@@ -9,3 +9,5 @@ dist/
 .DS_Store
 *.egg-info/
 .venv/
+run_mcp.bat
+.mcp.json

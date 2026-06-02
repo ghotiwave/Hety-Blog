@@ -12,6 +12,7 @@ interface Props {
     content: string
     summary: string | null
     cover_image: string | null
+    tags: string | null
     published: boolean
   }
 }
@@ -22,6 +23,7 @@ export function PostForm({ post }: Props) {
   const [content, setContent] = useState(post?.content ?? '')
   const [summary, setSummary] = useState(post?.summary ?? '')
   const [coverImage, setCoverImage] = useState(post?.cover_image ?? '')
+  const [tags, setTags] = useState(post?.tags ?? '')
   const [published, setPublished] = useState(post?.published ?? false)
   const [saving, setSaving] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
@@ -50,7 +52,7 @@ export function PostForm({ post }: Props) {
     e.preventDefault()
     setSaving(true)
     try {
-      const payload = { title, content, summary, cover_image: coverImage, published }
+      const payload = { title, content, summary, tags, cover_image: coverImage, published }
       if (post?.id) {
         await api.put(`/admin/posts/${post.id}`, payload)
       } else {
@@ -74,6 +76,11 @@ export function PostForm({ post }: Props) {
         placeholder="Summary"
         value={summary}
         onChange={(e) => setSummary(e.target.value)}
+      />
+      <Input
+        placeholder="Tags (comma-separated, e.g. #tech,#aigc,#python)"
+        value={tags}
+        onChange={(e) => setTags(e.target.value)}
       />
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>

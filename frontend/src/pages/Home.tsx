@@ -13,32 +13,28 @@ export function Home() {
 
   return (
     <div>
-      <section className="text-center py-16">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+      <section className="text-center py-20">
+        <h1 className="text-5xl text-stone-800 mb-5" style={{ fontFamily: 'Georgia, serif', fontWeight: 400 }}>
           Welcome to MyBlog
         </h1>
-        <p className="text-lg text-gray-500 mb-6 max-w-md mx-auto">
+        <p className="text-lg text-stone-400 italic mb-8 max-w-md mx-auto">
           A personal space for sharing thoughts, ideas, and stories.
         </p>
-        <div className="flex justify-center gap-3">
-          <Link to="/blog">
-            <Button size="lg">Read Blog</Button>
-          </Link>
-          <Link to="/about">
-            <Button variant="secondary" size="lg">About Me</Button>
-          </Link>
+        <div className="flex justify-center gap-4">
+          <Link to="/blog"><Button size="lg">Read Blog</Button></Link>
+          <Link to="/about"><Button variant="secondary" size="lg">About Me</Button></Link>
         </div>
       </section>
 
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Recent Posts</h2>
-          <Link to="/blog" className="text-sm text-blue-600 hover:underline">View all</Link>
+      <section className="mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xl text-stone-500 italic" style={{ fontFamily: 'Georgia, serif' }}>Recent Posts</h2>
+          <Link to="/blog" className="text-sm text-amber-700 hover:underline italic">View all &rarr;</Link>
         </div>
         {posts.length === 0 ? (
-          <p className="text-gray-400 text-center py-8">No posts yet.</p>
+          <p className="text-stone-300 text-center py-12 italic">No posts yet.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div>
             {posts.map((p) => (
               <PostCard key={p.id} {...p} coverImage={p.cover_image} createdAt={p.created_at} commentCount={p.comment_count} />
             ))}

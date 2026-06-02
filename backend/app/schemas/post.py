@@ -6,6 +6,7 @@ class PostCreate(BaseModel):
     content: str
     summary: str | None = None
     cover_image: str | None = None
+    tags: str | None = None
     published: bool = False
 
 
@@ -14,6 +15,7 @@ class PostUpdate(BaseModel):
     content: str | None = None
     summary: str | None = None
     cover_image: str | None = None
+    tags: str | None = None
     published: bool | None = None
 
 
@@ -23,6 +25,7 @@ class PostResponse(BaseModel):
     content: str
     summary: str | None = None
     cover_image: str | None = None
+    tags: str | None = None
     published: bool
     created_at: str
     updated_at: str
@@ -36,6 +39,7 @@ class PostListItem(BaseModel):
     title: str
     summary: str | None = None
     cover_image: str | None = None
+    tags: str | None = None
     published: bool
     created_at: str
     comment_count: int = 0

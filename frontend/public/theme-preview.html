@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog Theme Preview</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #e5e7eb; padding: 20px; }
+  h2.theme-label { text-align: center; margin: 16px 0 8px; font-size: 18px; color: #374151; }
+
+  .preview {
+    width: 380px; height: 600px; overflow-y: auto; border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.12); flex-shrink: 0;
+    font-size: 14px; line-height: 1.6;
+  }
+
+  .wrapper { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+  /* ===== A: 极简技术风 ===== */
+  .theme-a { background: #fff; color: #1a1a2e; }
+  .theme-a .nav { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 12px 20px; display:flex; justify-content:space-between; align-items:center; }
+  .theme-a .nav a { color: #6b7280; text-decoration:none; font-size:13px; margin-left:16px; }
+  .theme-a .nav .logo { font-weight:700; font-size:16px; color:#1a1a2e; }
+  .theme-a .hero { padding: 40px 20px 24px; }
+  .theme-a .hero h1 { font-size: 28px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px; }
+  .theme-a .hero p { color: #6b7280; font-size: 15px; }
+  .theme-a .card { margin: 0 20px 12px; padding: 16px; border: 1px solid #f3f4f6; border-radius: 8px; }
+  .theme-a .card h3 { font-size: 16px; color: #1a1a2e; margin-bottom: 4px; }
+  .theme-a .card .meta { color: #9ca3af; font-size: 12px; }
+  .theme-a .card p { color: #4b5563; margin-top: 6px; font-size: 13px; }
+  .theme-a .btn { display:inline-block; padding:8px 18px; background:#3b82f6; color:#fff; border-radius:6px; text-decoration:none; font-size:13px; font-weight:500; margin-top:8px; }
+
+  /* ===== B: 暖色杂志风 ===== */
+  .theme-b { background: #fefce8; color: #292524; font-family: Georgia, 'Times New Roman', serif; }
+  .theme-b .nav { background: #fefce8; border-bottom: 1px solid #f5d0a9; padding: 14px 24px; display:flex; justify-content:space-between; align-items:center; }
+  .theme-b .nav a { color: #a16207; text-decoration:none; font-size:13px; margin-left:20px; font-style:italic; }
+  .theme-b .nav .logo { font-weight:700; font-size:18px; color:#292524; font-style:normal; }
+  .theme-b .hero { padding: 44px 24px 28px; text-align:center; }
+  .theme-b .hero h1 { font-size: 30px; font-weight: 400; color: #292524; margin-bottom:10px; letter-spacing: -0.5px; }
+  .theme-b .hero p { color: #78716c; font-size:15px; font-style:italic; }
+  .theme-b .card { margin: 0 24px 14px; padding: 20px; border-bottom: 1px solid #f5d0a9; }
+  .theme-b .card h3 { font-size: 17px; color: #292524; margin-bottom:4px; font-weight:400; }
+  .theme-b .card .meta { color: #a8a29e; font-size:12px; font-style:italic; }
+  .theme-b .card p { color: #57534e; margin-top:6px; font-size:13px; line-height:1.8; }
+  .theme-b .btn { display:inline-block; padding:8px 20px; background:#d97706; color:#fff; border-radius:4px; text-decoration:none; font-size:13px; margin-top:8px; }
+
+  /* ===== C: 暗色开发者风 ===== */
+  .theme-c { background: #0d1117; color: #e6edf3; }
+  .theme-c .nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 12px 20px; display:flex; justify-content:space-between; align-items:center; }
+  .theme-c .nav a { color: #8b949e; text-decoration:none; font-size:13px; margin-left:16px; }
+  .theme-c .nav .logo { font-weight:700; font-size:16px; color:#58a6ff; font-family: monospace; }
+  .theme-c .hero { padding: 40px 20px 24px; }
+  .theme-c .hero h1 { font-size: 28px; font-weight: 700; color: #f0f6fc; margin-bottom:8px; }
+  .theme-c .hero p { color: #8b949e; font-size:15px; }
+  .theme-c .card { margin: 0 20px 12px; padding: 16px; border: 1px solid #21262d; border-radius: 6px; }
+  .theme-c .card h3 { font-size: 16px; color: #58a6ff; margin-bottom:4px; }
+  .theme-c .card .meta { color: #484f58; font-size:12px; font-family:monospace; }
+  .theme-c .card p { color: #8b949e; margin-top:6px; font-size:13px; }
+  .theme-c .btn { display:inline-block; padding:8px 18px; background:#238636; color:#fff; border-radius:6px; text-decoration:none; font-size:13px; font-weight:500; margin-top:8px; border:1px solid #2ea043; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- A -->
+  <div>
+    <h2 class="theme-label">A — 极简技术风</h2>
+    <div class="preview theme-a">
+      <div class="nav">
+        <span class="logo">MyBlog</span>
+        <div><a href="#">Blog</a><a href="#">About</a><a href="#">Game</a></div>
+      </div>
+      <div class="hero">
+        <h1>Hi, I'm Gianni</h1>
+        <p>Full-stack developer, building things for the web.</p>
+      </div>
+      <div class="card">
+        <h3>Building a Blog from Scratch</h3>
+        <span class="meta">2026-05-29 · 5 min read</span>
+        <p>How I built a full-stack blog with React, FastAPI, and Docker in 20 days.</p>
+        <a class="btn" href="#">Read →</a>
+      </div>
+      <div class="card">
+        <h3>Why I Love SQLite</h3>
+        <span class="meta">2026-05-20 · 3 min read</span>
+        <p>Single file, zero config, perfect for personal projects.</p>
+        <a class="btn" href="#">Read →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div>
+    <h2 class="theme-label">B — 暖色杂志风</h2>
+    <div class="preview theme-b">
+      <div class="nav">
+        <span class="logo">MyBlog</span>
+        <div><a href="#">Blog</a><a href="#">About</a><a href="#">Game</a></div>
+      </div>
+      <div class="hero">
+        <h1>Hi, I'm Gianni</h1>
+        <p>Full-stack developer, building things for the web.</p>
+      </div>
+      <div class="card">
+        <h3>Building a Blog from Scratch</h3>
+        <span class="meta">May 29, 2026</span>
+        <p>How I built a full-stack blog with React, FastAPI, and Docker in 20 days.</p>
+        <a class="btn" href="#">Read →</a>
+      </div>
+      <div class="card">
+        <h3>Why I Love SQLite</h3>
+        <span class="meta">May 20, 2026</span>
+        <p>Single file, zero config, perfect for personal projects.</p>
+        <a class="btn" href="#">Read →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div>
+    <h2 class="theme-label">C — 暗色开发者风</h2>
+    <div class="preview theme-c">
+      <div class="nav">
+        <span class="logo">&gt; myblog</span>
+        <div><a href="#">Blog</a><a href="#">About</a><a href="#">Game</a></div>
+      </div>
+      <div class="hero">
+        <h1>Hi, I'm Gianni</h1>
+        <p>Full-stack developer, building things for the web.</p>
+      </div>
+      <div class="card">
+        <h3>Building a Blog from Scratch</h3>
+        <span class="meta">2026-05-29 · 5 min read</span>
+        <p>How I built a full-stack blog with React, FastAPI, and Docker in 20 days.</p>
+        <a class="btn" href="#">Read →</a>
+      </div>
+      <div class="card">
+        <h3>Why I Love SQLite</h3>
+        <span class="meta">2026-05-20 · 3 min read</span>
+        <p>Single file, zero config, perfect for personal projects.</p>
+        <a class="btn" href="#">Read →</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

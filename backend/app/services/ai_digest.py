@@ -50,13 +50,29 @@ def generate_daily_digest(db: Session) -> NewsDigest:
 
     content = resp.choices[0].message.content
 
+    today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     digest = NewsDigest(
-        title=f"技术日报 - {datetime.now(timezone.utc).strftime('%Y-%m-%d')}",
+        title=f"技术日报 - {today_str}",
         topic="综合",
         content=content,
         source_urls=json.dumps([item["url"] for item in news_items]),
     )
     db.add(digest)
+    db.flush()
+
+    # Also create a blog post with auto-tags
+    from app.models.post import Post
+    existing = db.query(Post).filter(Post.title == f"AI技术日报 - {today_str}").first()
+    if not existing:
+        blog_post = Post(
+            title=f"AI技术日报 - {today_str}",
+            content=content,
+            summary=f"每日 AI 技术新闻总结，涵盖行业动态、模型发布、开源项目等。",
+            tags="#AI日报,#tech,#aigc",
+            published=True,
+        )
+        db.add(blog_post)
+
     db.commit()
     db.refresh(digest)
     return digest

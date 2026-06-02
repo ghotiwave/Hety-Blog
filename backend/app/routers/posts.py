@@ -13,6 +13,7 @@ router = APIRouter(prefix="/api/posts", tags=["posts"])
 @router.get("", response_model=PaginatedPosts)
 def list_posts(
     q: str | None = Query(None, alias="q"),
+    tag: str | None = Query(None, alias="tag"),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
     db: Session = Depends(get_db),
@@ -22,6 +23,8 @@ def list_posts(
         query = query.filter(
             Post.title.contains(q) | Post.content.contains(q)
         )
+    if tag:
+        query = query.filter(Post.tags.contains(tag))
     total = query.count()
     total_pages = max(1, math.ceil(total / page_size))
     posts = (
@@ -39,6 +42,7 @@ def list_posts(
                 title=p.title,
                 summary=p.summary,
                 cover_image=p.cover_image,
+                tags=p.tags,
                 published=p.published,
                 created_at=p.created_at.isoformat() if p.created_at else "",
                 comment_count=comment_count or 0,
@@ -66,6 +70,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
         content=post.content,
         summary=post.summary,
         cover_image=post.cover_image,
+        tags=post.tags,
         published=post.published,
         created_at=post.created_at.isoformat() if post.created_at else "",
         updated_at=post.updated_at.isoformat() if post.updated_at else "",

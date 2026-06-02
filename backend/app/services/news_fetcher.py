@@ -3,10 +3,40 @@ import requests
 from datetime import datetime, timezone, timedelta
 
 
-def fetch_github_trending():
-    """Fetch trending repos from GitHub"""
+AIHOT_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 aihot-skill/0.2.0"
+)
+
+
+def fetch_aihot_selected(since_hours=24):
+    """Fetch curated AI news from aihot.virxact.com"""
     try:
-        # GitHub trending - using the search API for repos created/updated recently
+        since = (datetime.now(timezone.utc) - timedelta(hours=since_hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        resp = requests.get(
+            "https://aihot.virxact.com/api/public/items",
+            params={"mode": "selected", "since": since, "take": 30},
+            headers={"User-Agent": AIHOT_UA},
+            timeout=15,
+        )
+        if resp.status_code == 200:
+            items = resp.json().get("items", [])
+            return [
+                {
+                    "title": item.get("title") or item.get("titleCn") or item.get("titleEn", "Untitled"),
+                    "url": item.get("url", ""),
+                    "description": item.get("summaryCn") or item.get("summary", ""),
+                    "source": f"AI HOT · {item.get('category', 'AI')}",
+                }
+                for item in items
+            ]
+        return []
+    except Exception:
+        return []
+
+
+def fetch_github_trending():
+    try:
         since = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
         resp = requests.get(
             "https://api.github.com/search/repositories",
@@ -26,7 +56,6 @@ def fetch_github_trending():
                     "title": item["full_name"],
                     "url": item["html_url"],
                     "description": item.get("description", "No description"),
-                    "stars": item.get("stargazers_count", 0),
                     "source": "GitHub Trending",
                 }
                 for item in items
@@ -37,7 +66,6 @@ def fetch_github_trending():
 
 
 def fetch_hackernews_top():
-    """Fetch top stories from Hacker News"""
     try:
         resp = requests.get(
             "https://hacker-news.firebaseio.com/v0/topstories.json",
@@ -66,8 +94,8 @@ def fetch_hackernews_top():
 
 
 def fetch_all_news():
-    """Aggregate news from all sources"""
     news = []
+    news.extend(fetch_aihot_selected(48))
     news.extend(fetch_github_trending())
     news.extend(fetch_hackernews_top())
     return news
