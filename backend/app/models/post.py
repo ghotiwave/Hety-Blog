@@ -13,6 +13,7 @@ class Post(Base):
     summary = Column(String(500), nullable=True)
     cover_image = Column(String(500), nullable=True)
     tags = Column(String(500), nullable=True)  # comma-separated tags
+    view_count = Column(Integer, default=0)
     published = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
