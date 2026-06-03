@@ -11,6 +11,8 @@ interface Post {
   tags: string | null
   created_at: string
   comment_count: number
+  like_count: number
+  view_count: number
 }
 
 export function PostList() {
@@ -75,10 +77,15 @@ export function PostList() {
           {posts.map((p) => (
             <PostCard
               key={p.id}
-              {...p}
+              id={p.id}
+              title={p.title}
+              summary={p.summary}
               coverImage={p.cover_image}
+              tags={p.tags}
               createdAt={p.created_at}
               commentCount={p.comment_count}
+              likeCount={p.like_count}
+              viewCount={p.view_count}
               activeTag={activeTag}
               onTagClick={toggleTag}
             />

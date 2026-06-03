@@ -23,7 +23,9 @@ export function Header() {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <span className="text-sm text-gray-500">{user.username}</span>
+              <span className="text-sm text-stone-400 italic">{user.username}</span>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/history')}>History</Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/likes')}>Likes</Button>
               {isAdmin && (
                 <Button variant="ghost" size="sm" onClick={() => navigate('/admin/dashboard')}>
                   Admin

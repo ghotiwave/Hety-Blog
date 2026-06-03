@@ -8,11 +8,13 @@ interface Props {
   tags?: string | null
   createdAt: string
   commentCount: number
+  likeCount?: number
+  viewCount?: number
   activeTag?: string
   onTagClick?: (tag: string) => void
 }
 
-export function PostCard({ id, title, summary, coverImage, tags, createdAt, commentCount, activeTag, onTagClick }: Props) {
+export function PostCard({ id, title, summary, coverImage, tags, createdAt, commentCount, likeCount = 0, viewCount = 0, activeTag, onTagClick }: Props) {
   const tagList = (tags || '').split(',').map((t) => t.trim()).filter(Boolean)
 
   return (
@@ -28,7 +30,7 @@ export function PostCard({ id, title, summary, coverImage, tags, createdAt, comm
           {summary && <p className="text-sm text-stone-400 mb-2 line-clamp-2">{summary}</p>}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-stone-300 italic">
-              {new Date(createdAt).toLocaleDateString('zh-CN')} · {commentCount} comments
+              {new Date(createdAt).toLocaleDateString('zh-CN')} · {commentCount} 💬 · {likeCount} ❤ · {viewCount} 👁
             </span>
             {tagList.length > 0 && tagList.map((tag) => (
               <span

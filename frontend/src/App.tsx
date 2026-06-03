@@ -11,6 +11,8 @@ import { Game } from '@/pages/Game'
 import { Leaderboard } from '@/pages/Leaderboard'
 import { Digest } from '@/pages/Digest'
 import { DigestDetail } from '@/pages/DigestDetail'
+import { UserHistory } from '@/pages/UserHistory'
+import { UserLikes } from '@/pages/UserLikes'
 import { Dashboard } from '@/pages/admin/Dashboard'
 import { PostManage } from '@/pages/admin/PostManage'
 import { PostEdit } from '@/pages/admin/PostEdit'
@@ -66,6 +68,8 @@ export default function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/digest" element={<Digest />} />
             <Route path="/digest/:id" element={<DigestDetail />} />
+            <Route path="/history" element={<UserHistory />} />
+            <Route path="/likes" element={<UserLikes />} />
 
             <Route element={<AdminShell />}>
               <Route path="/admin/dashboard" element={<Dashboard />} />
