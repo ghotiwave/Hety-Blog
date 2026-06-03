@@ -12,7 +12,8 @@ class Post(Base):
     content = Column(Text, nullable=False)
     summary = Column(String(500), nullable=True)
     cover_image = Column(String(500), nullable=True)
-    tags = Column(String(500), nullable=True)  # comma-separated tags
+    tags = Column(String(500), nullable=True)
+    post_type = Column(String(20), default="blog")  # "blog" or "note"
     view_count = Column(Integer, default=0)
     published = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

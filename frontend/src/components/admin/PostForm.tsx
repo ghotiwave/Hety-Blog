@@ -24,6 +24,7 @@ export function PostForm({ post }: Props) {
   const [summary, setSummary] = useState(post?.summary ?? '')
   const [coverImage, setCoverImage] = useState(post?.cover_image ?? '')
   const [tags, setTags] = useState(post?.tags ?? '')
+  const [postType, setPostType] = useState((post as any)?.post_type ?? 'blog')
   const [published, setPublished] = useState(post?.published ?? false)
   const [saving, setSaving] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
@@ -52,7 +53,7 @@ export function PostForm({ post }: Props) {
     e.preventDefault()
     setSaving(true)
     try {
-      const payload = { title, content, summary, tags, cover_image: coverImage, published }
+      const payload = { title, content, summary, tags, post_type: postType, cover_image: coverImage, published }
       if (post?.id) {
         await api.put(`/admin/posts/${post.id}`, payload)
       } else {
@@ -82,6 +83,14 @@ export function PostForm({ post }: Props) {
         value={tags}
         onChange={(e) => setTags(e.target.value)}
       />
+      <div className="flex items-center gap-4">
+        <label className="flex items-center gap-2 text-sm">
+          <input type="radio" value="blog" checked={postType === 'blog'} onChange={() => setPostType('blog')} /> Blog
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="radio" value="note" checked={postType === 'note'} onChange={() => setPostType('note')} /> Note
+        </label>
+      </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
         <div className="flex gap-2">

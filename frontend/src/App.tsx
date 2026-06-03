@@ -13,6 +13,7 @@ import { Digest } from '@/pages/Digest'
 import { DigestDetail } from '@/pages/DigestDetail'
 import { UserHistory } from '@/pages/UserHistory'
 import { UserLikes } from '@/pages/UserLikes'
+import { Notes } from '@/pages/Notes'
 import { Dashboard } from '@/pages/admin/Dashboard'
 import { PostManage } from '@/pages/admin/PostManage'
 import { PostEdit } from '@/pages/admin/PostEdit'
@@ -68,6 +69,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<PostDetail />} />
+            <Route path="/notes" element={<Notes />} />
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

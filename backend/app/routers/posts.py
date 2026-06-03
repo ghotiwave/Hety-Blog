@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api/posts", tags=["posts"])
 def list_posts(
     q: str | None = Query(None, alias="q"),
     tag: str | None = Query(None, alias="tag"),
+    post_type: str | None = Query(None, alias="type"),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
     db: Session = Depends(get_db),
@@ -26,6 +27,8 @@ def list_posts(
         )
     if tag:
         query = query.filter(Post.tags.contains(tag))
+    if post_type:
+        query = query.filter(Post.post_type == post_type)
     total = query.count()
     total_pages = max(1, math.ceil(total / page_size))
     posts = (

@@ -15,6 +15,7 @@ export function Header() {
           </Link>
           <nav className="flex items-center gap-5 text-sm">
             <Link to="/blog" className="text-stone-500 hover:text-stone-800 transition-colors italic">Blog</Link>
+            <Link to="/notes" className="text-stone-500 hover:text-stone-800 transition-colors italic">Notes</Link>
             <Link to="/about" className="text-stone-500 hover:text-stone-800 transition-colors italic">About</Link>
             <Link to="/game" className="text-stone-500 hover:text-stone-800 transition-colors italic">Game</Link>
             <Link to="/digest" className="text-stone-500 hover:text-stone-800 transition-colors italic">Digest</Link>

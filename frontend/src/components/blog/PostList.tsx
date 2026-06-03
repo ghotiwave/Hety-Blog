@@ -15,7 +15,7 @@ interface Post {
   view_count: number
 }
 
-export function PostList() {
+export function PostList({ postType }: { postType?: string }) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState('')
@@ -23,13 +23,12 @@ export function PostList() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
-  // Collect all unique tags from posts
   const allTags = [...new Set(posts.flatMap((p) => (p.tags || '').split(',').map((t) => t.trim()).filter(Boolean)))]
 
   useEffect(() => {
     setLoading(true)
     api.get('/posts', {
-      params: { page, q: q || undefined, tag: activeTag || undefined },
+      params: { page, q: q || undefined, tag: activeTag || undefined, type: postType || undefined },
     }).then((res) => {
       setPosts(res.data.items)
       setTotalPages(res.data.total_pages)
