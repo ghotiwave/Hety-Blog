@@ -24,7 +24,8 @@ export function Digest() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Tech Digest</h1>
+      <h1 className="text-3xl text-stone-800 mb-2" style={{ fontFamily: 'Georgia, serif' }}>AI News</h1>
+      <p className="text-stone-400 italic mb-6 text-sm">Daily AI industry digest, auto-generated every morning.</p>
       <p className="text-sm text-gray-500 mb-8">
         Daily tech news summaries powered by DeepSeek. Updated every morning.
       </p>

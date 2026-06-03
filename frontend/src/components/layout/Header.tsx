@@ -13,12 +13,12 @@ export function Header() {
           <Link to="/" className="text-xl font-bold text-stone-800 hover:text-amber-700 transition-colors italic" style={{ fontFamily: 'Georgia, serif' }}>
             MyBlog
           </Link>
-          <nav className="flex items-center gap-5 text-sm">
-            <Link to="/blog" className="text-stone-500 hover:text-stone-800 transition-colors italic">Blog</Link>
-            <Link to="/notes" className="text-stone-500 hover:text-stone-800 transition-colors italic">Notes</Link>
-            <Link to="/about" className="text-stone-500 hover:text-stone-800 transition-colors italic">About</Link>
-            <Link to="/game" className="text-stone-500 hover:text-stone-800 transition-colors italic">Game</Link>
-            <Link to="/digest" className="text-stone-500 hover:text-stone-800 transition-colors italic">Digest</Link>
+          <nav className="flex items-center gap-6 text-sm">
+            <Link to="/blog" className="text-stone-700 hover:text-amber-700 transition-colors font-medium">Blog</Link>
+            <Link to="/notes" className="text-stone-700 hover:text-amber-700 transition-colors font-medium">Notes</Link>
+            <Link to="/digest" className="text-stone-700 hover:text-amber-700 transition-colors font-medium">AI News</Link>
+            <Link to="/about" className="text-stone-700 hover:text-amber-700 transition-colors font-medium">About</Link>
+            <Link to="/game" className="text-stone-400 hover:text-amber-700 transition-colors text-xs">Game</Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">
