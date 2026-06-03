@@ -34,6 +34,8 @@ def init_db():
     from app.models.profile import Profile
     from app.models.score import Score
     from app.models.digest import NewsDigest
+    from app.models.reading_history import ReadingHistory
+    from app.models.like import Like
     import bcrypt
 
     Base.metadata.create_all(bind=engine)

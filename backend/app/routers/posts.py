@@ -5,6 +5,7 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.post import Post
 from app.models.comment import Comment
+from app.models.like import Like
 from app.schemas.post import PostResponse, PostListItem, PaginatedPosts
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
@@ -36,6 +37,7 @@ def list_posts(
     items = []
     for p in posts:
         comment_count = db.query(func.count(Comment.id)).filter(Comment.post_id == p.id).scalar()
+        like_count = db.query(func.count(Like.id)).filter(Like.post_id == p.id).scalar()
         items.append(
             PostListItem(
                 id=p.id,
@@ -45,6 +47,8 @@ def list_posts(
                 tags=p.tags,
                 published=p.published,
                 created_at=p.created_at.isoformat() if p.created_at else "",
+                like_count=like_count or 0,
+                view_count=p.view_count or 0,
                 comment_count=comment_count or 0,
             )
         )
@@ -64,6 +68,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Post not found")
     comment_count = db.query(func.count(Comment.id)).filter(Comment.post_id == post.id).scalar()
+    like_count = db.query(func.count(Like.id)).filter(Like.post_id == post.id).scalar()
     return PostResponse(
         id=post.id,
         title=post.title,
@@ -74,5 +79,7 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
         published=post.published,
         created_at=post.created_at.isoformat() if post.created_at else "",
         updated_at=post.updated_at.isoformat() if post.updated_at else "",
+        like_count=like_count or 0,
+        view_count=post.view_count or 0,
         comment_count=comment_count or 0,
     )

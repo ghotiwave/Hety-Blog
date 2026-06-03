@@ -29,6 +29,8 @@ class PostResponse(BaseModel):
     published: bool
     created_at: str
     updated_at: str
+    like_count: int = 0
+    view_count: int = 0
     comment_count: int = 0
 
     model_config = {"from_attributes": True}
@@ -42,6 +44,8 @@ class PostListItem(BaseModel):
     tags: str | None = None
     published: bool
     created_at: str
+    like_count: int = 0
+    view_count: int = 0
     comment_count: int = 0
 
     model_config = {"from_attributes": True}
