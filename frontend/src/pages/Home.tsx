@@ -12,34 +12,25 @@ export function Home() {
 
   return (
     <div className="min-h-[80vh] flex flex-col justify-center">
-      {/* Hero */}
-      <section className="py-20 md:py-28">
-        <div className="max-w-2xl">
-          <h1
-            className="text-4xl md:text-5xl lg:text-6xl text-stone-800 leading-tight mb-6 tracking-tight"
-            style={{ fontFamily: 'Georgia, serif' }}
-          >
+      <section className="py-24 md:py-32">
+        <div className="max-w-xl">
+          <h1 className="text-3xl md:text-4xl text-[#3a3a38] leading-snug mb-8 tracking-wide font-light">
             欢迎来到
             <br />
             Hety 的个人主页
           </h1>
-          <p className="text-lg md:text-xl text-stone-400 italic leading-relaxed max-w-lg">
+          <p className="text-sm text-[#b5b4af] leading-loose max-w-md">
             技术、思考与生活。
-          </p>
-          <p className="mt-5 text-sm text-stone-300 leading-relaxed max-w-md">
-            一名热爱技术的开发者。这里记录着我的学习笔记、项目复盘，
-            以及对 AI 与开源世界的观察。希望通过文字与你产生共鸣。
           </p>
         </div>
       </section>
 
-      {/* Recent posts — only if there are any */}
       {posts.length > 0 && (
-        <section className="border-t border-amber-200/40 pt-10 pb-16">
+        <section className="border-t border-[#e8e6e0]/50 pt-10 pb-16">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm text-stone-400 tracking-widest uppercase">Recent</h2>
-            <Link to="/blog" className="text-xs text-stone-300 hover:text-amber-600 transition-colors">
-              全部文章 &rarr;
+            <h2 className="text-xs text-[#c5c4bf] tracking-[0.2em]">最近</h2>
+            <Link to="/blog" className="text-xs text-[#c5c4bf] hover:text-[#8b7355] transition-colors">
+              全部 &rarr;
             </Link>
           </div>
           {posts.map((p) => (
@@ -59,9 +50,8 @@ export function Home() {
         </section>
       )}
 
-      {/* Footer */}
-      <div className="text-center py-6 border-t border-amber-200/40 mt-auto">
-        <p className="text-xs text-stone-300/60">感谢来访。</p>
+      <div className="text-center py-10 border-t border-[#e8e6e0]/30 mt-auto">
+        <p className="text-xs text-[#c5c4bf]">感谢来访。</p>
       </div>
     </div>
   )

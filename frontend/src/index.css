@@ -1,22 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #d97706;
-  --color-primary-dark: #b45309;
-  --color-bg: #fefce8;
-  --color-surface: #fffbeb;
-  --color-text: #292524;
-  --color-text-muted: #78716c;
-  --color-border: #f5d0a9;
-  --color-accent: #ea580c;
+  --color-primary: #8b7355;
+  --color-primary-dark: #6b563f;
+  --color-bg: #fafaf7;
+  --color-surface: #f5f4f0;
+  --color-text: #3a3a38;
+  --color-text-muted: #9a9996;
+  --color-border: #e8e6e0;
+  --color-accent: #a0937d;
 }
 
 body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: Georgia, 'Times New Roman', serif;
-  line-height: 1.8;
+  font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', 'Microsoft YaHei', sans-serif;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+  font-weight: 300;
 }
 
 /* Chrome Dino game night mode — toggled on <html> by Runner.invert() */
