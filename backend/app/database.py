@@ -44,11 +44,10 @@ def init_db():
     try:
 
         if not db.query(User).filter(User.role == "admin").first():
-            import os
-            admin_pw = os.environ.get("ADMIN_PASSWORD", "admin123")
+            from app.config import settings
             admin = User(
                 username="admin",
-                password_hash=bcrypt.hashpw(admin_pw.encode(), bcrypt.gensalt()).decode(),
+                password_hash=bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), bcrypt.gensalt()).decode(),
                 role="admin",
             )
             db.add(admin)
