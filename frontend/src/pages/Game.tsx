@@ -24,7 +24,7 @@ export function Game() {
         )}
       </div>
 
-      <p className="text-sm text-gray-500 mb-2">Press Space or tap to jump. Arrow Down to duck.</p>
+      <p className="text-sm text-[#b5b4af] mb-2">空格键跳跃，方向键下蹲。</p>
 
       <div className="mb-8">
         <DinoGame />
@@ -33,7 +33,7 @@ export function Game() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Leaderboard Top 5</h2>
         <Link to="/leaderboard">
-          <Button variant="ghost" size="sm">View All</Button>
+          <Button variant="ghost" size="sm">查看全部</Button>
         </Link>
       </div>
 
