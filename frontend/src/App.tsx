@@ -16,6 +16,9 @@ import { UserLikes } from '@/pages/UserLikes'
 import { Dashboard } from '@/pages/admin/Dashboard'
 import { PostManage } from '@/pages/admin/PostManage'
 import { PostEdit } from '@/pages/admin/PostEdit'
+import { AdminComments } from '@/pages/admin/Comments'
+import { ProfileEdit } from '@/pages/admin/ProfileEdit'
+import { AdminUsers } from '@/pages/admin/Users'
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isAdmin } = useAuth()
@@ -25,15 +28,19 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 }
 
 function AdminShell() {
+  const navItems = [
+    ['/admin/dashboard', 'Dashboard'],
+    ['/admin/posts', 'Posts'],
+    ['/admin/comments', 'Comments'],
+    ['/admin/profile', 'Profile'],
+    ['/admin/users', 'Users'],
+  ]
   return (
     <AdminGuard>
       <div className="flex gap-8">
         <aside className="w-48 shrink-0">
           <nav className="flex flex-col gap-1 sticky top-20">
-            {[
-              ['/admin/dashboard', 'Dashboard'],
-              ['/admin/posts', 'Posts'],
-            ].map(([path, label]) => (
+            {navItems.map(([path, label]) => (
               <a
                 key={path}
                 href={path}
@@ -76,6 +83,9 @@ export default function App() {
               <Route path="/admin/posts" element={<PostManage />} />
               <Route path="/admin/posts/new" element={<PostEdit />} />
               <Route path="/admin/posts/:id/edit" element={<PostEdit />} />
+              <Route path="/admin/comments" element={<AdminComments />} />
+              <Route path="/admin/profile" element={<ProfileEdit />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
             </Route>
           </Route>
         </Routes>
