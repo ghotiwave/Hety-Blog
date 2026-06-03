@@ -95,9 +95,9 @@ export function PostDetail() {
         >
           {liked ? '❤️' : '🤍'} {likeCount}
         </button>
-        <span className="text-sm text-stone-400">{post.comment_count} comments</span>
-        <span className="text-sm text-stone-300">{post.view_count} views</span>
-        {!user && <span className="text-xs text-stone-300 italic">Login to like</span>}
+        <span className="text-sm text-stone-400">{post.comment_count} 评论</span>
+        <span className="text-sm text-stone-300">{post.view_count} 阅读</span>
+        {!user && <span className="text-xs text-stone-300">登录后点赞</span>}
       </div>
 
       <CommentSection postId={post.id} />

@@ -43,25 +43,25 @@ export function CommentSection({ postId }: { postId: number }) {
   return (
     <div className="mt-12">
       <h2 className="text-lg text-stone-700 mb-6" style={{ fontFamily: 'Georgia, serif' }}>
-        Comments ({comments.length})
+        评论 ({comments.length})
       </h2>
 
       {user ? (
         <form onSubmit={handleSubmit} className="space-y-3 mb-8">
           <Textarea
-            placeholder="Write a comment..."
+            placeholder="写下评论..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
             required
           />
           <Button type="submit" disabled={submitting}>
-            {submitting ? 'Posting...' : 'Post Comment'}
+            {submitting ? '发送中...' : '发表评论'}
           </Button>
         </form>
       ) : (
         <div className="mb-8 py-4 px-4 bg-stone-50 rounded-lg border border-stone-200 text-center">
           <p className="text-stone-400 italic text-sm">
-            <Link to="/login" className="text-amber-700 hover:underline">Login</Link> to post a comment.
+            <Link to="/login" className="text-[#8b7355] hover:underline">登录</Link> 后发表评论。
           </p>
         </div>
       )}

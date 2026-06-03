@@ -30,7 +30,7 @@ export function PostCard({ id, title, summary, coverImage, tags, createdAt, comm
           {summary && <p className="text-sm text-[#b5b4af] mb-2 line-clamp-2">{summary}</p>}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-[#c5c4bf]">
-              {new Date(createdAt).toLocaleDateString('zh-CN')} · {commentCount} 评论 · {likeCount} 赞
+              {new Date(createdAt).toLocaleDateString('zh-CN')} · {commentCount} 评论 · {likeCount} 赞 · {viewCount} 阅读
             </span>
             {tagList.length > 0 && tagList.map((tag) => (
               <span

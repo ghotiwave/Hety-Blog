@@ -15,10 +15,10 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', 'Microsoft YaHei', sans-serif;
+  font-family: 'LXGW WenKai Screen', 'PingFang SC', 'Microsoft YaHei', serif;
   line-height: 1.9;
   letter-spacing: 0.02em;
-  font-weight: 300;
+  font-weight: 400;
 }
 
 /* Chrome Dino game night mode — toggled on <html> by Runner.invert() */

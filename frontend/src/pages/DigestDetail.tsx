@@ -33,7 +33,7 @@ export function DigestDetail() {
   return (
     <div className="max-w-3xl mx-auto">
       <Link to="/digest">
-        <Button variant="ghost" size="sm" className="mb-4">← Back to Digests</Button>
+        <Button variant="ghost" size="sm" className="mb-4">← 返回</Button>
       </Link>
 
       <article className="bg-white rounded-xl border border-gray-200 p-8">
