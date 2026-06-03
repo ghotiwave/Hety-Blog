@@ -18,6 +18,7 @@ export function Header() {
             <Link to="/about" className="text-stone-500 hover:text-stone-800 transition-colors italic">About</Link>
             <Link to="/game" className="text-stone-500 hover:text-stone-800 transition-colors italic">Game</Link>
             <Link to="/digest" className="text-stone-500 hover:text-stone-800 transition-colors italic">Digest</Link>
+            <Link to="/knowledge" className="text-stone-500 hover:text-stone-800 transition-colors italic">Knowledge</Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">

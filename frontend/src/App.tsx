@@ -13,6 +13,7 @@ import { Digest } from '@/pages/Digest'
 import { DigestDetail } from '@/pages/DigestDetail'
 import { UserHistory } from '@/pages/UserHistory'
 import { UserLikes } from '@/pages/UserLikes'
+import { Knowledge } from '@/pages/Knowledge'
 import { Dashboard } from '@/pages/admin/Dashboard'
 import { PostManage } from '@/pages/admin/PostManage'
 import { PostEdit } from '@/pages/admin/PostEdit'
@@ -75,6 +76,7 @@ export default function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/digest" element={<Digest />} />
             <Route path="/digest/:id" element={<DigestDetail />} />
+            <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/history" element={<UserHistory />} />
             <Route path="/likes" element={<UserLikes />} />
 
