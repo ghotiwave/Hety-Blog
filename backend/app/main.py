@@ -27,8 +27,7 @@ scheduler.add_job(scheduled_digest_job, "cron", hour=8, minute=0)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    if settings.DEEPSEEK_API_KEY:
-        scheduler.start()
+    scheduler.start()
     yield
     scheduler.shutdown()
 
