@@ -2,7 +2,6 @@ from pydantic import BaseModel
 
 
 class CommentCreate(BaseModel):
-    author_name: str
     content: str
 
 

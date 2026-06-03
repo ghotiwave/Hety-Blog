@@ -3,16 +3,22 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.post import Post
 from app.models.comment import Comment
+from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentResponse
+from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/posts", tags=["comments"])
 
 
-def _serialize_comment(c):
+def _serialize(c, db: Session):
+    username = None
+    if c.user_id:
+        user = db.query(User).filter(User.id == c.user_id).first()
+        username = user.username if user else "deleted"
     return CommentResponse(
         id=c.id,
         post_id=c.post_id,
-        author_name=c.author_name,
+        author_name=username or "anonymous",
         content=c.content,
         created_at=c.created_at.isoformat() if c.created_at else "",
     )
@@ -29,18 +35,27 @@ def list_comments(post_id: int, db: Session = Depends(get_db)):
         .order_by(Comment.created_at.asc())
         .all()
     )
-    return [_serialize_comment(c) for c in comments]
+    return [_serialize(c, db) for c in comments]
 
 
 @router.post("/{post_id}/comments", response_model=CommentResponse, status_code=201)
-def create_comment(post_id: int, req: CommentCreate, db: Session = Depends(get_db)):
+def create_comment(
+    post_id: int,
+    req: CommentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     post = db.query(Post).filter(Post.id == post_id, Post.published == True).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    if not req.author_name.strip() or not req.content.strip():
-        raise HTTPException(status_code=422, detail="Author name and content are required")
-    comment = Comment(post_id=post_id, author_name=req.author_name.strip(), content=req.content.strip())
+    if not req.content.strip():
+        raise HTTPException(status_code=422, detail="Content required")
+    comment = Comment(
+        post_id=post_id,
+        user_id=current_user.id,
+        content=req.content.strip(),
+    )
     db.add(comment)
     db.commit()
     db.refresh(comment)
-    return _serialize_comment(comment)
+    return _serialize(comment, db)
