@@ -61,23 +61,32 @@ def reading_history(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    total = db.query(ReadingHistory).filter(ReadingHistory.user_id == user.id).count()
-    rows = (
-        db.query(ReadingHistory)
+    # Deduplicate: show only the latest visit per post
+    subq = (
+        db.query(
+            ReadingHistory.post_id,
+            func.max(ReadingHistory.visited_at).label("last_visit"),
+        )
         .filter(ReadingHistory.user_id == user.id)
-        .order_by(desc(ReadingHistory.visited_at))
+        .group_by(ReadingHistory.post_id)
+        .subquery()
+    )
+    total = db.query(subq).count()
+    rows = (
+        db.query(subq)
+        .order_by(desc(subq.c.last_visit))
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
     )
     items = []
-    for r in rows:
-        p = r.post
-        if p and p.published:
+    for row in rows:
+        p = db.query(Post).filter(Post.id == row.post_id, Post.published == True).first()
+        if p:
             items.append({
                 "post_id": p.id,
                 "title": p.title,
-                "visited_at": r.visited_at.isoformat() if r.visited_at else "",
+                "visited_at": row.last_visit.isoformat() if row.last_visit else "",
             })
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
