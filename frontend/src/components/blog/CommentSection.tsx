@@ -43,7 +43,7 @@ export function CommentSection({ postId }: { postId: number }) {
 
   return (
     <div className="mt-12">
-      <h2 className="text-lg text-stone-700 mb-6" style={{ fontFamily: 'Georgia, serif' }}>
+      <h2 className="text-xl text-[var(--color-text)] mb-6 font-light tracking-wide">
         评论 ({comments.length})
       </h2>
 
@@ -69,21 +69,21 @@ export function CommentSection({ postId }: { postId: number }) {
 
       <div className="space-y-4">
         {comments.map((c) => (
-          <div key={c.id} className="py-3 border-b border-amber-100">
-            <div className="flex items-start gap-3">
+          <div key={c.id} className="py-5 border-b border-amber-100">
+            <div className="flex items-start gap-4">
               {c.avatar_url ? (
-                <img src={c.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border border-[var(--color-border)] shrink-0" />
+                <img src={c.avatar_url} alt="" className="w-11 h-11 rounded-full object-cover border border-[var(--color-border)] shrink-0" />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-sm text-[var(--color-text-muted)] shrink-0">
+                <div className="w-11 h-11 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-base text-[var(--color-text-muted)] shrink-0">
                   {c.author_name[0]}
                 </div>
               )}
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-sm text-stone-700">{c.author_name}</span>
-                  <span className="text-xs text-stone-300">{new Date(c.created_at).toLocaleString('zh-CN')}</span>
+                <div className="flex items-center gap-3 mb-1.5">
+                  <span className="font-medium text-base text-[var(--color-text)]">{c.author_name}</span>
+                  <span className="text-sm text-[var(--color-text-muted)]">{new Date(c.created_at).toLocaleString('zh-CN')}</span>
                 </div>
-              <div className="text-sm text-stone-500 prose prose-sm max-w-none">
+              <div className="text-base text-[var(--color-text)] prose max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                   {c.content}
                 </ReactMarkdown>
