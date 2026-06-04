@@ -12,13 +12,16 @@ router = APIRouter(prefix="/api/digests", tags=["digests"])
 def list_digests(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
+    date: str | None = Query(None, alias="date", description="Filter by date (YYYY-MM or YYYY-MM-DD)"),
     db: Session = Depends(get_db),
 ):
-    total = db.query(NewsDigest).count()
+    query = db.query(NewsDigest)
+    if date:
+        query = query.filter(NewsDigest.created_at.contains(date))
+    total = query.count()
     total_pages = max(1, math.ceil(total / page_size))
     digests = (
-        db.query(NewsDigest)
-        .order_by(NewsDigest.created_at.desc())
+        query.order_by(NewsDigest.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
