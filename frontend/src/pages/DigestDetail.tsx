@@ -27,20 +27,23 @@ export function DigestDetail() {
     }).finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <div className="text-center text-gray-400 py-12">Loading...</div>
-  if (!digest) return <div className="text-center text-gray-400 py-12">Digest not found.</div>
+  if (loading) return <div className="text-center text-[var(--color-text-muted)] py-12">加载中...</div>
+  if (!digest) return <div className="text-center text-[var(--color-text-muted)] py-12">日报未找到。</div>
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-2xl mx-auto">
       <Link to="/digest">
-        <Button variant="ghost" size="sm" className="mb-4">← 返回</Button>
+        <Button variant="ghost" size="sm" className="mb-6">← 返回</Button>
       </Link>
 
-      <article className="bg-white rounded-xl border border-gray-200 p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{digest.title}</h1>
-        <p className="text-sm text-gray-400 mb-8">
-          {digest.topic} · {new Date(digest.created_at).toLocaleDateString('zh-CN')}
-        </p>
+      <article>
+        <header className="mb-10">
+          <h1 className="text-2xl text-[var(--color-text)] mb-2 font-normal tracking-wide">{digest.title}</h1>
+          <p className="text-xs text-[var(--color-text-muted)]">
+            {digest.topic} · {new Date(digest.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+        </header>
+
         <div className="prose max-w-none">
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
             {digest.content}
@@ -52,17 +55,12 @@ export function DigestDetail() {
             const urls: string[] = JSON.parse(digest.source_urls)
             if (urls.length === 0) return null
             return (
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Sources</h3>
+              <div className="mt-10 pt-6 border-t border-[var(--color-border)]">
+                <h3 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-3">来源</h3>
                 <ul className="space-y-1">
                   {urls.map((url, i) => (
                     <li key={i}>
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline break-all"
-                      >
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] break-all transition-colors">
                         {url}
                       </a>
                     </li>

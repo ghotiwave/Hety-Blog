@@ -74,6 +74,19 @@ body {
 .prose hr { border: none; border-top: 1px solid #e7e5e4; margin: 1.5rem 0; }
 .prose img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
 
+/* Card-style list items for AI digest */
+.prose ul { list-style: none; padding-left: 0; }
+.prose ul li {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 10px 0;
+  transition: border-color 0.2s;
+}
+.prose ul li:hover { border-color: var(--color-primary); }
+.prose ul li p { margin: 0; }
+
 @media (prefers-color-scheme: dark) {
   .inverted .runner-canvas {
     filter: invert(0);
