@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_USE_SSL: bool = False
     SITE_URL: str = "http://localhost:8000"
+    SITE_DOMAIN: str = "gianniiss.top"
+    RESEND_API_KEY: str = ""
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

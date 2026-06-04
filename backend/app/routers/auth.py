@@ -49,21 +49,15 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    # Try to send verification email; if SMTP not configured, return the link
-    verify_url = None
-    if settings.SMTP_HOST and req.email:
-        from app.services.email_service import send_verification_email
-        sent = send_verification_email(req.email, verify_token)
-        if not sent:
-            verify_url = f"{settings.SITE_URL}/api/auth/verify/{verify_token}"
-    else:
-        verify_url = f"{settings.SITE_URL}/api/auth/verify/{verify_token}"
+    # Send verification email via Resend (or fall back to returning the link)
+    from app.services.email_service import send_verification_email
+    sent = send_verification_email(req.email, verify_token)
 
     token = create_token(user)
     resp = TokenResponse(access_token=token, user=user_to_response(user))
     result = resp.model_dump()
-    if verify_url:
-        result["verify_url"] = verify_url
+    if not sent:
+        result["verify_url"] = f"{settings.SITE_URL}/api/auth/verify/{verify_token}"
     return result
 
 
