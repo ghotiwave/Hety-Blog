@@ -12,7 +12,7 @@ interface AuthState {
   token: string | null
   isAdmin: boolean
   login: (username: string, password: string) => Promise<void>
-  register: (username: string, email: string, password: string) => Promise<any>
+  register: (username: string, email: string, password: string, turnstile_token?: string) => Promise<any>
   logout: () => void
 }
 
@@ -36,8 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u)
   }
 
-  async function register(username: string, email: string, password: string) {
-    const res = await api.post('/auth/register', { username, email, password })
+  async function register(username: string, email: string, password: string, turnstile_token?: string) {
+    const res = await api.post('/auth/register', { username, email, password, turnstile_token })
     const { access_token, user: u, verify_url } = res.data
     localStorage.setItem('token', access_token)
     localStorage.setItem('user', JSON.stringify(u))

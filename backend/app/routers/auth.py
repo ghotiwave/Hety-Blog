@@ -1,10 +1,12 @@
 import secrets
-from fastapi import APIRouter, Depends, HTTPException
+import time
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from jose import jwt
 from datetime import datetime, timedelta, timezone
 import bcrypt
+import httpx
 from app.database import get_db
 from app.config import settings
 from app.models.user import User
@@ -12,6 +14,22 @@ from app.schemas.user import RegisterRequest, LoginRequest, TokenResponse, UserR
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+# Simple in-memory rate limiter
+_register_attempts: dict[str, list[float]] = {}
+
+
+def _check_rate_limit(ip: str, max_attempts: int = 3, window: int = 3600) -> bool:
+    now = time.time()
+    attempts = [t for t in _register_attempts.get(ip, []) if now - t < window]
+    _register_attempts[ip] = attempts
+    return len(attempts) < max_attempts
+
+
+def _record_attempt(ip: str):
+    if ip not in _register_attempts:
+        _register_attempts[ip] = []
+    _register_attempts[ip].append(time.time())
 
 
 def create_token(user: User) -> str:
@@ -32,11 +50,30 @@ def user_to_response(user: User) -> dict:
 
 
 @router.post("/register")
-def register(req: RegisterRequest, db: Session = Depends(get_db)):
+async def register(request: Request, req: RegisterRequest, db: Session = Depends(get_db)):
+    client_ip = request.client.host if request.client else "unknown"
+
+    # Rate limit: 3 per hour per IP
+    if not _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="注册过于频繁，请稍后再试")
+
+    # Turnstile verification
+    if settings.TURNSTILE_SECRET_KEY and hasattr(req, "turnstile_token") and req.turnstile_token:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post("https://challenges.cloudflare.com/turnstile/v0/siteverify", data={
+                "secret": settings.TURNSTILE_SECRET_KEY,
+                "response": req.turnstile_token,
+            })
+            if not resp.json().get("success"):
+                _record_attempt(client_ip)
+                raise HTTPException(status_code=400, detail="人机验证失败")
+
     if db.query(User).filter(User.username == req.username).first():
         raise HTTPException(status_code=400, detail="用户名已被注册")
     if req.email and db.query(User).filter(User.email == req.email).first():
         raise HTTPException(status_code=400, detail="邮箱已被注册")
+
+    _record_attempt(client_ip)
 
     verify_token = secrets.token_urlsafe(32)
     user = User(

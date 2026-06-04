@@ -1,9 +1,15 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
+
+const TURNSTILE_SITE_KEY = '' // Fill after getting from Cloudflare
+
+declare global {
+  interface Window { turnstile: any }
+}
 
 export function Register() {
   const { register } = useAuth()
@@ -14,17 +20,31 @@ export function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [verifyUrl, setVerifyUrl] = useState('')
+  const turnstileRef = useRef<string | null>(null)
+  const turnstileDivRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (TURNSTILE_SITE_KEY && turnstileDivRef.current && window.turnstile) {
+      window.turnstile.render(turnstileDivRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: (token: string) => { turnstileRef.current = token },
+      })
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (TURNSTILE_SITE_KEY && !turnstileRef.current) {
+      setError('请完成人机验证')
+      return
+    }
     setError('')
     setLoading(true)
     try {
-      const result = await register(username, email, password)
+      const result = await register(username, email, password, turnstileRef.current || undefined)
       if (result?.verify_url) setVerifyUrl(result.verify_url)
-      navigate('/')
-    } catch {
-      setError('注册失败，请重试')
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || '注册失败')
     } finally {
       setLoading(false)
     }
@@ -39,11 +59,12 @@ export function Register() {
             <Input placeholder="用户名" value={username} onChange={(e) => setUsername(e.target.value)} required />
             <Input type="email" placeholder="邮箱" value={email} onChange={(e) => setEmail(e.target.value)} required />
             <Input type="password" placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            {TURNSTILE_SITE_KEY && <div ref={turnstileDivRef} className="flex justify-center" />}
             {error && <p className="text-sm text-red-500">{error}</p>}
             {verifyUrl && (
               <p className="text-xs text-green-600 bg-green-50 p-2 rounded">
-                注册成功！请点击验证链接激活账号：<br />
-                <a href={verifyUrl} target="_blank" className="underline break-all">{verifyUrl}</a>
+                注册成功！验证链接已发送到你的邮箱。<br />
+                如未收到，点击：<a href={verifyUrl} target="_blank" className="underline break-all">{verifyUrl}</a>
               </p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>

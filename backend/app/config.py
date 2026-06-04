@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     SITE_URL: str = "http://localhost:8000"
     SITE_DOMAIN: str = "gianniiss.top"
     RESEND_API_KEY: str = ""
+    TURNSTILE_SECRET_KEY: str = ""
+    TURNSTILE_SITE_KEY: str = ""
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
