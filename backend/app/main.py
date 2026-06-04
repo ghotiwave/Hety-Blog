@@ -48,7 +48,7 @@ os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 # Register routers
-from app.routers import auth, posts, comments, scores, digests, profile_public, user_actions
+from app.routers import auth, posts, comments, scores, digests, profile_public, user_actions, user_profile
 from app.routers import admin_posts, admin_comments, admin_profile, admin_dashboard, admin_digests, upload
 
 app.include_router(auth.router)
@@ -58,6 +58,7 @@ app.include_router(scores.router)
 app.include_router(digests.router)
 app.include_router(profile_public.router)
 app.include_router(user_actions.router)
+app.include_router(user_profile.router)
 app.include_router(admin_posts.router)
 app.include_router(admin_profile.router)
 app.include_router(admin_dashboard.router)

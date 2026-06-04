@@ -44,6 +44,8 @@ def user_to_response(user: User) -> dict:
         "username": user.username,
         "email": user.email,
         "email_verified": bool(user.email_verified),
+        "avatar_url": user.avatar_url,
+        "signature": user.signature,
         "role": user.role,
         "created_at": user.created_at.isoformat() if user.created_at else "",
     }

@@ -5,6 +5,8 @@ interface User {
   id: number
   username: string
   role: string
+  avatar_url?: string | null
+  signature?: string | null
 }
 
 interface AuthState {

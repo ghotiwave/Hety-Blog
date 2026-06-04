@@ -23,6 +23,8 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: str | None = None
+    avatar_url: str | None = None
+    signature: str | None = None
     role: str
     created_at: str
 

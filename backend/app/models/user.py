@@ -12,6 +12,8 @@ class User(Base):
     email = Column(String(100), unique=True, nullable=True)
     email_verified = Column(Integer, default=0)
     verification_token = Column(String(100), nullable=True)
+    avatar_url = Column(String(500), nullable=True)
+    signature = Column(String(200), nullable=True)
     password_hash = Column(String(255), nullable=False)
     role = Column(String(10), default="user")
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

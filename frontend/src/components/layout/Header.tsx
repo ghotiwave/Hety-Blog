@@ -29,7 +29,12 @@ export function Header() {
           </button>
           {user ? (
             <>
-              <span className="text-xs text-[var(--color-text-muted)]">{user.username}</span>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} className="w-5 h-5 rounded-full object-cover mr-1" alt="" />
+                ) : null}
+                {user.username}
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => navigate('/history')}>历史</Button>
               <Button variant="ghost" size="sm" onClick={() => navigate('/likes')}>点赞</Button>
               {isAdmin && (
