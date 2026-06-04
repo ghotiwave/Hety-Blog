@@ -87,6 +87,48 @@ body {
 .prose ul li:hover { border-color: var(--color-primary); }
 .prose ul li p { margin: 0; }
 
+/* === Scrollbar (macOS style) === */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(150,150,150,0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(150,150,150,0.6); }
+
+/* === Code block depth === */
+.prose pre {
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: box-shadow 0.3s ease;
+}
+.prose pre:hover { box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+
+/* === Image hover zoom === */
+.prose img {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 6px;
+}
+.prose img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* === Sidebar hover reveal (desktop ≥1220px) === */
+@media screen and (min-width: 1220px) {
+  .sidebar-panel {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+  }
+  .sidebar-left .sidebar-panel { transform: translateX(calc(-100% + 6px)); }
+  .sidebar-right .sidebar-panel { transform: translateX(calc(100% - 6px)); }
+
+  .sidebar-left:hover .sidebar-panel,
+  .sidebar-right:hover .sidebar-panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .inverted .runner-canvas {
     filter: invert(0);
