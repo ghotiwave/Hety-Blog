@@ -24,7 +24,7 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={toggle} className="text-sm text-[#9a9996] hover:text-[#5a5a55] cursor-pointer px-2 transition-colors" title={dark ? '切到亮色' : '切到暗色'}>
+          <button onClick={toggle} className="text-lg cursor-pointer px-2 py-1 rounded hover:bg-[#f0eeea] dark:hover:bg-[#3d3d3a] transition-colors" title={dark ? '切到亮色' : '切到暗色'}>
             {dark ? '☀' : '☾'}
           </button>
           {user ? (

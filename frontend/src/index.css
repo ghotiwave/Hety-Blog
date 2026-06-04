@@ -26,21 +26,27 @@ body {
 
 /* Dark mode overrides */
 .dark {
-  --color-primary: #a0937d;
-  --color-primary-dark: #8b7355;
-  --color-bg: #1c1c1a;
-  --color-surface: #2d2d2a;
-  --color-text: #e8e6e0;
-  --color-text-muted: #9a9996;
+  --color-primary: #b8a68e;
+  --color-primary-dark: #a0937d;
+  --color-bg: #1a1a18;
+  --color-surface: #252523;
+  --color-text: #e0ded8;
+  --color-text-muted: #b0aea8;
   --color-border: #3d3d3a;
-  --color-accent: #8b7355;
+  --color-accent: #c5a880;
 }
 
 .dark .prose h1, .dark .prose h2 { color: #e8e6e0; }
-.dark .prose p, .dark .prose li { color: #c5c4bf; }
-.dark .prose blockquote { color: #9a9996; border-color: #3d3d3a; }
-.dark .prose code { background: #2d2d2a; }
-.dark .prose pre { background: #1a1a18; color: #c5c4bf; }
+.dark .prose p, .dark .prose li { color: #d0cec8; }
+.dark .prose blockquote { color: #b0aea8; border-color: #4d4d4a; }
+.dark .prose code { background: #2d2d2a; color: #d0cec8; }
+.dark .prose pre { background: #121210; color: #d0cec8; }
+
+/* Dark mode header - blend with background */
+.dark header {
+  background: rgba(26, 26, 24, 0.9) !important;
+  border-color: rgba(61, 61, 58, 0.5) !important;
+}
 
 /* Chrome Dino game night mode — toggled on <html> by Runner.invert() */
 .inverted .runner-canvas {
