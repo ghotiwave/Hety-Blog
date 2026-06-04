@@ -31,7 +31,7 @@ export function Digest() {
       <p className="text-sm text-[var(--color-text-muted)] mb-8">每日 AI 行业动态，自动生成。</p>
 
       {/* Archive navigation */}
-      {archives.length > 1 && (
+      {archives.length > 0 && (
         <div className="flex items-center gap-1 mb-8 flex-wrap">
           <span
             onClick={() => setDateFilter('')}

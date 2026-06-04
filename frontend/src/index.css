@@ -17,7 +17,7 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: 'LXGW WenKai Screen', 'PingFang SC', 'Microsoft YaHei', serif;
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'LXGW WenKai Screen', sans-serif;
   line-height: 1.9;
   letter-spacing: 0.02em;
   font-weight: 400;
