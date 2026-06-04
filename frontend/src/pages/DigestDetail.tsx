@@ -5,6 +5,8 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import 'katex/dist/katex.min.css'
 import api from '@/services/api'
+import { ArticleLayout } from '@/components/blog/ArticleLayout'
+import rehypeSlug from 'rehype-slug'
 import { Button } from '@/components/ui/Button'
 
 interface Digest {
@@ -36,6 +38,7 @@ export function DigestDetail() {
         <Button variant="ghost" size="sm" className="mb-6">← 返回</Button>
       </Link>
 
+      <ArticleLayout content={digest.content}>
       <article>
         <header className="mb-10">
           <h1 className="text-2xl text-[var(--color-text)] mb-2 font-normal tracking-wide">{digest.title}</h1>
@@ -45,7 +48,7 @@ export function DigestDetail() {
         </header>
 
         <div className="prose max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeSlug]}>
             {digest.content}
           </ReactMarkdown>
         </div>
@@ -71,6 +74,7 @@ export function DigestDetail() {
           } catch { return null }
         })()}
       </article>
+      </ArticleLayout>
     </div>
   )
 }

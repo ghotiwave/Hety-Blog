@@ -9,6 +9,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { CommentSection } from '@/components/blog/CommentSection'
 import { MiniGraph } from '@/components/blog/MiniGraph'
 import { GraphModal } from '@/components/blog/GraphModal'
+import { ArticleLayout } from '@/components/blog/ArticleLayout'
+import rehypeSlug from 'rehype-slug'
 
 interface Post {
   id: number
@@ -63,6 +65,7 @@ export function PostDetail() {
   const timeStr = ts.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 
   return (
+    <ArticleLayout content={post.content}>
     <article className="max-w-3xl mx-auto">
       {post.cover_image && (
         <img src={post.cover_image} alt={post.title} className="w-full h-64 object-cover rounded-xl mb-6" />
@@ -80,7 +83,7 @@ export function PostDetail() {
         <span>{post.view_count} views</span>
       </div>
       <div className="prose max-w-none mb-8">
-        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeSlug]}>
           {post.content}
         </ReactMarkdown>
       </div>
@@ -104,5 +107,6 @@ export function PostDetail() {
 
       {showGraph && <GraphModal currentPostId={post.id} onClose={() => setShowGraph(false)} />}
     </article>
+    </ArticleLayout>
   )
 }
