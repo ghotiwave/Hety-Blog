@@ -70,23 +70,26 @@ export function CommentSection({ postId }: { postId: number }) {
       <div className="space-y-4">
         {comments.map((c) => (
           <div key={c.id} className="py-3 border-b border-amber-100">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-start gap-3">
               {c.avatar_url ? (
-                <img src={c.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover border border-[var(--color-border)]" />
+                <img src={c.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border border-[var(--color-border)] shrink-0" />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[10px] text-[var(--color-text-muted)]">
+                <div className="w-9 h-9 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-sm text-[var(--color-text-muted)] shrink-0">
                   {c.author_name[0]}
                 </div>
               )}
-              <span className="font-medium text-sm text-stone-700">{c.author_name}</span>
-              <span className="text-xs text-stone-300">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium text-sm text-stone-700">{c.author_name}</span>
+                  <span className="text-xs text-stone-300">
                 {new Date(c.created_at).toLocaleString('zh-CN')}
               </span>
             </div>
-            <div className="text-sm text-stone-500 prose prose-sm max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                {c.content}
-              </ReactMarkdown>
+              <div className="text-sm text-stone-500 prose prose-sm max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                  {c.content}
+                </ReactMarkdown>
+              </div>
             </div>
           </div>
         ))}
