@@ -15,7 +15,7 @@ export function Header() {
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             <Link to="/blog" className="text-[#9a9996] hover:text-[#5a5a55] transition-colors">博客</Link>
-            <Link to="/notes" className="text-[#9a9996] hover:text-[#5a5a55] transition-colors">笔记</Link>
+            <a href="http://localhost:8080" className="text-[#9a9996] hover:text-[#5a5a55] transition-colors">笔记</a>
             <Link to="/digest" className="text-[#9a9996] hover:text-[#5a5a55] transition-colors">AI 日报</Link>
             <Link to="/about" className="text-[#9a9996] hover:text-[#5a5a55] transition-colors">关于</Link>
             <Link to="/game" className="text-[#c5c4bf] hover:text-[#9a9996] transition-colors text-xs">Game</Link>
