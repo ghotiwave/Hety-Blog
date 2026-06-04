@@ -58,21 +58,6 @@ def generate_daily_digest(db: Session) -> NewsDigest:
         source_urls=json.dumps([item["url"] for item in news_items]),
     )
     db.add(digest)
-    db.flush()
-
-    # Also create a blog post with auto-tags
-    from app.models.post import Post
-    existing = db.query(Post).filter(Post.title == f"AI技术日报 - {today_str}").first()
-    if not existing:
-        blog_post = Post(
-            title=f"AI技术日报 - {today_str}",
-            content=content,
-            summary=f"每日 AI 技术新闻总结，涵盖行业动态、模型发布、开源项目等。",
-            tags="#AI日报,#tech,#aigc",
-            published=True,
-        )
-        db.add(blog_post)
-
     db.commit()
     db.refresh(digest)
     return digest
