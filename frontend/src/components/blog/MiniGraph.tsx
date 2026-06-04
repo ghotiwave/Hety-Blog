@@ -14,7 +14,7 @@ export function MiniGraph({ currentPostId, tags, onExpand }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    api.get('/posts', { params: { page_size: 100 } }).then((res) => setPosts(res.data.items))
+    api.get('/posts', { params: { page_size: 50 } }).then((res) => setPosts(res.data.items))
   }, [])
 
   useEffect(() => {

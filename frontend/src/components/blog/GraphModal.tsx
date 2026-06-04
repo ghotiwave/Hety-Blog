@@ -12,7 +12,7 @@ export function GraphModal({ currentPostId, onClose }: Props) {
   const [dims, setDims] = useState({ w: 800, h: 500 })
 
   useEffect(() => {
-    api.get('/posts', { params: { page_size: 100 } }).then((res) => setPosts(res.data.items))
+    api.get('/posts', { params: { page_size: 50 } }).then((res) => setPosts(res.data.items))
     setDims({ w: Math.min(window.innerWidth * 0.85, 900), h: window.innerHeight * 0.7 })
   }, [])
 

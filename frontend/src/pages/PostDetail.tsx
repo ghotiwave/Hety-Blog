@@ -42,7 +42,7 @@ export function PostDetail() {
     }).finally(() => setLoading(false))
 
     // Fetch adjacent posts (no type filter - get all published)
-    api.get('/posts', { params: { page_size: 200 } }).then((res) => {
+    api.get('/posts', { params: { page_size: 50 } }).then((res) => {
       const posts = res.data.items
       const idx = posts.findIndex((p: any) => p.id === Number(id))
       if (idx >= 0) {
