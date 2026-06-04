@@ -9,6 +9,7 @@ class CommentResponse(BaseModel):
     id: int
     post_id: int
     author_name: str
+    avatar_url: str | None = None
     content: str
     created_at: str
 

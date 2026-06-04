@@ -12,14 +12,18 @@ router = APIRouter(prefix="/api/posts", tags=["comments"])
 
 def _serialize(c, db: Session):
     username = None
+    avatar_url = None
     if c.user_id:
         user = db.query(User).filter(User.id == c.user_id).first()
-        username = user.username if user else "deleted"
+        if user:
+            username = user.username
+            avatar_url = user.avatar_url
     return CommentResponse(
         id=c.id,
         post_id=c.post_id,
         author_name=username or "anonymous",
         content=c.content,
+        avatar_url=avatar_url,
         created_at=c.created_at.isoformat() if c.created_at else "",
     )
 

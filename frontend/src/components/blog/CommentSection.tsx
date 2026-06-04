@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 interface Comment {
   id: number
   author_name: string
+  avatar_url: string | null
   content: string
   created_at: string
 }
@@ -70,6 +71,13 @@ export function CommentSection({ postId }: { postId: number }) {
         {comments.map((c) => (
           <div key={c.id} className="py-3 border-b border-amber-100">
             <div className="flex items-center gap-2 mb-1">
+              {c.avatar_url ? (
+                <img src={c.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover border border-[var(--color-border)]" />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[10px] text-[var(--color-text-muted)]">
+                  {c.author_name[0]}
+                </div>
+              )}
               <span className="font-medium text-sm text-stone-700">{c.author_name}</span>
               <span className="text-xs text-stone-300">
                 {new Date(c.created_at).toLocaleString('zh-CN')}
