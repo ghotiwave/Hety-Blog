@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { Button } from '@/components/ui/Button'
 
 export function Header() {
   const { user, isAdmin, logout } = useAuth()
+  const { dark, toggle } = useTheme()
   const navigate = useNavigate()
 
   return (
@@ -22,6 +24,9 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={toggle} className="text-sm text-[#9a9996] hover:text-[#5a5a55] cursor-pointer px-2 transition-colors" title={dark ? '切到亮色' : '切到暗色'}>
+            {dark ? '☀' : '☾'}
+          </button>
           {user ? (
             <>
               <span className="text-xs text-[#b5b4af]">{user.username}</span>
