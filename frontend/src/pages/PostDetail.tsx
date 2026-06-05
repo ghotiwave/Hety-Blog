@@ -82,7 +82,7 @@ export function PostDetail() {
       )}
       <div className="flex gap-6">
         <div className="flex-1">
-          <h1 className="text-3xl text-stone-800 mb-2" style={{ fontFamily: 'Georgia, serif', fontWeight: 400 }}>
+          <h1 className="text-3xl text-[var(--color-text)] mb-2" style={{ fontFamily: 'Georgia, serif', fontWeight: 400 }}>
             {post.title}
           </h1>
         </div>
