@@ -87,7 +87,7 @@ function NewsCard({ item, onClick }: { item: NewsItem; onClick: () => void }) {
             {item.title}
           </ReactMarkdown>
         </div>
-        <div className="text-xs text-[var(--color-text-muted)] leading-relaxed mb-4 line-clamp-4">
+        <div className="text-xs text-[var(--color-text)]/75 leading-relaxed mb-4 line-clamp-4">
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em', 'p']}>
             {item.desc}
           </ReactMarkdown>
