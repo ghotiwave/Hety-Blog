@@ -226,7 +226,7 @@ export function DigestDetail() {
                   {sub.items.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 items-stretch">
                       {sub.items.map((item, ii) => (
-                        <NewsCard key={ii} item={item} />
+                        <NewsCard key={ii} item={item} onClick={() => setExpanded(item)} />
                       ))}
                     </div>
                   )}
