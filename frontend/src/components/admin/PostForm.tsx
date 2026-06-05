@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
-import rehypeSlug from 'rehype-slug'
 import api from '@/services/api'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { EmojiPicker } from '@/components/blog/EmojiPicker'
+import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 
 interface Props {
   post?: {
@@ -129,9 +126,9 @@ export function PostForm({ post }: Props) {
         {preview ? (
           <div className="min-h-[300px] p-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]/30 prose max-w-none prose-a:text-[var(--color-primary)]">
             {content ? (
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeSlug]}>
+              <MarkdownRenderer>
                 {content}
-              </ReactMarkdown>
+              </MarkdownRenderer>
             ) : (
               <p className="text-[var(--color-text-muted)] text-sm italic">暂无内容</p>
             )}

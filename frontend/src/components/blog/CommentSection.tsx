@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
 import api from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { EmojiPicker } from '@/components/blog/EmojiPicker'
+import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 
 interface Comment {
   id: number
@@ -129,9 +127,9 @@ function CommentItem({ comment, postId, onReply, onRefresh }: {
             {comment.reply_to_name && (
               <span className="text-[var(--color-primary)] mr-1">回复 @{comment.reply_to_name}:</span>
             )}
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong','a','code','em','p','img','ul','ol','li','blockquote','pre','h3','h4']}>
+            <MarkdownRenderer allowedElements={['strong','a','code','em','p','img','ul','ol','li','blockquote','pre','h3','h4']}>
               {comment.content}
-            </ReactMarkdown>
+            </MarkdownRenderer>
           </div>
           <div className="flex items-center gap-4 text-xs">
             <button onClick={handleLike} className={`${comment.user_liked ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'} hover:text-[var(--color-primary)] cursor-pointer transition-colors`}>
@@ -166,9 +164,9 @@ function CommentItem({ comment, postId, onReply, onRefresh }: {
                     </div>
                     <div className="text-sm text-[var(--color-text)]">
                       {r.reply_to_name && <span className="text-[var(--color-primary)] mr-1">@ {r.reply_to_name}</span>}
-                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                      <MarkdownRenderer>
                         {r.content}
-                      </ReactMarkdown>
+                      </MarkdownRenderer>
                     </div>
                     <button onClick={() => onReply(r.id, r.author_name)} className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] cursor-pointer mt-1">回复</button>
                   </div>
@@ -260,9 +258,9 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
       {preview ? (
         <div className="min-h-[100px] p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]/30 text-sm prose max-w-none prose-a:text-[var(--color-primary)]">
           {content ? (
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong','a','code','em','p','img','ul','ol','li','blockquote','pre','h3','h4']}>
+            <MarkdownRenderer allowedElements={['strong','a','code','em','p','img','ul','ol','li','blockquote','pre','h3','h4']}>
               {content}
-            </ReactMarkdown>
+            </MarkdownRenderer>
           ) : (
             <p className="text-[var(--color-text-muted)] italic text-xs">暂无内容</p>
           )}

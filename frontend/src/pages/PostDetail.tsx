@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import ReactMarkdown from 'react-markdown'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
+import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 import 'katex/dist/katex.min.css'
 import api from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -10,7 +8,6 @@ import { CommentSection } from '@/components/blog/CommentSection'
 import { MiniGraph } from '@/components/blog/MiniGraph'
 import { GraphModal } from '@/components/blog/GraphModal'
 import { ArticleLayout } from '@/components/blog/ArticleLayout'
-import rehypeSlug from 'rehype-slug'
 
 interface Post {
   id: number
@@ -93,9 +90,9 @@ export function PostDetail() {
         <span>{post.view_count} views</span>
       </div>
       <div className="prose max-w-none mb-8">
-        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeSlug]}>
+        <MarkdownRenderer>
           {post.content}
-        </ReactMarkdown>
+        </MarkdownRenderer>
       </div>
 
       <div className="flex items-center gap-6 py-4 border-t border-b border-amber-200/60 mb-8">

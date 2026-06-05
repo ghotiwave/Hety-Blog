@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
+import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 import api from '@/services/api'
 
 interface Profile {
@@ -32,9 +30,9 @@ export function About() {
           <section>
             <h2 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-2">简介</h2>
             <div className="text-sm text-[var(--color-text)] leading-loose prose max-w-none prose-a:text-[var(--color-primary)]">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              <MarkdownRenderer>
                 {profile.bio}
-              </ReactMarkdown>
+              </MarkdownRenderer>
             </div>
           </section>
         )}

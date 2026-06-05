@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
 import api from '@/services/api'
 import { Input } from '@/components/ui/Input'
+import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 
@@ -46,14 +44,14 @@ export function ProfileEdit() {
         <Textarea placeholder="Bio（支持 Markdown）" value={bio} onChange={(e) => setBio(e.target.value)} className="min-h-[100px]" />
         {bio && (
           <div className="p-3 rounded border border-[var(--color-border)]/50 bg-[var(--color-surface)]/30 text-sm prose max-w-none prose-a:text-[var(--color-primary)]">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{bio}</ReactMarkdown>
+            <MarkdownRenderer>{bio}</MarkdownRenderer>
           </div>
         )}
         <Input placeholder="Interests (comma-separated)" value={interests} onChange={(e) => setInterests(e.target.value)} />
         <Textarea placeholder="Experience（支持 Markdown）" value={experience} onChange={(e) => setExperience(e.target.value)} className="min-h-[100px]" />
         {experience && (
           <div className="p-3 rounded border border-[var(--color-border)]/50 bg-[var(--color-surface)]/30 text-sm prose max-w-none prose-a:text-[var(--color-primary)]">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{experience}</ReactMarkdown>
+            <MarkdownRenderer>{experience}</MarkdownRenderer>
           </div>
         )}
         <Input placeholder="GitHub URL" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />

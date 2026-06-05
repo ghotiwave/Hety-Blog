@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import api from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
-import ReactMarkdown from 'react-markdown'
-import remarkMath from 'remark-math'
-import rehypeKatex from 'rehype-katex'
 import { Input } from '@/components/ui/Input'
+import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 
@@ -90,9 +88,9 @@ export function UserProfile() {
           </p>
           {signature && (
             <div className="mt-2 p-3 rounded-lg border border-[var(--color-border)]/50 bg-[var(--color-surface)]/30 text-sm text-[var(--color-text)] prose max-w-none prose-a:text-[var(--color-primary)]">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              <MarkdownRenderer>
                 {signature}
-              </ReactMarkdown>
+              </MarkdownRenderer>
             </div>
           )}
         </div>
