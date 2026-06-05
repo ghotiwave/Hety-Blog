@@ -70,7 +70,7 @@ body {
 .prose code { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
 .prose pre { background: #1c1917; color: #e7e5e4; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; }
 .prose pre code { background: none; padding: 0; color: inherit; }
-.prose strong { color: #292524; font-weight: 600; }
+.prose strong { color: var(--color-text); font-weight: 600; }
 .prose hr { border: none; border-top: 1px solid #e7e5e4; margin: 1.5rem 0; }
 .prose img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
 
