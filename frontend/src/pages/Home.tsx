@@ -13,17 +13,17 @@ export function Home() {
 
   return (
     <div className="min-h-[80vh] flex flex-col justify-center">
-      <section className="py-24 md:py-32">
-        <div className="max-w-xl">
-          <img src={logoImg} alt="Hety" className="w-20 h-20 object-contain mb-6 rounded-xl" />
-          <h1 className="text-3xl md:text-4xl text-[var(--color-text)] leading-snug mb-8 tracking-wide font-light">
-            欢迎来到
-            <br />
-            Hety 的个人主页
-          </h1>
-          <p className="text-sm text-[var(--color-text-muted)] leading-loose max-w-md">
-            技术、思考与生活。
-          </p>
+      <section className="py-24 md:py-32 flex justify-center">
+        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 max-w-2xl">
+          <img src={logoImg} alt="Hety" className="w-28 h-28 md:w-36 md:h-36 object-contain rounded-2xl shrink-0" />
+          <div className="text-center md:text-left">
+            <h1 className="text-3xl md:text-4xl text-[var(--color-text)] leading-snug mb-3 tracking-wide font-light">
+              Hety 的个人主页
+            </h1>
+            <p className="text-sm text-[var(--color-text-muted)] leading-loose">
+              技术、思考与生活。
+            </p>
+          </div>
         </div>
       </section>
 

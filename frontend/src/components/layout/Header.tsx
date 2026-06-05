@@ -14,7 +14,7 @@ export function Header() {
       <div className="max-w-5xl mx-auto flex items-center justify-between px-6 h-14">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
-            <img src={logoImg} alt="Hety" className="h-7 w-auto object-contain" />
+            <img src={logoImg} alt="Hety" className="h-8 w-auto object-contain" />
             <span className="text-sm text-[var(--color-text)] tracking-wider">Hety</span>
           </Link>
           <nav className="flex items-center gap-6 text-sm">
