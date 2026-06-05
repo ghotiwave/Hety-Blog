@@ -74,23 +74,25 @@ function parseSections(md: string): { spotlight: string; sections: { heading: st
   return { spotlight, sections }
 }
 
-/** Mini card for a single news item — uses ReactMarkdown for bold/links */
+/** Mini card for a single news item — equal-height flex column, badge pinned to bottom */
 function NewsCard({ item }: { item: NewsItem }) {
   return (
-    <div className="group">
-      <div className="text-sm font-semibold text-[var(--color-text)] mb-1 leading-snug prose-a:text-[var(--color-primary)] [&_strong]:text-[var(--color-text)]">
-        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em']}>
-          {item.title}
-        </ReactMarkdown>
-      </div>
-      <div className="text-xs text-[var(--color-text-muted)] leading-relaxed mb-2">
-        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em', 'p']}>
-          {item.desc}
-        </ReactMarkdown>
+    <div className="h-full flex flex-col p-4 rounded-lg border border-[var(--color-border)]/40 bg-[var(--color-bg)]/40 transition-colors hover:border-[var(--color-primary)]/30">
+      <div className="flex-1">
+        <div className="text-sm font-semibold text-[var(--color-text)] mb-1.5 leading-snug prose-a:text-[var(--color-primary)] [&_strong]:text-[var(--color-text)]">
+          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em']}>
+            {item.title}
+          </ReactMarkdown>
+        </div>
+        <div className="text-xs text-[var(--color-text-muted)] leading-relaxed mb-4 line-clamp-4">
+          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em', 'p']}>
+            {item.desc}
+          </ReactMarkdown>
+        </div>
       </div>
       {item.sourceUrl && (
         <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer"
-          className="inline-block text-xs px-2.5 py-1 rounded-full bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors truncate max-w-full"
+          className="inline-block text-xs px-2.5 py-1 rounded-full bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors truncate max-w-full w-fit"
         >
           {item.sourceLabel}
         </a>
@@ -146,7 +148,7 @@ export function DigestDetail() {
             <h2 id="今日特别关注" className="text-lg font-bold text-[var(--color-text)] mb-5 pb-3 border-b border-[var(--color-border)]">
               🔥 今日特别关注
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 items-stretch">
               {spotlightItems.map((item, i) => (
                 <NewsCard key={i} item={item} />
               ))}
@@ -172,7 +174,7 @@ export function DigestDetail() {
                     </h3>
                   )}
                   {sub.items.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 items-stretch">
                       {sub.items.map((item, ii) => (
                         <NewsCard key={ii} item={item} />
                       ))}
