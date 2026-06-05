@@ -74,12 +74,20 @@ function parseSections(md: string): { spotlight: string; sections: { heading: st
   return { spotlight, sections }
 }
 
-/** Mini card for a single news item */
+/** Mini card for a single news item — uses ReactMarkdown for bold/links */
 function NewsCard({ item }: { item: NewsItem }) {
   return (
     <div className="group">
-      <h4 className="text-sm font-semibold text-[var(--color-text)] mb-1 leading-snug">{item.title}</h4>
-      <p className="text-xs text-[var(--color-text-muted)] leading-relaxed mb-2">{item.desc}</p>
+      <div className="text-sm font-semibold text-[var(--color-text)] mb-1 leading-snug prose-a:text-[var(--color-primary)] [&_strong]:text-[var(--color-text)]">
+        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em']}>
+          {item.title}
+        </ReactMarkdown>
+      </div>
+      <div className="text-xs text-[var(--color-text-muted)] leading-relaxed mb-2">
+        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em', 'p']}>
+          {item.desc}
+        </ReactMarkdown>
+      </div>
       {item.sourceUrl && (
         <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer"
           className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors truncate max-w-full"
@@ -104,10 +112,9 @@ export function DigestDetail() {
     if (!digest) return null
     const { spotlight, sections } = parseSections(digest.content)
     const spotlightItems = parseItems(spotlight)
-    const sectionBlocks: SectionBlock[] = sections.map((s) => ({
-      heading: s.heading,
-      subBlocks: parseSubBlocks(s.body),
-    }))
+    const sectionBlocks: SectionBlock[] = sections
+      .map((s) => ({ heading: s.heading, subBlocks: parseSubBlocks(s.body) }))
+      .filter((s) => s.subBlocks.length > 0 && s.subBlocks.some((b) => b.items.length > 0))
     return { spotlightItems, sectionBlocks, sourceUrls: digest.source_urls ? (() => {
       try { return JSON.parse(digest.source_urls) as string[] } catch { return [] }
     })() : [] }
@@ -136,7 +143,7 @@ export function DigestDetail() {
         {/* Spotlight — 3-col grid */}
         {spotlightItems.length > 0 && (
           <section className="mb-8 p-6 md:p-8 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface)]/30">
-            <h2 className="text-lg font-bold text-[var(--color-text)] mb-5 pb-3 border-b border-[var(--color-border)]">
+            <h2 id="今日特别关注" className="text-lg font-bold text-[var(--color-text)] mb-5 pb-3 border-b border-[var(--color-border)]">
               🔥 今日特别关注
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
@@ -154,7 +161,7 @@ export function DigestDetail() {
               key={si}
               className="p-6 md:p-8 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface)]/30"
             >
-              <h2 className="text-lg font-bold text-[var(--color-text)] mb-5 pb-3 border-b border-[var(--color-border)]">
+              <h2 id={sec.heading.replace(/[🔥🆕📊📈💡🛠️🤖📰🌐]/g, '').trim()} className="text-lg font-bold text-[var(--color-text)] mb-5 pb-3 border-b border-[var(--color-border)]">
                 {sec.heading}
               </h2>
               {sec.subBlocks.map((sub, sbi) => (
