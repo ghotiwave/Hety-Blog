@@ -74,10 +74,13 @@ function parseSections(md: string): { spotlight: string; sections: { heading: st
   return { spotlight, sections }
 }
 
-/** Mini card for a single news item — equal-height flex column, badge pinned to bottom */
-function NewsCard({ item }: { item: NewsItem }) {
+/** Mini card — equal-height flex column, badge pinned to bottom. Click to expand full content. */
+function NewsCard({ item, onClick }: { item: NewsItem; onClick: () => void }) {
   return (
-    <div className="h-full flex flex-col p-4 rounded-lg border border-[var(--color-border)]/40 bg-[var(--color-bg)]/40 transition-colors hover:border-[var(--color-primary)]/30">
+    <div
+      onClick={onClick}
+      className="h-full flex flex-col p-4 rounded-lg border border-[var(--color-border)]/40 bg-[var(--color-bg)]/40 transition-colors hover:border-[var(--color-primary)]/30 cursor-pointer"
+    >
       <div className="flex-1">
         <div className="text-sm font-semibold text-[var(--color-text)] mb-1.5 leading-snug prose-a:text-[var(--color-primary)] [&_strong]:text-[var(--color-text)]">
           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em']}>
@@ -92,6 +95,7 @@ function NewsCard({ item }: { item: NewsItem }) {
       </div>
       {item.sourceUrl && (
         <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
           className="inline-block text-xs px-2.5 py-1 rounded-full bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors truncate max-w-full w-fit"
         >
           {item.sourceLabel}
@@ -101,10 +105,56 @@ function NewsCard({ item }: { item: NewsItem }) {
   )
 }
 
+/** Full-content modal shown when a news card is clicked */
+function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 md:p-8 relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-2xl cursor-pointer leading-none"
+        >
+          &times;
+        </button>
+
+        <div className="pr-8">
+          <h2 className="text-lg font-bold text-[var(--color-text)] mb-4 leading-snug">
+            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em']}>
+              {item.title}
+            </ReactMarkdown>
+          </h2>
+          <div className="text-sm text-[var(--color-text)] leading-relaxed prose max-w-none prose-a:text-[var(--color-primary)]">
+            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+              {item.desc}
+            </ReactMarkdown>
+          </div>
+        </div>
+
+        {item.sourceUrl && (
+          <div className="mt-6 pt-4 border-t border-[var(--color-border)]">
+            <a
+              href={item.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm px-4 py-2 rounded-full bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors"
+            >
+              <span className="text-xs">↗</span> {item.sourceLabel || '查看原文'}
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function DigestDetail() {
   const { id } = useParams<{ id: string }>()
   const [digest, setDigest] = useState<Digest | null>(null)
   const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState<NewsItem | null>(null)
 
   useEffect(() => {
     api.get(`/digests/${id}`).then((res) => setDigest(res.data)).finally(() => setLoading(false))
@@ -150,7 +200,7 @@ export function DigestDetail() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 items-stretch">
               {spotlightItems.map((item, i) => (
-                <NewsCard key={i} item={item} />
+                <NewsCard key={i} item={item} onClick={() => setExpanded(item)} />
               ))}
             </div>
           </section>
@@ -201,6 +251,8 @@ export function DigestDetail() {
           </div>
         )}
       </div>
+
+      {expanded && <NewsModal item={expanded} onClose={() => setExpanded(null)} />}
     </ArticleLayout>
   )
 }
