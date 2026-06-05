@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
@@ -14,38 +14,6 @@ interface Digest {
   source_urls: string | null; created_at: string
 }
 
-/** Split markdown into sections by ## headings for newspaper grid */
-function splitSections(md: string): { heading: string; body: string; isSpotlight: boolean }[] {
-  const sections: { heading: string; body: string; isSpotlight: boolean }[] = []
-  const lines = md.split('\n')
-  let currentHeading = ''
-  let currentBody: string[] = []
-
-  for (const line of lines) {
-    if (line.startsWith('## ') || line.startsWith('### ')) {
-      if (currentBody.length || currentHeading) {
-        sections.push({
-          heading: currentHeading,
-          body: currentBody.join('\n').trim(),
-          isSpotlight: currentHeading.includes('特别关注') || currentHeading.includes('🔥'),
-        })
-      }
-      currentHeading = line.replace(/^#+\s*/, '')
-      currentBody = []
-    } else {
-      currentBody.push(line)
-    }
-  }
-  if (currentBody.length || currentHeading) {
-    sections.push({
-      heading: currentHeading,
-      body: currentBody.join('\n').trim(),
-      isSpotlight: currentHeading.includes('特别关注') || currentHeading.includes('🔥'),
-    })
-  }
-  return sections
-}
-
 export function DigestDetail() {
   const { id } = useParams<{ id: string }>()
   const [digest, setDigest] = useState<Digest | null>(null)
@@ -54,11 +22,6 @@ export function DigestDetail() {
   useEffect(() => {
     api.get(`/digests/${id}`).then((res) => setDigest(res.data)).finally(() => setLoading(false))
   }, [id])
-
-  const sections = useMemo(() => (digest ? splitSections(digest.content) : []), [digest])
-  // First two sections (title area + spotlight) get full width
-  const headlineSections = sections.slice(0, 2)
-  const gridSections = sections.slice(2)
 
   if (loading) return <div className="text-center text-[var(--color-text-muted)] py-12">加载中...</div>
   if (!digest) return <div className="text-center text-[var(--color-text-muted)] py-12">日报未找到。</div>
@@ -70,63 +33,36 @@ export function DigestDetail() {
           <Button variant="ghost" size="sm" className="mb-4">← 返回</Button>
         </Link>
 
-        {/* Newspaper masthead */}
-        <header className="mb-8 pb-6 border-b-2 border-[var(--color-text)]">
-          <h1 className="text-2xl md:text-3xl text-[var(--color-text)] font-bold tracking-tight mb-1">
-            {digest.title}
-          </h1>
-          <div className="flex items-center gap-3 text-xs text-[var(--color-text-muted)]">
-            <span>{digest.topic}</span>
-            <span className="w-px h-3 bg-[var(--color-border)]" />
+        {/* Masthead */}
+        <header className="mb-8 pb-4 border-b-2 border-[var(--color-text)]">
+          <h1 className="text-2xl text-[var(--color-text)] font-bold tracking-tight mb-1">{digest.title}</h1>
+          <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
             <span>{new Date(digest.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
           </div>
         </header>
 
-        {/* Spotlight sections — full width */}
-        {headlineSections.map((s, i) => (
-          <section key={i} className={`mb-6 pb-6 ${i < headlineSections.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
-            <h2 className="text-lg font-bold text-[var(--color-text)] mb-3 flex items-center gap-1">
-              {s.heading}
-            </h2>
-            <div className="prose max-w-none columns-1 md:columns-2 gap-6">
-              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeSlug]}>
-                {s.body}
-              </ReactMarkdown>
-            </div>
-          </section>
-        ))}
-
-        {/* Grid sections — 3-column newspaper layout */}
-        {gridSections.length > 0 && (
-          <>
-            <div className="w-full h-px bg-[var(--color-text)]/20 mb-6" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {gridSections.map((s, i) => (
-                <section
-                  key={i}
-                  className={`p-4 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface)]/50 ${
-                    s.isSpotlight ? 'md:col-span-2 lg:col-span-2' : ''
-                  }`}
-                >
-                  <h3 className="text-sm font-bold text-[var(--color-text)] mb-2 pb-2 border-b border-[var(--color-border)]/60">
-                    {s.heading}
-                  </h3>
-                  <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeSlug]}>
-                      {s.body}
-                    </ReactMarkdown>
-                  </div>
-                </section>
-              ))}
-            </div>
-          </>
-        )}
+        {/* Newspaper columns on desktop */}
+        <div className="prose max-w-none
+          columns-1 md:columns-2 lg:columns-3
+          gap-6 lg:gap-8
+          [&>h2]:column-span-all
+          [&>h2]:text-lg [&>h2]:font-bold [&>h2]:mt-0 [&>h2]:mb-4 [&>h2]:pb-2
+          [&>h2]:border-b [&>h2]:border-[var(--color-border)]
+          [&>p]:break-inside-avoid
+          [&>ul]:break-inside-avoid-column
+          [&>blockquote]:break-inside-avoid
+          [&>hr]:column-span-all [&>hr]:my-6
+        ">
+          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex, rehypeSlug]}>
+            {digest.content}
+          </ReactMarkdown>
+        </div>
 
         {/* Sources */}
         {digest.source_urls && (() => {
           try {
             const urls: string[] = JSON.parse(digest.source_urls)
-            if (urls.length === 0) return null
+            if (!urls.length) return null
             return (
               <div className="mt-10 pt-4 border-t border-[var(--color-border)]">
                 <h3 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-2">来源</h3>
