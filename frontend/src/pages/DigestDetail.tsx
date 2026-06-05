@@ -83,20 +83,21 @@ export function DigestDetail() {
           </section>
         )}
 
-        {/* Section boxes — 2-col grid on desktop, 1-col on mobile */}
+        {/* Section boxes — wide single column with internal 2-col flow */}
         {sections.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+          <div className="space-y-6 md:space-y-8">
             {sections.map((sec, i) => (
               <section
                 key={i}
-                className="p-5 md:p-6 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface)]/30 hover:border-[var(--color-primary)]/30 transition-colors"
+                className="p-6 md:p-8 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface)]/30 hover:border-[var(--color-primary)]/30 transition-colors"
               >
-                <div className="prose prose-sm max-w-none
-                  prose-h2:text-base prose-h2:font-bold prose-h2:mt-0 prose-h2:mb-4 prose-h2:pb-3 prose-h2:border-b prose-h2:border-[var(--color-border)] prose-h2:text-[var(--color-text)]
-                  prose-h3:text-sm prose-h3:font-semibold prose-h3:text-[var(--color-text-muted)] prose-h3:mb-3
+                <div className="prose max-w-none
+                  prose-h2:text-lg prose-h2:font-bold prose-h2:mt-0 prose-h2:mb-5 prose-h2:pb-3 prose-h2:border-b prose-h2:border-[var(--color-border)] prose-h2:text-[var(--color-text)] prose-h2:column-span-all
+                  prose-h3:text-sm prose-h3:font-semibold prose-h3:text-[var(--color-text-muted)] prose-h3:mb-4 prose-h3:mt-0
                   prose-li:text-[var(--color-text)] prose-li:leading-relaxed prose-li:mb-2 prose-li:tracking-wide
                   prose-p:leading-relaxed prose-p:tracking-wide
-                  [&>ul]:space-y-1
+                  [&>ul]:columns-1 md:[&>ul]:columns-2 md:[&>ul]:gap-8
+                  [&>ul>li]:break-inside-avoid
                   [&_blockquote]:text-[11px] [&_blockquote]:text-[var(--color-text-muted)] [&_blockquote]:border-l-0 [&_blockquote]:pl-0 [&_blockquote]:mt-1 [&_blockquote]:mb-0 [&_blockquote]:opacity-70
                   [&_blockquote_a]:text-[var(--color-primary)]
                 ">
