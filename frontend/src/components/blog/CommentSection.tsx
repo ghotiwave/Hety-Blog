@@ -21,7 +21,12 @@ function UserCard({ comment, onClose }: { comment: Comment; onClose: () => void 
                 {comment.author_name[0]}
               </div>
             )}
-            <div className="font-medium text-sm text-[var(--color-text)]">{comment.author_name}</div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-medium text-sm text-[var(--color-text)]">{comment.author_name}</span>
+              {comment.author_role === 'admin' && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-medium">管理员</span>
+              )}
+            </div>
           </div>
           {comment.signature ? (
             <div className="text-xs text-[var(--color-text-muted)] leading-relaxed border-t border-[var(--color-border)]/50 pt-2">
@@ -40,6 +45,7 @@ interface Comment {
   id: number
   user_id: number | null
   author_name: string
+  author_role: string | null
   avatar_url: string | null
   signature: string | null
   content: string
@@ -219,6 +225,9 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="font-medium text-sm text-[var(--color-text)] cursor-pointer hover:text-[var(--color-primary)] transition-colors" onClick={() => setShowUserCard(!showUserCard)}>{comment.author_name}</span>
+            {comment.author_role === 'admin' && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-medium">管理员</span>
+            )}
             <span className="text-xs text-[var(--color-text-muted)]">{new Date(comment.created_at).toLocaleString('zh-CN')}</span>
           </div>
           <div className="text-sm text-[var(--color-text)] prose max-w-none mb-2">

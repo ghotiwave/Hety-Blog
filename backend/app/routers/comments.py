@@ -31,6 +31,7 @@ def _serialize(c, db: Session, current_user_id: int | None = None):
         "content": c.content,
         "user_id": user.id if user else None,
         "author_name": user.username if user else "anonymous",
+        "author_role": user.role if user else None,
         "avatar_url": user.avatar_url if user else None,
         "signature": user.signature if user else None,
         "reply_to_name": reply_user.username if reply_user else None,
