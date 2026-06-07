@@ -9,30 +9,30 @@ import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 
 function UserCard({ comment, onClose }: { comment: Comment; onClose: () => void }) {
   return (
-    <div className="absolute z-50 mt-2" onClick={(e) => e.stopPropagation()}>
-      <div className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-4 w-56">
-        <div className="flex items-center gap-3 mb-3">
-          {comment.avatar_url ? (
-            <img src={comment.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover border border-[var(--color-border)]" />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-lg text-[var(--color-text-muted)]">
-              {comment.author_name[0]}
-            </div>
-          )}
-          <div>
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="absolute z-50 mt-2" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-4 w-56">
+          <div className="flex items-center gap-3 mb-3">
+            {comment.avatar_url ? (
+              <img src={comment.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover border border-[var(--color-border)]" />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-lg text-[var(--color-text-muted)]">
+                {comment.author_name[0]}
+              </div>
+            )}
             <div className="font-medium text-sm text-[var(--color-text)]">{comment.author_name}</div>
-            <div className="text-[10px] text-[var(--color-text-muted)]">ID: {comment.user_id}</div>
           </div>
+          {comment.signature ? (
+            <div className="text-xs text-[var(--color-text-muted)] leading-relaxed border-t border-[var(--color-border)]/50 pt-2">
+              <MarkdownRenderer allowedElements={['strong','a','code','em','p']}>{comment.signature}</MarkdownRenderer>
+            </div>
+          ) : (
+            <div className="text-xs text-[var(--color-text-muted)]/50 italic border-t border-[var(--color-border)]/50 pt-2">暂无签名</div>
+          )}
         </div>
-        {comment.signature ? (
-          <div className="text-xs text-[var(--color-text-muted)] leading-relaxed border-t border-[var(--color-border)]/50 pt-2">
-            <MarkdownRenderer allowedElements={['strong','a','code','em','p']}>{comment.signature}</MarkdownRenderer>
-          </div>
-        ) : (
-          <div className="text-xs text-[var(--color-text-muted)]/50 italic border-t border-[var(--color-border)]/50 pt-2">暂无签名</div>
-        )}
       </div>
-    </div>
+    </>
   )
 }
 
