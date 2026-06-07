@@ -61,7 +61,7 @@ export function ProfileEdit() {
         <Input placeholder="GitHub 链接" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
         <Input placeholder="Twitter 链接" value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} />
         <Input placeholder="QQ 号" value={qq} onChange={(e) => setQq(e.target.value)} />
-        <Input placeholder="抖音主页链接" value={douyin} onChange={(e) => setDouyin(e.target.value)} />
+        <Input placeholder="抖音号" value={douyin} onChange={(e) => setDouyin(e.target.value)} />
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
           {msg && <span className="text-sm text-green-500">{msg}</span>}

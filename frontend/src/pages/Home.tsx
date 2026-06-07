@@ -20,6 +20,12 @@ interface Profile {
 
 const iconCls = "text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
 
+function copyToClipboard(text: string, label: string) {
+  navigator.clipboard.writeText(text).then(() => {
+    // brief visual feedback - could add toast later
+  }).catch(() => {})
+}
+
 function ProfileModal({ profile, onClose }: { profile: Profile; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
@@ -55,6 +61,7 @@ export function Home() {
   const [posts, setPosts] = useState<any[]>([])
   const [profile, setProfile] = useState<Profile>({})
   const [showProfile, setShowProfile] = useState(false)
+  const [copied, setCopied] = useState('')
 
   useEffect(() => {
     api.get('/posts', { params: { page_size: 5 } }).then((res) => setPosts(res.data.items))
@@ -90,14 +97,24 @@ export function Home() {
                 </a>
               )}
               {profile.qq && (
-                <a href={`https://wpa.qq.com/msgrd?v=3&uin=${profile.qq}&site=qq&menu=yes`} target="_blank" rel="noopener noreferrer" className={iconCls} title="QQ">
+                <button
+                  onClick={() => { navigator.clipboard.writeText(profile.qq!); setCopied('qq'); setTimeout(() => setCopied(''), 1500) }}
+                  className={`${iconCls} cursor-pointer relative`}
+                  title="复制 QQ 号"
+                >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M21.395 15.035a39.548 39.548 0 0 0-.803-2.264l-1.079-2.695c.001-.032.014-.562.014-.836C19.526 4.632 17.351 0 12 0S4.474 4.632 4.474 9.241c0 .274.013.804.014.836l-1.08 2.695a38.97 38.97 0 0 0-.802 2.264c-1.021 3.283-1.045 4.642 1.055 5.396.592.214 1.544.403 2.366.554.215 1.317.864 2.074 1.667 2.65.77.553 1.616.804 1.988.804.148 2.088 2.559 1.933 4.318 1.933s4.17.155 4.318-1.933c.372 0 1.218-.251 1.988-.804.803-.576 1.452-1.333 1.667-2.65.822-.151 1.774-.34 2.366-.554 2.1-.754 2.076-2.113 1.055-5.396zM12 1.876c3.307 0 5.476 2.123 5.476 5.074 0 .188-.011.48-.014.664l-.341.062c-.694-1.914-2.726-3.301-5.121-3.301s-4.427 1.387-5.121 3.301l-.341-.062c-.003-.184-.014-.476-.014-.664 0-2.951 2.169-5.074 5.476-5.074z"/></svg>
-                </a>
+                  {copied === 'qq' && <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] bg-[var(--color-text)] text-[var(--color-bg)] px-2 py-0.5 rounded whitespace-nowrap">已复制</span>}
+                </button>
               )}
               {profile.douyin && (
-                <a href={profile.douyin} target="_blank" rel="noopener noreferrer" className={iconCls} title="抖音">
+                <button
+                  onClick={() => { navigator.clipboard.writeText(profile.douyin!); setCopied('douyin'); setTimeout(() => setCopied(''), 1500) }}
+                  className={`${iconCls} cursor-pointer relative`}
+                  title="复制抖音号"
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
-                </a>
+                  {copied === 'douyin' && <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] bg-[var(--color-text)] text-[var(--color-bg)] px-2 py-0.5 rounded whitespace-nowrap">已复制</span>}
+                </button>
               )}
             </div>
           </div>
