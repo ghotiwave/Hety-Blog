@@ -21,17 +21,40 @@ interface Comment {
   parent_id?: number | null
 }
 
+const PAGE_SIZE = 10
+
 export function CommentSection({ postId }: { postId: number }) {
   const [comments, setComments] = useState<Comment[]>([])
   const [sort, setSort] = useState<'time' | 'hot'>('time')
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [loadingMore, setLoadingMore] = useState(false)
   const { user } = useAuth()
   const [replyTarget, setReplyTarget] = useState<{ id: number; name: string } | null>(null)
 
-  const fetchComments = useCallback(() => {
-    api.get(`/posts/${postId}/comments`, { params: { sort } }).then((res) => setComments(res.data.items))
-  }, [postId, sort])
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const hasMore = page < totalPages
 
-  useEffect(() => { fetchComments() }, [fetchComments])
+  const fetchComments = useCallback((p?: number) => {
+    const pg = p ?? page
+    api.get(`/posts/${postId}/comments`, { params: { sort, page: pg } }).then((res) => {
+      if (pg === 1) {
+        setComments(res.data.items)
+      } else {
+        setComments((prev) => [...prev, ...res.data.items])
+      }
+      setTotal(res.data.total)
+    }).finally(() => setLoadingMore(false))
+  }, [postId, sort, page])
+
+  useEffect(() => { fetchComments(1) }, [sort])
+
+  const loadMore = () => {
+    setLoadingMore(true)
+    const next = page + 1
+    setPage(next)
+    fetchComments(next)
+  }
 
   return (
     <div className="mt-12">
@@ -80,10 +103,22 @@ export function CommentSection({ postId }: { postId: number }) {
             replyTarget={replyTarget}
             onReply={(id, name) => setReplyTarget({ id, name })}
             onCancelReply={() => setReplyTarget(null)}
-            onRefresh={fetchComments}
+            onRefresh={() => fetchComments(1)}
           />
         ))}
       </div>
+
+      {hasMore && (
+        <div className="text-center py-4">
+          <button
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)] cursor-pointer transition-colors"
+          >
+            {loadingMore ? '加载中...' : `加载更多评论 (${total - page * PAGE_SIZE} 条)`}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -98,8 +133,12 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
 }) {
   const [showReplies, setShowReplies] = useState(false)
   const [allReplies, setAllReplies] = useState<Comment[]>([])
+  const [replyPage, setReplyPage] = useState(1)
+  const [replyTotal, setReplyTotal] = useState(0)
+  const [loadingReplies, setLoadingReplies] = useState(false)
   const { user } = useAuth()
   const isReplying = replyTarget?.id === comment.id
+  const replyHasMore = replyTotal > allReplies.length
 
   const handleLike = async () => {
     if (!user) return
@@ -111,9 +150,25 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
     if (!comment.reply_count) return
     setShowReplies(!showReplies)
     if (!showReplies) {
-      api.get(`/posts/${postId}/comments/${comment.id}/replies`)
-        .then((res) => setAllReplies(res.data.items))
+      setReplyPage(1)
+      api.get(`/posts/${postId}/comments/${comment.id}/replies`, { params: { page: 1 } })
+        .then((res) => {
+          setAllReplies(res.data.items)
+          setReplyTotal(res.data.total)
+        })
     }
+  }
+
+  const loadMoreReplies = () => {
+    const next = replyPage + 1
+    setLoadingReplies(true)
+    api.get(`/posts/${postId}/comments/${comment.id}/replies`, { params: { page: next } })
+      .then((res) => {
+        setAllReplies((prev) => [...prev, ...res.data.items])
+        setReplyTotal(res.data.total)
+        setReplyPage(next)
+      })
+      .finally(() => setLoadingReplies(false))
   }
 
   return (
@@ -192,6 +247,17 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
                   </div>
                 </div>
               ))}
+              {replyHasMore && (
+                <div className="text-center py-2">
+                  <button
+                    onClick={loadMoreReplies}
+                    disabled={loadingReplies}
+                    className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] cursor-pointer transition-colors"
+                  >
+                    {loadingReplies ? '加载中...' : `加载更多回复 (${replyTotal - allReplies.length} 条)`}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
