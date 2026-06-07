@@ -7,10 +7,41 @@ import { Button } from '@/components/ui/Button'
 import { EmojiPicker } from '@/components/blog/EmojiPicker'
 import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 
+function UserCard({ comment, onClose }: { comment: Comment; onClose: () => void }) {
+  return (
+    <div className="absolute z-50 mt-2" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-4 w-56">
+        <div className="flex items-center gap-3 mb-3">
+          {comment.avatar_url ? (
+            <img src={comment.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover border border-[var(--color-border)]" />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-lg text-[var(--color-text-muted)]">
+              {comment.author_name[0]}
+            </div>
+          )}
+          <div>
+            <div className="font-medium text-sm text-[var(--color-text)]">{comment.author_name}</div>
+            <div className="text-[10px] text-[var(--color-text-muted)]">ID: {comment.user_id}</div>
+          </div>
+        </div>
+        {comment.signature ? (
+          <div className="text-xs text-[var(--color-text-muted)] leading-relaxed border-t border-[var(--color-border)]/50 pt-2">
+            <MarkdownRenderer allowedElements={['strong','a','code','em','p']}>{comment.signature}</MarkdownRenderer>
+          </div>
+        ) : (
+          <div className="text-xs text-[var(--color-text-muted)]/50 italic border-t border-[var(--color-border)]/50 pt-2">暂无签名</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 interface Comment {
   id: number
+  user_id: number | null
   author_name: string
   avatar_url: string | null
+  signature: string | null
   content: string
   reply_to_name: string | null
   like_count: number
@@ -136,6 +167,7 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
   const [replyPage, setReplyPage] = useState(1)
   const [replyTotal, setReplyTotal] = useState(0)
   const [loadingReplies, setLoadingReplies] = useState(false)
+  const [showUserCard, setShowUserCard] = useState(false)
   const { user } = useAuth()
   const isReplying = replyTarget?.id === comment.id
   const replyHasMore = replyTotal > allReplies.length
@@ -174,16 +206,19 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
   return (
     <div className="border-b border-[var(--color-border)]/60 py-4">
       <div className="flex items-start gap-4">
-        {comment.avatar_url ? (
-          <img src={comment.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-[var(--color-border)] shrink-0" />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-sm text-[var(--color-text-muted)] shrink-0">
-            {comment.author_name[0]}
-          </div>
-        )}
+        <button className="relative shrink-0" onClick={() => setShowUserCard(!showUserCard)}>
+          {comment.avatar_url ? (
+            <img src={comment.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-[var(--color-border)] cursor-pointer hover:opacity-80 transition-opacity" />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-sm text-[var(--color-text-muted)] cursor-pointer hover:opacity-80 transition-opacity">
+              {comment.author_name[0]}
+            </div>
+          )}
+          {showUserCard && <UserCard comment={comment} onClose={() => setShowUserCard(false)} />}
+        </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-sm text-[var(--color-text)]">{comment.author_name}</span>
+            <span className="font-medium text-sm text-[var(--color-text)] cursor-pointer hover:text-[var(--color-primary)] transition-colors" onClick={() => setShowUserCard(!showUserCard)}>{comment.author_name}</span>
             <span className="text-xs text-[var(--color-text-muted)]">{new Date(comment.created_at).toLocaleString('zh-CN')}</span>
           </div>
           <div className="text-sm text-[var(--color-text)] prose max-w-none mb-2">
