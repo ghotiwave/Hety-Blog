@@ -267,6 +267,9 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="font-medium text-sm text-[var(--color-text)]">{r.author_name}</span>
+                      {r.author_role === 'admin' && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-medium">管理员</span>
+                      )}
                       <span className="text-xs text-[var(--color-text-muted)]">{new Date(r.created_at).toLocaleString('zh-CN')}</span>
                     </div>
                     <div className="text-sm text-[var(--color-text)]">
