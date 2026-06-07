@@ -21,10 +21,8 @@ _register_attempts: dict[str, list[float]] = {}
 
 
 def _validate_username(username: str):
-    if len(username) < 1 or len(username) > 10:
-        raise HTTPException(status_code=422, detail="用户名长度需在 1-10 位之间")
-    if re.search(r'[一-鿿]', username):
-        raise HTTPException(status_code=422, detail="用户名不允许包含中文字符")
+    if len(username) < 1 or len(username) > 20:
+        raise HTTPException(status_code=422, detail="用户名长度需在 1-20 位之间")
     if re.search(r'[<>\"\';&|`$(){}]', username):
         raise HTTPException(status_code=422, detail="用户名包含非法字符")
     return username.strip()
