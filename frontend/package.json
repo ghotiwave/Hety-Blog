@@ -17,7 +17,6 @@
     "lxgw-wenkai-screen-web": "^1.522.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-force-graph-2d": "^1.29.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.15.1",
     "rehype-katex": "^7.0.1",

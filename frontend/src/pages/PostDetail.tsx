@@ -5,8 +5,6 @@ import 'katex/dist/katex.min.css'
 import api from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { CommentSection } from '@/components/blog/CommentSection'
-import { MiniGraph } from '@/components/blog/MiniGraph'
-import { GraphModal } from '@/components/blog/GraphModal'
 import { ArticleLayout } from '@/components/blog/ArticleLayout'
 
 interface Post {
@@ -27,7 +25,6 @@ export function PostDetail() {
   const [liked, setLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
   const [likeLoading, setLikeLoading] = useState(false)
-  const [showGraph, setShowGraph] = useState(false)
   const { user } = useAuth()
 
   const [adjacent, setAdjacent] = useState<{ prev: any; next: any }>({ prev: null, next: null })
@@ -77,14 +74,9 @@ export function PostDetail() {
       {post.cover_image && (
         <img src={post.cover_image} alt={post.title} className="w-full h-64 object-cover rounded-xl mb-6" />
       )}
-      <div className="flex gap-6">
-        <div className="flex-1">
-          <h1 className="text-3xl text-[var(--color-text)] mb-2" style={{ fontFamily: 'Georgia, serif', fontWeight: 400 }}>
-            {post.title}
-          </h1>
-        </div>
-        {post.tags && <div className="w-56 shrink-0"><MiniGraph currentPostId={post.id} tags={post.tags} onExpand={() => setShowGraph(true)} /></div>}
-      </div>
+      <h1 className="text-3xl text-[var(--color-text)] mb-2" style={{ fontFamily: 'Georgia, serif', fontWeight: 400 }}>
+        {post.title}
+      </h1>
       <div className="flex items-center gap-4 text-sm text-stone-400 italic mb-8">
         <span>{dateStr} {timeStr}</span>
         <span>{post.view_count} views</span>
@@ -112,7 +104,6 @@ export function PostDetail() {
 
       <CommentSection postId={post.id} />
 
-      {showGraph && <GraphModal currentPostId={post.id} onClose={() => setShowGraph(false)} />}
     </article>
     </ArticleLayout>
   )
