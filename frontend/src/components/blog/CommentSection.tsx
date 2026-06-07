@@ -65,7 +65,7 @@ interface Comment {
 
 const PAGE_SIZE = 10
 
-export function CommentSection({ postId }: { postId: number }) {
+export function CommentSection({ postId, totalComments }: { postId: number; totalComments: number }) {
   const [comments, setComments] = useState<Comment[]>([])
   const [sort, setSort] = useState<'time' | 'hot'>('time')
   const [page, setPage] = useState(1)
@@ -102,7 +102,7 @@ export function CommentSection({ postId }: { postId: number }) {
     <div className="mt-12">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl text-[var(--color-text)] font-light tracking-wide">
-          评论 ({comments.length})
+          评论 ({totalComments})
         </h2>
         <div className="flex gap-2 text-sm">
           {(['time', 'hot'] as const).map((s) => (
