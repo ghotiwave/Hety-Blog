@@ -32,11 +32,11 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
 function AdminShell() {
   const navItems = [
-    ['/admin/dashboard', 'Dashboard'],
-    ['/admin/posts', 'Posts'],
-    ['/admin/comments', 'Comments'],
-    ['/admin/profile', 'Profile'],
-    ['/admin/users', 'Users'],
+    ['/admin/dashboard', '控制面板'],
+    ['/admin/posts', '文章管理'],
+    ['/admin/comments', '评论管理'],
+    ['/admin/profile', '个人资料'],
+    ['/admin/users', '用户管理'],
   ]
   return (
     <AdminGuard>
@@ -47,7 +47,7 @@ function AdminShell() {
               <a
                 key={path}
                 href={path}
-                className="px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 transition-colors"
+                className="px-3 py-2 rounded-lg text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)] transition-colors"
               >
                 {label}
               </a>

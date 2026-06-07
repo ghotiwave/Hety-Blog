@@ -32,33 +32,33 @@ export function ProfileEdit() {
     setSaving(true)
     await api.put('/admin/profile', { name, bio, interests, experience, github_url: githubUrl, twitter_url: twitterUrl })
     setSaving(false)
-    setMsg('Saved!')
+    setMsg('保存成功')
     setTimeout(() => setMsg(''), 2000)
   }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h1>
+      <h1 className="text-2xl font-bold text-[var(--color-text)] mb-6">个人资料</h1>
       <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
-        <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <Textarea placeholder="Bio（支持 Markdown）" value={bio} onChange={(e) => setBio(e.target.value)} className="min-h-[100px]" />
+        <Input placeholder="姓名" value={name} onChange={(e) => setName(e.target.value)} />
+        <Textarea placeholder="个人简介（支持 Markdown）" value={bio} onChange={(e) => setBio(e.target.value)} className="min-h-[100px]" />
         {bio && (
           <div className="p-3 rounded border border-[var(--color-border)]/50 bg-[var(--color-surface)]/30 text-sm prose max-w-none prose-a:text-[var(--color-primary)]">
             <MarkdownRenderer>{bio}</MarkdownRenderer>
           </div>
         )}
-        <Input placeholder="Interests (comma-separated)" value={interests} onChange={(e) => setInterests(e.target.value)} />
-        <Textarea placeholder="Experience（支持 Markdown）" value={experience} onChange={(e) => setExperience(e.target.value)} className="min-h-[100px]" />
+        <Input placeholder="兴趣爱好（用逗号分隔）" value={interests} onChange={(e) => setInterests(e.target.value)} />
+        <Textarea placeholder="经历（支持 Markdown）" value={experience} onChange={(e) => setExperience(e.target.value)} className="min-h-[100px]" />
         {experience && (
           <div className="p-3 rounded border border-[var(--color-border)]/50 bg-[var(--color-surface)]/30 text-sm prose max-w-none prose-a:text-[var(--color-primary)]">
             <MarkdownRenderer>{experience}</MarkdownRenderer>
           </div>
         )}
-        <Input placeholder="GitHub URL" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
-        <Input placeholder="Twitter URL" value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} />
+        <Input placeholder="GitHub 链接" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
+        <Input placeholder="Twitter 链接" value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} />
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</Button>
-          {msg && <span className="text-sm text-green-600">{msg}</span>}
+          <Button type="submit" disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
+          {msg && <span className="text-sm text-green-500">{msg}</span>}
         </div>
       </form>
     </div>
