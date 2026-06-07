@@ -5,6 +5,7 @@ import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import api from '@/services/api'
 import { PostCard } from '@/components/blog/PostCard'
+import { siteConfig } from '@/config'
 import logoImg from '@/assets/logo.png'
 
 interface Profile {
@@ -38,7 +39,7 @@ function ProfileModal({ profile, onClose }: { profile: Profile; onClose: () => v
           {profile.avatar_url && (
             <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full object-cover mx-auto mb-4 border border-[var(--color-border)]" />
           )}
-          <h2 className="text-xl font-bold text-[var(--color-text)]">{profile.name || 'Hety'}</h2>
+          <h2 className="text-xl font-bold text-[var(--color-text)]">{profile.name || siteConfig.shortName}</h2>
         </div>
         {profile.bio && (
           <div className="text-sm text-[var(--color-text)] leading-relaxed prose max-w-none prose-a:text-[var(--color-primary)]">
@@ -74,13 +75,13 @@ export function Home() {
     <div className="min-h-[80vh] flex flex-col justify-center">
       <section className="py-24 md:py-32 flex justify-center">
         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12 max-w-2xl">
-          <img src={logoImg} alt="Hety" className="w-28 h-28 md:w-36 md:h-36 object-contain rounded-2xl shrink-0" />
+          <img src={logoImg} alt={siteConfig.shortName} className="w-28 h-28 md:w-36 md:h-36 object-contain rounded-2xl shrink-0" />
           <div className="text-center md:text-left">
             <h1 className="text-3xl md:text-4xl text-[var(--color-text)] leading-snug mb-3 tracking-wide font-light">
-              Hety 的个人主页
+              {siteConfig.name}
             </h1>
             <p className="text-sm text-[var(--color-text-muted)] leading-loose">
-              技术、思考与生活。
+              {siteConfig.description}
             </p>
             <div className="flex items-center gap-4 mt-4">
               <button onClick={() => setShowProfile(true)} className={iconCls} title="个人信息">

@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_USE_SSL: bool = False
     SITE_URL: str = "http://localhost:8000"
+    SITE_NAME: str = "我的个人主页"
     SITE_DOMAIN: str = "gianniiss.top"
     RESEND_API_KEY: str = ""
     TURNSTILE_SECRET_KEY: str = ""

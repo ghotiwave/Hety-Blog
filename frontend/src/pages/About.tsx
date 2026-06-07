@@ -7,7 +7,7 @@ export function About() {
         <section>
           <h2 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-3">这是什么网站</h2>
           <p>
-            Hety 的个人主页，一个集博客、笔记和 AI 日报于一体的小角落。
+            {siteConfig.name}，一个集博客、笔记和 AI 日报于一体的小角落。
             这里记录了我的技术学习、生活随想，也尝试用 AI 整理每日值得关注的信息。
           </p>
         </section>
@@ -39,7 +39,7 @@ export function About() {
           <ul className="space-y-2 text-[var(--color-text-muted)] list-disc list-inside">
             <li>博客文章（Markdown 编辑 + 评论 + 点赞）</li>
             <li>AI 技术日报（每日自动生成）</li>
-            <li>Hety-Wiki 笔记站（Obsidian 管理）</li>
+            <li>{siteConfig.wikiName} 笔记站（Obsidian 管理）</li>
             <li>小恐龙快跑（Chrome Dino 游戏）</li>
             <li>明暗双主题切换</li>
           </ul>

@@ -47,7 +47,7 @@ def init_db():
         if not db.query(User).filter(User.role == "admin").first():
             from app.config import settings
             admin = User(
-                username="Hety",
+                username="admin",
                 password_hash=bcrypt.hashpw(settings.ADMIN_PASSWORD.encode(), bcrypt.gensalt()).decode(),
                 role="admin",
             )
