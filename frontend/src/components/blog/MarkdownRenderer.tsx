@@ -1,9 +1,23 @@
-import { useState } from 'react'
+import { useState, createElement } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
-import rehypeSlug from 'rehype-slug'
 import type { Components } from 'react-markdown'
+
+function slugId(text: string): string {
+  return text
+    .replace(/[^\w\s一-鿿-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .toLowerCase()
+}
+
+function headingId(children: React.ReactNode): string {
+  const text = Array.isArray(children)
+    ? children.map((c) => (typeof c === 'string' ? c : '')).join('')
+    : String(children ?? '')
+  return slugId(text)
+}
 
 interface Props {
   children: string
@@ -27,6 +41,18 @@ function CopyButton({ code }: { code: string }) {
 }
 
 const components: Components = {
+  h1({ children, ...props }) {
+    return createElement('h1', { ...props, id: headingId(children) }, children)
+  },
+  h2({ children, ...props }) {
+    return createElement('h2', { ...props, id: headingId(children) }, children)
+  },
+  h3({ children, ...props }) {
+    return createElement('h3', { ...props, id: headingId(children) }, children)
+  },
+  h4({ children, ...props }) {
+    return createElement('h4', { ...props, id: headingId(children) }, children)
+  },
   pre({ children }) {
     return <pre>{children}</pre>
   },
