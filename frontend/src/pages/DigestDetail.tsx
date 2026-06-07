@@ -48,6 +48,31 @@ function parseItems(body: string): NewsItem[] {
   return items
 }
 
+/** Parse `#### title\ndesc\n> 原文：...` format into NewsItem[] */
+function parseDetailItems(body: string): NewsItem[] {
+  const items: NewsItem[] = []
+  const blocks = body.split(/\n(?=#### )/)
+  for (const block of blocks) {
+    const lines = block.split('\n')
+    const hMatch = lines[0].match(/^####\s+(.+)/)
+    if (!hMatch) continue
+    const title = hMatch[1].replace(/\*+/g, '').trim()
+    // Collect desc lines until we hit > 原文： or end
+    const descLines: string[] = []
+    let sourceUrl = ''; let sourceLabel = ''
+    for (let j = 1; j < lines.length; j++) {
+      const sm = lines[j].match(/^\s*>\s*(?:原文|来源|查看原文|原文链接)[：:]\s*\[(.+?)\]\((.+?)\)/)
+      if (sm) {
+        sourceLabel = sm[1]; sourceUrl = sm[2]
+        break
+      }
+      if (lines[j].trim()) descLines.push(lines[j])
+    }
+    items.push({ title, desc: descLines.join('\n').trim(), sourceUrl, sourceLabel })
+  }
+  return items
+}
+
 /** Parse body into subBlocks grouped by ### headings */
 function parseSubBlocks(body: string): { subheading: string; items: NewsItem[] }[] {
   const blocks: { subheading: string; items: NewsItem[] }[] = []
@@ -56,7 +81,11 @@ function parseSubBlocks(body: string): { subheading: string; items: NewsItem[] }
     const hMatch = part.match(/^###\s+(.+)/)
     const subheading = hMatch ? hMatch[1] : ''
     const rest = hMatch ? part.replace(/^###\s+.+\n/, '') : part
-    const items = parseItems(rest)
+    let items = parseItems(rest)
+    // Fallback: try #### detail format if no list items found
+    if (items.length === 0 && rest.includes('####')) {
+      items = parseDetailItems(rest)
+    }
     if (items.length > 0 || subheading) {
       blocks.push({ subheading, items })
     }

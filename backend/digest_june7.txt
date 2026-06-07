@@ -1,0 +1,62 @@
+ID: 3
+Title: 技术日报 - 2026-06-07
+
+# 技术日报 - 2026-06-07
+
+## 🔥 今日特别关注
+- **GitHub Spec Kit**：109K+ 星标，用产品规范引导 AI 编码，解决 vibe coding 痛点
+- **OpenCV 5 发布**：全新 DNN 引擎，原生支持 Transformer 和 VLM/LLM
+- **AI 算力军备竞赛**：谷歌每月向 SpaceX 支付 9.2 亿美元获取 xAI 算力，Apollo 为 Anthropic 敲定 350 亿美元债务融资
+
+---
+
+## AI/大模型
+
+### 算力与基础设施
+
+#### 谷歌将每月向 SpaceX 支付 9.2 亿美元，以获取 xAI 数据中心的计算能力
+谷歌与 SpaceX 达成协议，每月支付 9.2 亿美元（约合每年 110 亿美元），获得位于 xAI 数据中心的计算能力。该交易的具体金额和合作细节于本周披露，将极大扩充谷歌的算力资源，也再次表明 AI 算力正成为一种战略性商品。
+> 原文：[CNBC](https://www.cnbc.com/2026/06/05/google-to-pay-spacex-920-million-a-month-for-xai-compute-capacity.html)
+
+#### Apollo 敲定 350 亿美元债务融资，为 Anthropic 采购 AI 芯片
+Apollo Global Management 和 Blackstone 已为 Anthropic 敲定 350 亿美元融资方案，用于扩充其 AI 基础设施。这是人工智能竞赛中最新的一笔巨额交易，凸显了 AI 芯片采购已成为巨头间竞争的核心。
+> 原文：[Bloomberg](https://www.bloomberg.com/news/articles/2026-06-05/apollo-wraps-up-35-billion-debt-to-buy-ai-chips-for-anthropic)
+
+#### AI 热推高美国计算基建 GDP 占比翻倍
+AI 热潮使计算基础设施占美国 GDP 比重翻倍。2026 年第一季度，与 AI 相关的数据中心建设、计算硬件和网络设备投资约占美国 GDP 的 0.8%，推动整个计算基础设施占 GDP 比重达到约 1.5%。
+> 原文：[Epoch AI Research](https://x.com/EpochAIResearch/status/2062933470373146828)
+
+### 模型与评测
+
+#### 🔥 M3 与 Opus 代码审计 13 个 bug：$0.07 vs $1.30
+对 Claude Opus 4.8 和 MiniMax M3 进行相同的代码审计：同一代码库、同一提示词，预先植入 17 个已知 bug。MiniMax M3 以 $0.07 抓到 13 个；最便宜的 Claude 运行同样抓到 13 个，花费 $1.30。MiniMax 表示这一对比非常有趣，绝对值得一读。
+> 原文：[MiniMax AI](https://x.com/MiniMax_AI/status/2063397618034844135)
+
+#### Arena 发布真实世界 AI 智能体排行榜 Agent Arena
+Arena 推出基于真实用户任务的智能体排行榜，评估模型在代码编写、应用构建、文档分析等工作中的表现。排行榜基于 30 万+任务、200 万+工具调用和 4000 万行代码，前三名：GPT-5.5 High（+10.7%）、Claude Opus 4.7 Thinking（+9.5%）、GPT-5.4 High（+8.9%）。
+> 原文：[Rohan Paul](https://x.com/rohanpaul_ai/status/2063018358795300982)
+
+#### Riverflow 2.5：可控制评分标准的图像模型
+在 OpenRouter 上线来自 Sourceful 的 Riverflow 2.5，这是首个具有独立评分标准的图像模型，用户可控制该标准以引导其思维和编辑，并具备可控的推理努力，可在速度与质量之间进行权衡。免费至 6 月 9 日。
+> 原文：[OpenRouter](https://x.com/OpenRouter/status/2062944965978992935)
+
+### 产品与工具
+
+#### 🔥 GitHub 开源 Spec Kit 工具包，用产品规范引导 AI 编码
+GitHub 发布开源工具包 Spec Kit，旨在解决 "vibe coding" 的最大弱点——AI 常在规则未明确时就开始编码。它把流程从 "让 AI 直接构建" 改为 "先写产品规范，再让 AI 根据规范实现"。当前 AI 编码模式常因松散提示直接跳入代码，导致需求薄弱、边界遗漏和反复返工。项目已获 109K+ 星标。
+> 原文：[Rohan Paul](https://x.com/rohanpaul_ai/status/2063246343842501091)
+
+#### 🔥 OpenCV 5 发布：升级全新 DNN 引擎、原生支持大模型
+OpenCV 5 正式发布，采用基于图的 DNN 引擎，ONNX 算子覆盖率从 4.x 的不到 23% 提升至超 80%，原生支持 Transformer、视觉语言模型（VLM）和大语言模型（LLM）。其他更新包括：更好的 Python 集成、更紧凑核心代码、清晰硬件加速层、原生 FP16/BF16 等。该库 GitHub 拥有超 86,000 stars，每日安装量超一百万次。
+> 原文：[IT之家](https://www.ithome.com/0/960/969.htm)
+
+#### ChatGPT 网页版支持从写作块发送邮件
+草拟、调整、发送——现在你可以在网页版 ChatGPT 中直接从写作块发送邮件，无需离开对话，让写作和沟通更加流畅。
+> 原文：[ChatGPT](https://x.com/ChatGPTapp/status/2062944254591430917)
+
+#### Google AI 本周产品更新：Nano Banana 2、Co-Scientist、dreambeans、Gemma 4 等
+Google AI 本周发布多项更新：Nano Banana 2 及 Pro 正式 GA；Co-Scientist 多智能体系统面向科研自动生成优化新假设；Google Labs 推出 dreambeans，根据用户 Google 应用数据每日生成个性化话题集；Gemma 4 12B 可完全离线运行于笔记本；Google Magenta RealTime 2 开源实时音乐模型。
+> 原文：[Google AI](https://x.com/GoogleAI/status/2062942864288387430)
+
+#### Gemini Live 支持实时创建编辑图像
+用户现可直接在 Gemini Live 中创建和编辑图像。无论是测试房间装饰、解决数学问题，还是制作可分享的梗图，所有
