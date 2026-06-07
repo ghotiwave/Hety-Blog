@@ -10,6 +10,7 @@ class ProfileUpdate(BaseModel):
     github_url: str | None = None
     twitter_url: str | None = None
     qq: str | None = None
+    douyin: str | None = None
 
 
 class ProfileResponse(BaseModel):
@@ -22,6 +23,7 @@ class ProfileResponse(BaseModel):
     github_url: str | None = None
     twitter_url: str | None = None
     qq: str | None = None
+    douyin: str | None = None
     updated_at: str
 
     model_config = {"from_attributes": True}

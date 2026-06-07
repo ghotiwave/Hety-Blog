@@ -1,72 +1,56 @@
-import { useState, useEffect } from 'react'
-import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
-import api from '@/services/api'
-
-interface Profile {
-  name: string
-  bio: string | null
-  avatar_url: string | null
-  interests: string | null
-  experience: string | null
-  github_url: string | null
-  twitter_url: string | null
-}
-
 export function About() {
-  const [profile, setProfile] = useState<Profile | null>(null)
-
-  useEffect(() => {
-    api.get('/profile').then((res) => setProfile(res.data)).catch(() => {})
-  }, [])
-
-  if (!profile) return <div className="text-center text-[var(--color-text-muted)] py-12">加载中...</div>
-
   return (
-    <div className="max-w-xl mx-auto">
-      <h1 className="text-2xl text-[var(--color-text)] mb-8 font-light tracking-wide">关于</h1>
+    <div className="max-w-2xl mx-auto">
+      <h1 className="text-2xl text-[var(--color-text)] mb-8 font-light tracking-wide">关于本站</h1>
 
-      <div className="space-y-8">
-        {profile.bio && (
-          <section>
-            <h2 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-2">简介</h2>
-            <div className="text-sm text-[var(--color-text)] leading-loose prose max-w-none prose-a:text-[var(--color-primary)]">
-              <MarkdownRenderer>
-                {profile.bio}
-              </MarkdownRenderer>
+      <div className="space-y-8 text-sm text-[var(--color-text)] leading-loose">
+        <section>
+          <h2 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-3">这是什么网站</h2>
+          <p>
+            Hety 的个人主页，一个集博客、笔记和 AI 日报于一体的小角落。
+            这里记录了我的技术学习、生活随想，也尝试用 AI 整理每日值得关注的信息。
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-3">技术栈</h2>
+          <div className="grid grid-cols-2 gap-3 text-[var(--color-text-muted)]">
+            <div className="bg-[var(--color-surface)]/50 border border-[var(--color-border)]/50 rounded-lg p-4">
+              <div className="font-semibold text-[var(--color-text)] mb-1">前端</div>
+              <p className="text-xs">React + Vite + TypeScript<br />Tailwind CSS + shadcn/ui</p>
             </div>
-          </section>
-        )}
-
-        {profile.interests && (
-          <section>
-            <h2 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-2">兴趣</h2>
-            <div className="flex flex-wrap gap-2">
-              {profile.interests.split(',').map((i) => (
-                <span key={i.trim()} className="px-3 py-1 text-xs bg-[var(--color-surface)] text-[#8b7355]">
-                  {i.trim()}
-                </span>
-              ))}
+            <div className="bg-[var(--color-surface)]/50 border border-[var(--color-border)]/50 rounded-lg p-4">
+              <div className="font-semibold text-[var(--color-text)] mb-1">后端</div>
+              <p className="text-xs">FastAPI + SQLAlchemy<br />SQLite + JWT 认证</p>
             </div>
-          </section>
-        )}
+            <div className="bg-[var(--color-surface)]/50 border border-[var(--color-border)]/50 rounded-lg p-4">
+              <div className="font-semibold text-[var(--color-text)] mb-1">笔记站</div>
+              <p className="text-xs">Quartz v4 + Obsidian<br />Markdown + Wikilink</p>
+            </div>
+            <div className="bg-[var(--color-surface)]/50 border border-[var(--color-border)]/50 rounded-lg p-4">
+              <div className="font-semibold text-[var(--color-text)] mb-1">部署</div>
+              <p className="text-xs">Docker Compose<br />Nginx + Uvicorn</p>
+            </div>
+          </div>
+        </section>
 
-        {profile.experience && (
-          <section>
-            <h2 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-2">经历</h2>
-            <div className="text-sm text-[var(--color-text)] leading-loose whitespace-pre-wrap">{profile.experience}</div>
-          </section>
-        )}
+        <section>
+          <h2 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-3">功能</h2>
+          <ul className="space-y-2 text-[var(--color-text-muted)] list-disc list-inside">
+            <li>博客文章（Markdown 编辑 + 评论 + 点赞）</li>
+            <li>AI 技术日报（每日自动生成）</li>
+            <li>Hety-Wiki 笔记站（Obsidian 管理）</li>
+            <li>小恐龙快跑（Chrome Dino 游戏）</li>
+            <li>明暗双主题切换</li>
+          </ul>
+        </section>
 
-        {(profile.github_url || profile.twitter_url) && (
-          <section className="flex gap-4 pt-4 border-t border-[var(--color-border)]/50">
-            {profile.github_url && (
-              <a href={profile.github_url} target="_blank" rel="noopener" className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">GitHub</a>
-            )}
-            {profile.twitter_url && (
-              <a href={profile.twitter_url} target="_blank" rel="noopener" className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors">Twitter</a>
-            )}
-          </section>
-        )}
+        <section>
+          <h2 className="text-xs text-[var(--color-text-muted)] tracking-[0.2em] mb-3">联系</h2>
+          <p className="text-[var(--color-text-muted)]">
+            想了解更多？回首页点击个人信息图标查看我的社交链接。
+          </p>
+        </section>
       </div>
     </div>
   )

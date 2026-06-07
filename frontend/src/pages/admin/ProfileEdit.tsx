@@ -13,6 +13,7 @@ export function ProfileEdit() {
   const [githubUrl, setGithubUrl] = useState('')
   const [twitterUrl, setTwitterUrl] = useState('')
   const [qq, setQq] = useState('')
+  const [douyin, setDouyin] = useState('')
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -26,13 +27,14 @@ export function ProfileEdit() {
       setGithubUrl(p.github_url || '')
       setTwitterUrl(p.twitter_url || '')
       setQq(p.qq || '')
+      setDouyin(p.douyin || '')
     })
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    await api.put('/admin/profile', { name, bio, interests, experience, github_url: githubUrl, twitter_url: twitterUrl, qq })
+    await api.put('/admin/profile', { name, bio, interests, experience, github_url: githubUrl, twitter_url: twitterUrl, qq, douyin })
     setSaving(false)
     setMsg('保存成功')
     setTimeout(() => setMsg(''), 2000)
@@ -59,6 +61,7 @@ export function ProfileEdit() {
         <Input placeholder="GitHub 链接" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
         <Input placeholder="Twitter 链接" value={twitterUrl} onChange={(e) => setTwitterUrl(e.target.value)} />
         <Input placeholder="QQ 号" value={qq} onChange={(e) => setQq(e.target.value)} />
+        <Input placeholder="抖音主页链接" value={douyin} onChange={(e) => setDouyin(e.target.value)} />
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
           {msg && <span className="text-sm text-green-500">{msg}</span>}
