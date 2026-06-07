@@ -23,6 +23,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "80:80"
+    volumes:
+      - ../notes/public:/usr/share/nginx/notes:ro
     depends_on:
       - backend
     restart: unless-stopped
