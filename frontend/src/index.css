@@ -133,7 +133,7 @@ body {
   .sidebar-panel {
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    transition: opacity 0.3s ease-out 0.4s, transform 0.3s ease-out 0.4s;
   }
   .sidebar-left .sidebar-panel { transform: translateX(calc(-100% + 6px)); }
   .sidebar-right .sidebar-panel { transform: translateX(calc(100% - 6px)); }
@@ -143,6 +143,7 @@ body {
     opacity: 1;
     pointer-events: auto;
     transform: translateX(0);
+    transition-delay: 0s;
   }
 }
 
