@@ -22,6 +22,7 @@ import { PostEdit } from '@/pages/admin/PostEdit'
 import { AdminComments } from '@/pages/admin/Comments'
 import { ProfileEdit } from '@/pages/admin/ProfileEdit'
 import { AdminUsers } from '@/pages/admin/Users'
+import { siteConfig } from '@/config'
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isAdmin } = useAuth()
@@ -72,14 +73,14 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<PostDetail />} />
-            <Route path="/notes" element={<Notes />} />
+            {siteConfig.features.notes && <Route path="/notes" element={<Notes />} />}
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/game" element={<Game />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/digest" element={<Digest />} />
-            <Route path="/digest/:id" element={<DigestDetail />} />
+            {siteConfig.features.game && <Route path="/game" element={<Game />} />}
+            {siteConfig.features.game && <Route path="/leaderboard" element={<Leaderboard />} />}
+            {siteConfig.features.digest && <Route path="/digest" element={<Digest />} />}
+            {siteConfig.features.digest && <Route path="/digest/:id" element={<DigestDetail />} />}
             <Route path="/history" element={<UserHistory />} />
             <Route path="/likes" element={<UserLikes />} />
             <Route path="/profile" element={<UserProfile />} />
