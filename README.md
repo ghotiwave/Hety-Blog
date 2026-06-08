@@ -29,7 +29,7 @@
 ### 1. Clone 并配置
 
 ```bash
-git clone https://github.com/ghotiwave/MyBlog.git
+git clone https://github.com/ghotiwave/Hety-Blog.git
 cd MyBlog
 cp .env.example backend/.env
 ```
