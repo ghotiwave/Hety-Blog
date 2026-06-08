@@ -1,36 +1,40 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/services/api'
 import initRunnerFn from 't-rex-runner/dist/runner.js'
 
 export function TrexRunner() {
   const containerRef = useRef<HTMLDivElement>(null)
+  const runnerRef = useRef<any>(null)
   const { user } = useAuth()
   const submittedRef = useRef(false)
-  const initializedRef = useRef(false)
 
   useEffect(() => {
     const container = containerRef.current
-    if (!container || initializedRef.current) return
-    initializedRef.current = true
+    if (!container) return
+    // Prevent double-init in React strict mode
+    if (container.querySelector('.interstitial-wrapper')) return
 
     try {
-      initRunnerFn('#trex-container')
+      const runner = initRunnerFn('#trex-container')
+      runnerRef.current = runner
     } catch (e) {
       console.error('Game init error:', e)
+      return
     }
 
     const poll = setInterval(() => {
-      if (!container) return
-      const scoreDisplay = container.querySelector('.current-score') as HTMLElement | null
-      if (scoreDisplay) {
-        const score = parseInt(scoreDisplay.textContent?.replace(/\D/g, '') || '0', 10)
-        if (score === 0) submittedRef.current = false
-        if (score > 0 && !submittedRef.current && user) {
-          // Game over detection: check if score stopped incrementing
-          submittedRef.current = true
-          api.post('/scores', { score }).catch(() => {})
-        }
+      const r = runnerRef.current
+      if (!r) return
+      // Read score from the game's internal distanceMeter
+      const dm = r.distanceMeter || r._distanceMeter
+      const digits = dm?.digits
+      const score = digits ? parseInt(digits.join(''), 10) : 0
+
+      if (score === 0) submittedRef.current = false
+      if (r.crashed && score > 0 && !submittedRef.current && user) {
+        submittedRef.current = true
+        api.post('/scores', { score }).catch(() => {})
       }
     }, 500)
 
@@ -38,8 +42,8 @@ export function TrexRunner() {
   }, [user])
 
   return (
-    <div className="w-full max-w-[620px] mx-auto bg-white select-none rounded-lg overflow-hidden border border-[var(--color-border)]">
-      <div id="trex-container" ref={containerRef} style={{ minHeight: 220 }} />
+    <div className="w-full max-w-[640px] mx-auto bg-white select-none rounded-lg overflow-hidden border border-[var(--color-border)]">
+      <div id="trex-container" ref={containerRef} style={{ minHeight: 224 }} />
     </div>
   )
 }

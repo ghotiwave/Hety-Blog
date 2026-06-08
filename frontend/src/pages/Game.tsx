@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { DinoGame } from '@/components/game/DinoGame'
+import { TrexRunner } from '@/components/game/TrexRunner'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/services/api'
 import { Button } from '@/components/ui/Button'
@@ -27,7 +27,7 @@ export function Game() {
       <p className="text-sm text-[var(--color-text-muted)] mb-2">空格键跳跃，方向键下蹲。</p>
 
       <div className="mb-8">
-        <DinoGame />
+        <TrexRunner />
       </div>
 
       <div className="flex items-center justify-between mb-4">

@@ -9,7 +9,6 @@ import { About } from '@/pages/About'
 import { Login } from '@/pages/Login'
 import { Register } from '@/pages/Register'
 import { Game } from '@/pages/Game'
-import { Game2 } from '@/pages/Game2'
 import { Leaderboard } from '@/pages/Leaderboard'
 import { Digest } from '@/pages/Digest'
 import { DigestDetail } from '@/pages/DigestDetail'
@@ -78,7 +77,6 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/game" element={<Game />} />
-            <Route path="/game2" element={<Game2 />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/digest" element={<Digest />} />
             <Route path="/digest/:id" element={<DigestDetail />} />
