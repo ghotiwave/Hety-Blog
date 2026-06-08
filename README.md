@@ -101,17 +101,72 @@ cd public && python -m http.server 8080
 
 ## 个性化
 
-部署后，以下内容可通过后台直接编辑（无需改代码）：
+### 方式一：不用改代码，后台直接改
 
-- 个人信息（头像、签名、社交链接）→ 管理后台 → 个人资料
-- 关于页面 → 管理后台 → 个人资料 → 关于页面编辑器
-- 博客文章 → 管理后台 → 文章管理
+登录 `http://localhost/admin/dashboard`（默认账号 `.env` 里设的管理员），以下内容可在网页上编辑，立即生效：
 
-以下需手动修改文件后重新构建：
+| 内容 | 位置 | 支持格式 |
+|---|---|---|
+| 个人信息（姓名、简介、兴趣） | 管理后台 → 个人资料 | Markdown |
+| 头像 | 管理后台 → 个人资料 | 上传自动压缩 |
+| 社交链接（GitHub、X、QQ、抖音、邮箱） | 管理后台 → 个人资料 | 链接/号码 |
+| 关于页面 | 管理后台 → 个人资料 → 关于页面编辑器 | Markdown + 图片 + 表情 |
+| 博客文章 | 管理后台 → 文章管理 | Markdown + 图片 + 表情 |
 
-- 网站名称和标语 → `frontend/src/config.ts`
-- 网站 Logo → 替换 `frontend/src/assets/logo.png`
-- 配色方案 → `frontend/src/index.css` 里的 CSS 变量
+### 方式二：需手动改文件，改完重新构建
+
+以下内容不在数据库中，需要编辑源码后 `docker compose up -d --build` 重新构建。
+
+#### 网站名称和标语
+
+编辑 `frontend/src/config.ts`：
+
+```ts
+export const siteConfig = {
+  name: '你的网站名',        // 首页大标题
+  shortName: '简写',         // 导航栏和页脚显示的短名
+  description: '你的标语',    // 首页副标题
+  wikiName: '你的Wiki名',    // 笔记站名称（没有就不管）
+}
+```
+
+#### 网站 Logo
+
+替换 `frontend/src/assets/logo.png`。建议正方形 PNG，尺寸不限（会自动缩放）。同时也作为浏览器标签页图标（favicon）。
+
+#### 环境变量
+
+`.env`（项目根目录）包含后台运行所需的配置：
+
+| 变量 | 必填 | 说明 |
+|---|---|---|
+| `SECRET_KEY` | 是 | JWT 签名密钥，随便一串乱码即可 |
+| `ADMIN_USERNAME` | 否 | 初始管理员用户名，默认 `admin` |
+| `ADMIN_PASSWORD` | 是 | 初始管理员密码，首次启动后生效 |
+| `SITE_NAME` | 否 | 网站名，用于验证邮件等场景 |
+| `SITE_DOMAIN` | 否 | 域名，用于邮件发件人地址 |
+| `DEEPSEEK_API_KEY` | 否 | DeepSeek API 密钥，不填则不生成 AI 日报 |
+| `DEEPSEEK_BASE_URL` | 否 | API 地址，默认 `https://api.deepseek.com` |
+| `RESEND_API_KEY` | 否 | 邮件服务，不填则注册后直接登录 |
+
+修改 `.env` 后需重启容器：`docker compose down && docker compose up -d --build`
+
+#### 配色方案
+
+编辑 `frontend/src/index.css`，搜索 `@theme` 块：
+
+```css
+@theme {
+  --color-primary: #8b7355;       /* 主题色（链接、按钮） */
+  --color-bg: #fafaf7;            /* 页面背景 */
+  --color-surface: #f5f4f0;       /* 卡片背景 */
+  --color-text: #3a3a38;          /* 正文颜色 */
+  --color-text-muted: #9a9996;    /* 次要文字 */
+  --color-border: #e8e6e0;        /* 边框 */
+}
+```
+
+暗色模式在 `.dark` 块里有对应的变量，需要同步修改。六个变量改完，整个网站的配色就全换了。
 
 ---
 
