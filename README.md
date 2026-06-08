@@ -34,12 +34,12 @@
 git clone https://github.com/ghotiwave/Hety-Blog.git
 cd Hety-Blog
 
-# 2. 创建环境变量文件
-cp .env.example backend/.env
-# 编辑 backend/.env，至少填两个必填项：
-#   SECRET_KEY
-#   ADMIN_PASSWORD
-# （DEEPSEEK_API_KEY 可留空，不填则不生成 AI 日报）
+# 2. 创建环境变量文件（必须放在项目根目录，docker compose 只读这里的 .env）
+cp .env.example .env
+# 编辑 .env，至少填两个必填项：
+#   SECRET_KEY=随机字符串
+#   ADMIN_PASSWORD=你的管理员密码
+# （DEEPSEEK_API_KEY 可留空）
 
 # 3. 启动
 docker compose up -d --build
@@ -67,6 +67,7 @@ docker compose up -d --build
 
 ```bash
 cd backend
+cp ../.env.example .env  # 编辑 .env 填 SECRET_KEY 和 ADMIN_PASSWORD
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --port 8000
 ```
