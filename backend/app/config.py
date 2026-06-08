@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "uploads"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
     DEEPSEEK_API_KEY: str = ""
+    ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin123"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     # SMTP for email verification (optional)
