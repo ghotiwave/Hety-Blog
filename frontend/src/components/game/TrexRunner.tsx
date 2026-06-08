@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/services/api'
-import initRunner from 't-rex-runner'
+import 't-rex-runner/dist/runner.js'
 
 export function TrexRunner() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -13,10 +13,9 @@ export function TrexRunner() {
     if (!container) return
 
     const t = setTimeout(() => {
-      try {
-        initRunner('#trex-container')
-      } catch (e) {
-        console.error('Game init failed:', e)
+      const fn = (window as any).initRunner
+      if (typeof fn === 'function') {
+        fn('#trex-container')
       }
     }, 200)
 
