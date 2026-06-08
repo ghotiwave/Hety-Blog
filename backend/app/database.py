@@ -45,23 +45,13 @@ def init_db():
     try:
 
         from app.config import settings
-        existing_admin = db.query(User).filter(User.role == "admin").first()
-        pwd = settings.ADMIN_PASSWORD.strip()
-        pw_hash = bcrypt.hashpw(pwd.encode(), bcrypt.gensalt()).decode()
-
-        if not existing_admin:
+        if not db.query(User).filter(User.role == "admin").first():
             admin = User(
                 username=settings.ADMIN_USERNAME.strip(),
-                password_hash=pw_hash,
+                password_hash=bcrypt.hashpw(settings.ADMIN_PASSWORD.strip().encode(), bcrypt.gensalt()).decode(),
                 role="admin",
             )
             db.add(admin)
-        else:
-            # Sync .env changes to existing admin on every startup
-            if existing_admin.username != settings.ADMIN_USERNAME.strip():
-                existing_admin.username = settings.ADMIN_USERNAME.strip()
-            if not bcrypt.checkpw(pwd.encode(), existing_admin.password_hash.encode()):
-                existing_admin.password_hash = pw_hash
 
         if not db.query(Profile).first():
             profile = Profile(
