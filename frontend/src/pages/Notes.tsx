@@ -1,4 +1,4 @@
-const NOTES_URL = import.meta.env.DEV ? 'http://localhost:8080' : '/notes'
+const NOTES_URL = import.meta.env.DEV ? 'http://localhost:8080' : '/notes-content'
 
 export function Notes() {
   return (

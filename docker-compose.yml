@@ -24,7 +24,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ../notes/public:/usr/share/nginx/notes:ro
+      - ../notes/public:/usr/share/nginx/notes-content:ro
     depends_on:
       - backend
     restart: unless-stopped
