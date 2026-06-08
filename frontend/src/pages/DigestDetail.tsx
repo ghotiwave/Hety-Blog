@@ -78,12 +78,20 @@ function parseSubBlocks(body: string): { subheading: string; items: NewsItem[] }
     const subheading = hMatch ? hMatch[1] : ''
     const rest = hMatch ? part.replace(/^###\s+.+\n/, '') : part
     let items = parseItems(rest)
-    // Fallback: try ###/#### detail format
+    // Fallback 1: try ###/#### detail format (from rest)
     if (items.length === 0 && /^#{3,4} /m.test(rest)) {
       items = parseDetailItems(rest)
     }
+    // Fallback 2: no sub-items found — treat the ### heading itself as an item title
+    if (items.length === 0 && subheading && rest.trim()) {
+      const m = rest.match(/^\s*>\s*(?:原文|来源|查看原文|原文链接)[：:]\s*\[(.+?)\]\((.+?)\)/)
+      const sourceUrl = m ? m[2] : ''
+      const sourceLabel = m ? m[1] : ''
+      const desc = m ? rest.replace(/^\s*>\s*(?:原文|来源|查看原文|原文链接)[：:]\s*\[.+?\]\(.+?\)\s*/, '').trim() : rest.trim()
+      items = [{ title: subheading.replace(/^\s*/, ''), desc, sourceUrl, sourceLabel }]
+    }
     if (items.length > 0 || subheading) {
-      blocks.push({ subheading, items })
+      blocks.push({ subheading: items.length > 0 ? '' : subheading, items })
     }
   }
   return blocks
