@@ -20,7 +20,7 @@ export function Header() {
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             <Link to="/blog" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">博客</Link>
-            <a href="http://localhost:8080" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">笔记</a>
+            <Link to="/notes" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">笔记</Link>
             <Link to="/digest" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">AI 日报</Link>
             <Link to="/about" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">关于</Link>
             <Link to="/game" className="text-[var(--color-text-muted)] hover:text-[var(--color-text-muted)] transition-colors text-xs">Game</Link>
