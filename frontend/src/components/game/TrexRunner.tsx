@@ -1,43 +1,50 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/services/api'
 import initRunnerFn from 't-rex-runner/dist/runner.js'
 
 export function TrexRunner() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const runnerRef = useRef<any>(null)
-  const initRef = useRef(false)
   const { user } = useAuth()
   const submittedRef = useRef(false)
+  const destroyedRef = useRef(false)
 
   useEffect(() => {
     const container = containerRef.current
-    if (!container || initRef.current) return
-    initRef.current = true
+    if (!container) return
 
+    // Clean up previous game if any
+    const old = container.querySelector('.interstitial-wrapper')
+    if (old) container.innerHTML = ''
+
+    let runner: any = null
     try {
-      const runner = initRunnerFn('#trex-container')
-      runnerRef.current = runner
+      runner = initRunnerFn('#trex-container')
     } catch (e) {
       console.error('Game init error:', e)
       return
     }
 
     const poll = setInterval(() => {
-      const r = runnerRef.current
-      if (!r) return
-      // Read score from distanceMeter digits array
-      const dm = r.distanceMeter
-      const score = dm?.digits ? parseInt(dm.digits.join(''), 10) : Math.floor(r.distanceRan * 0.025)
+      if (!runner || destroyedRef.current) return
+      const dm = runner.distanceMeter
+      const score = dm?.digits ? parseInt(dm.digits.join(''), 10) : Math.floor(runner.distanceRan * 0.025)
 
       if (score === 0) submittedRef.current = false
-      if (r.crashed && score > 0 && !submittedRef.current && user) {
+      if (runner.crashed && score > 0 && !submittedRef.current && user) {
         submittedRef.current = true
         api.post('/scores', { score }).catch(() => {})
       }
     }, 500)
 
-    return () => { clearInterval(poll) }
+    return () => {
+      destroyedRef.current = true
+      clearInterval(poll)
+      try { runner?.destroy?.() } catch {}
+      if (container) container.innerHTML = ''
+      // Re-allow init on next mount
+      setTimeout(() => { destroyedRef.current = false }, 100)
+    }
   }, [user])
 
   return (
