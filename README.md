@@ -1,10 +1,10 @@
-# 个人博客模版
+# Hety-Blog 模版
 
-一个开箱即用的全栈个人博客，支持 Markdown 写作、评论系统、AI 日报、暗色模式、笔记站集成。
+我在 vibe coding 自己的个人博客时整理出的一个开箱即用的全栈个人博客模版，支持 Markdown 写作、评论系统、AI 日报、暗色模式、笔记站集成。
 
 ## 技术栈
 
-| 层 | 技术 |
+| 层面 | 技术 |
 |---|---|
 | 前端 | React + Vite + TypeScript + Tailwind CSS |
 | 后端 | FastAPI + SQLAlchemy + SQLite |

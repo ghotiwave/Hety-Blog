@@ -32,28 +32,45 @@ function ProfileModal({ profile, onClose }: { profile: Profile; onClose: () => v
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6 md:p-8 relative"
+        className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <button onClick={onClose} className="absolute top-4 right-4 text-2xl text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer leading-none">&times;</button>
-        <div className="text-center mb-6">
-          {profile.avatar_url && (
-            <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full object-cover mx-auto mb-4 border border-[var(--color-border)]" />
+        <button onClick={onClose} className="absolute top-4 right-4 text-2xl text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer leading-none z-10">&times;</button>
+
+        {/* Header with bg */}
+        <div className="bg-[var(--color-surface)]/50 px-6 pt-8 pb-6 text-center rounded-t-2xl">
+          {profile.avatar_url ? (
+            <img src={profile.avatar_url} alt="" className="w-20 h-20 rounded-full object-cover mx-auto mb-3 border-2 border-[var(--color-bg)] shadow-sm" />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-[var(--color-bg)] border-2 border-[var(--color-border)] flex items-center justify-center text-2xl text-[var(--color-text-muted)] mx-auto mb-3">
+              {(profile.name || '?')[0]}
+            </div>
           )}
-          <h2 className="text-xl font-bold text-[var(--color-text)]">{profile.name || siteConfig.shortName}</h2>
+          <h2 className="text-lg font-bold text-[var(--color-text)]">{profile.name || siteConfig.shortName}</h2>
+          {profile.bio && (
+            <div className="text-xs text-[var(--color-text-muted)] mt-2 leading-relaxed prose max-w-none prose-a:text-[var(--color-primary)]">
+              <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{profile.bio}</ReactMarkdown>
+            </div>
+          )}
         </div>
-        {profile.bio && (
-          <div className="text-sm text-[var(--color-text)] leading-relaxed prose max-w-none prose-a:text-[var(--color-primary)]">
-            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{profile.bio}</ReactMarkdown>
-          </div>
-        )}
+
+        {/* Interests */}
         {profile.interests && (
-          <div className="flex flex-wrap gap-2 mt-4 justify-center">
-            {profile.interests.split(',').map((i) => (
-              <span key={i.trim()} className="px-3 py-1 text-xs bg-[var(--color-surface)] text-[var(--color-primary)] rounded-full">{i.trim()}</span>
-            ))}
+          <div className="px-6 py-4 border-b border-[var(--color-border)]/50">
+            <div className="flex flex-wrap gap-1.5 justify-center">
+              {profile.interests.split(',').map((i) => (
+                <span key={i.trim()} className="px-2.5 py-1 text-[11px] bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-full">{i.trim()}</span>
+              ))}
+            </div>
           </div>
         )}
+
+        {/* Social links */}
+        <div className="flex justify-center gap-5 py-4 text-xs text-[var(--color-text-muted)]">
+          {profile.github_url && <a href={profile.github_url} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--color-text)] transition-colors">GitHub</a>}
+          {profile.twitter_url && <a href={profile.twitter_url} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--color-text)] transition-colors">X</a>}
+          {profile.email_public && <a href={`mailto:${profile.email_public}`} className="hover:text-[var(--color-text)] transition-colors">{profile.email_public}</a>}
+        </div>
       </div>
     </div>
   )
