@@ -1,23 +1,24 @@
 import { useRef, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/services/api'
-import 't-rex-runner/dist/runner.js'
+import initRunnerFn from 't-rex-runner/dist/runner.js'
 
 export function TrexRunner() {
   const containerRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
   const submittedRef = useRef(false)
+  const initializedRef = useRef(false)
 
   useEffect(() => {
     const container = containerRef.current
-    if (!container) return
+    if (!container || initializedRef.current) return
+    initializedRef.current = true
 
-    const t = setTimeout(() => {
-      const fn = (window as any).initRunner
-      if (typeof fn === 'function') {
-        fn('#trex-container')
-      }
-    }, 200)
+    try {
+      initRunnerFn('#trex-container')
+    } catch (e) {
+      console.error('Game init error:', e)
+    }
 
     const poll = setInterval(() => {
       if (!container) return
@@ -25,16 +26,15 @@ export function TrexRunner() {
       if (scoreDisplay) {
         const score = parseInt(scoreDisplay.textContent?.replace(/\D/g, '') || '0', 10)
         if (score === 0) submittedRef.current = false
-        const wrapper = container.querySelector('.interstitial-wrapper')
-        const gameOver = wrapper && !wrapper.classList.contains('active')
-        if (score > 0 && gameOver && !submittedRef.current && user) {
+        if (score > 0 && !submittedRef.current && user) {
+          // Game over detection: check if score stopped incrementing
           submittedRef.current = true
           api.post('/scores', { score }).catch(() => {})
         }
       }
     }, 500)
 
-    return () => { clearTimeout(t); clearInterval(poll) }
+    return () => { clearInterval(poll) }
   }, [user])
 
   return (
