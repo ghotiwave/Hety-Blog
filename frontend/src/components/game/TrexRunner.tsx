@@ -26,9 +26,9 @@ export function TrexRunner() {
     const poll = setInterval(() => {
       const r = runnerRef.current
       if (!r) return
-      const dm = r.distanceMeter || r._distanceMeter
-      const digits = dm?.digits
-      const score = digits ? parseInt(digits.join(''), 10) : 0
+      // Read score from distanceMeter digits array
+      const dm = r.distanceMeter
+      const score = dm?.digits ? parseInt(dm.digits.join(''), 10) : Math.floor(r.distanceRan * 0.025)
 
       if (score === 0) submittedRef.current = false
       if (r.crashed && score > 0 && !submittedRef.current && user) {
