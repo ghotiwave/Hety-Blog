@@ -1,48 +1,38 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session
-import shutil
+from fastapi import APIRouter, HTTPException, UploadFile, File
 import os
 import io
 from PIL import Image
-from app.database import get_db
 from app.config import settings
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 MAX_AVATAR_KB = 200
+MAX_DIM = 800
 
 
 @router.post("/upload")
-async def upload_image(
-    file: UploadFile = File(...),
-):
-    ext = file.filename.rsplit(".", 1)[-1] if "." in (file.filename or "") else "png"
-    if ext.lower() not in ("png", "jpg", "jpeg", "gif", "webp"):
-        raise HTTPException(status_code=400, detail="Unsupported file type")
+async def upload_image(file: UploadFile = File(...)):
+    ext = (file.filename or "png").rsplit(".", 1)[-1].lower()
+    if ext not in ("png", "jpg", "jpeg", "gif", "webp"):
+        raise HTTPException(status_code=400, detail="不支持的文件类型")
 
     contents = await file.read()
-    file_size_kb = len(contents) / 1024
 
-    # Compress if > 200KB or resize large images
-    if ext.lower() in ("jpg", "jpeg", "png", "webp") and (file_size_kb > MAX_AVATAR_KB):
+    # Always compress and resize to keep avatars small
+    if ext in ("jpg", "jpeg", "png", "webp"):
         try:
             img = Image.open(io.BytesIO(contents))
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGBA")
-            else:
-                img = img.convert("RGB")
-            # Resize if too large
-            if max(img.size) > 800:
-                img.thumbnail((800, 800), Image.LANCZOS)
-            # Save with compression
+            img = img.convert("RGBA") if img.mode in ("RGBA", "P") else img.convert("RGB")
+            # Resize large images
+            if max(img.size) > MAX_DIM:
+                img.thumbnail((MAX_DIM, MAX_DIM), Image.LANCZOS)
+            # Always save as optimized JPEG for consistent small size
             out = io.BytesIO()
-            fmt = "JPEG" if ext.lower() in ("jpg", "jpeg") else "PNG"
-            img.save(out, format=fmt, optimize=True, quality=75)
+            img.convert("RGB").save(out, format="JPEG", optimize=True, quality=80)
             contents = out.getvalue()
-            if fmt == "PNG":
-                ext = "png"  # keep png for transparency
-        except Exception:
-            pass  # If PIL fails, use original
+            ext = "jpg"
+        except Exception as e:
+            print(f"Image compression failed: {e}")
 
     filename = f"{os.urandom(8).hex()}.{ext}"
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
