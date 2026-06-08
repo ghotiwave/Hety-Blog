@@ -1,6 +1,6 @@
 # Hety-Blog
 
-一个开箱即用的全栈个人博客模版。支持 Markdown 写作、B 站风格评论区、AI 日报、暗色模式、小恐龙游戏。
+我在 vibe coding 自己的个人博客时整理出的一个开箱即用的全栈个人博客模版，支持 Markdown 写作、评论系统、AI 日报、暗色模式、笔记站集成。
 
 ## 技术栈
 
@@ -37,9 +37,8 @@ cd Hety-Blog
 # 2. 创建环境变量文件
 cp .env.example backend/.env
 # 编辑 backend/.env，至少填两个必填项：
-#   SECRET_KEY=随便打一串乱码
-#   ADMIN_PASSWORD=你的管理员密码
-#   SITE_NAME=你的网站名
+#   SECRET_KEY
+#   ADMIN_PASSWORD
 # （DEEPSEEK_API_KEY 可留空，不填则不生成 AI 日报）
 
 # 3. 启动
