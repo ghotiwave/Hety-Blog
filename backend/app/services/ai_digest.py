@@ -55,15 +55,21 @@ def generate_daily_digest(db: Session) -> NewsDigest:
         api_key=settings.AI_API_KEY,
     )
 
-    resp = client.chat.completions.create(
+    # DeepSeek V4 models default to thinking mode, which consumes token budget.
+    # Disable thinking for summarization tasks where we only need the final output.
+    api_kwargs = dict(
         model=settings.AI_MODEL,
         messages=[
             {"role": "system", "content": "你是一个专业的技术日报编辑，用中文撰写内容。"},
             {"role": "user", "content": prompt},
         ],
         temperature=0.7,
-        max_tokens=4000,
+        max_tokens=8000,
     )
+    if "deepseek" in settings.AI_BASE_URL and ("v4" in settings.AI_MODEL.lower() or "deepseek-v4" in settings.AI_MODEL.lower()):
+        api_kwargs["extra_body"] = {"thinking": {"type": "disabled"}}
+
+    resp = client.chat.completions.create(**api_kwargs)
 
     content = resp.choices[0].message.content
     if not content or not content.strip():

@@ -154,7 +154,7 @@ export const siteConfig = {
 | `SITE_DOMAIN` | 否 | 域名，用于邮件发件人地址 |
 | `AI_API_KEY` | 否 | AI API 密钥（兼容 DeepSeek / OpenAI / Ollama 等），不填则不生成 AI 日报 |
 | `AI_BASE_URL` | 否 | API 地址，默认 `https://api.deepseek.com` |
-| `AI_MODEL` | 否 | 模型名，默认 `deepseek-chat` |
+| `AI_MODEL` | 否 | 模型名，默认 `deepseek-v4-flash`（自动关闭 thinking） |
 | `RESEND_API_KEY` | 否 | 邮件服务，不填则注册后直接登录 |
 
 修改 `.env` 后需重启容器：`docker compose down && docker compose up -d --build`
