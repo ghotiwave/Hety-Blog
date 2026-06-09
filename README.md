@@ -9,7 +9,7 @@
 | 前端 | React + Vite + TypeScript + Tailwind CSS |
 | 后端 | FastAPI + SQLAlchemy + SQLite |
 | 认证 | JWT（bcrypt 密码哈希） |
-| AI | DeepSeek API（可选，不填则跳过日报） |
+| AI | 兼容 OpenAI 接口的 API（可选，不填则跳过日报） |
 | 部署 | Docker Compose（Nginx 反代 + Uvicorn） |
 | 笔记站 | Quartz v4（可选，独立仓库） |
 
@@ -18,7 +18,7 @@
 - 博客文章 — Markdown 编辑器 + 实时预览 + 图片上传 + 表情包
 - 评论区 — 二层嵌套回复 + 点赞 + 表情 + 管理员标识
 - 用户系统 — 注册/登录、头像上传（自动压缩）、个性签名
-- AI 日报 — 每天 8:00 自动抓取新闻 + DeepSeek 总结生成
+- AI 日报 — 每天 8:00 自动抓取新闻 + AI 总结生成（支持 DeepSeek、OpenAI、Ollama 等）
 - 明暗双主题 — 一键切换，CSS 变量全覆盖
 - 小恐龙快跑 — npm 包 `t-rex-runner`，分数排行榜
 - 笔记站 — Obsidian 写作 + Quartz 发布（独立部署到 `/notes`）
@@ -39,7 +39,7 @@ cp .env.example .env
 # 编辑 .env，至少填两个必填项：
 #   SECRET_KEY=随机字符串
 #   ADMIN_PASSWORD=你的管理员密码
-# （DEEPSEEK_API_KEY 可留空）
+# （AI_API_KEY 可留空）
 
 # 3. 启动
 docker compose up -d --build
@@ -152,8 +152,9 @@ export const siteConfig = {
 | `ADMIN_PASSWORD` | 是 | 初始管理员密码，首次启动后生效 |
 | `SITE_NAME` | 否 | 网站名，用于验证邮件等场景 |
 | `SITE_DOMAIN` | 否 | 域名，用于邮件发件人地址 |
-| `DEEPSEEK_API_KEY` | 否 | DeepSeek API 密钥，不填则不生成 AI 日报 |
-| `DEEPSEEK_BASE_URL` | 否 | API 地址，默认 `https://api.deepseek.com` |
+| `AI_API_KEY` | 否 | AI API 密钥（兼容 DeepSeek / OpenAI / Ollama 等），不填则不生成 AI 日报 |
+| `AI_BASE_URL` | 否 | API 地址，默认 `https://api.deepseek.com` |
+| `AI_MODEL` | 否 | 模型名，默认 `deepseek-v4-pro` |
 | `RESEND_API_KEY` | 否 | 邮件服务，不填则注册后直接登录 |
 
 修改 `.env` 后需重启容器：`docker compose down && docker compose up -d --build`

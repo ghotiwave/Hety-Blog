@@ -51,12 +51,12 @@ def generate_daily_digest(db: Session) -> NewsDigest:
 {news_text}"""
 
     client = OpenAI(
-        base_url=settings.DEEPSEEK_BASE_URL,
-        api_key=settings.DEEPSEEK_API_KEY,
+        base_url=settings.AI_BASE_URL,
+        api_key=settings.AI_API_KEY,
     )
 
     resp = client.chat.completions.create(
-        model="deepseek-chat",
+        model=settings.AI_MODEL,
         messages=[
             {"role": "system", "content": "你是一个专业的技术日报编辑，用中文撰写内容。"},
             {"role": "user", "content": prompt},
