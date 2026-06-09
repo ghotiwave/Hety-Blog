@@ -66,14 +66,21 @@ def generate_daily_digest(db: Session) -> NewsDigest:
     )
 
     content = resp.choices[0].message.content
+    if not content or not content.strip():
+        finish = resp.choices[0].finish_reason
+        raise Exception(f"AI 返回空内容 (finish_reason={finish})，请检查模型名 '{settings.AI_MODEL}' 是否正确")
 
-    today_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+    now = datetime.now(timezone.utc)
+    today_str = now.strftime('%Y-%m-%d')
+    # Check for existing digests today to avoid slug conflict
+    existing = db.query(NewsDigest).filter(NewsDigest.slug.like(f'{today_str}%')).count()
+    slug = today_str if existing == 0 else f'{today_str}-{existing + 1}'
     digest = NewsDigest(
         title=f"技术日报 - {today_str}",
         topic="综合",
         content=content,
         source_urls=json.dumps([item["url"] for item in news_items]),
-        slug=today_str,
+        slug=slug,
     )
     db.add(digest)
     db.commit()

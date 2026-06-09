@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     ADMIN_USERNAME: str = "admin"
     ADMIN_PASSWORD: str = "admin123"
     AI_BASE_URL: str = "https://api.deepseek.com"
-    AI_MODEL: str = "deepseek-v4-pro"
+    AI_MODEL: str = "deepseek-chat"
     # SMTP for email verification (optional)
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
