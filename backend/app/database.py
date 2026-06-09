@@ -46,9 +46,16 @@ def init_db():
 
         from app.config import settings
         if not db.query(User).filter(User.role == "admin").first():
+            password = settings.ADMIN_PASSWORD.strip()
+            username = settings.ADMIN_USERNAME.strip()
+            if not password or password == "your-admin-password":
+                raise RuntimeError(
+                    "管理员密码未设置！请在项目根目录创建 .env 文件并设置 ADMIN_PASSWORD，"
+                    "参考 .env.example。当前 ADMIN_PASSWORD 为空或仍为示例值。"
+                )
             admin = User(
-                username=settings.ADMIN_USERNAME.strip(),
-                password_hash=bcrypt.hashpw(settings.ADMIN_PASSWORD.strip().encode(), bcrypt.gensalt()).decode(),
+                username=username,
+                password_hash=bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(),
                 role="admin",
             )
             db.add(admin)
