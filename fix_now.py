@@ -1,4 +1,17 @@
-services:
+import paramiko
+ssh = paramiko.SSHClient()
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+ssh.connect("106.54.211.108", username="ubuntu", password="Zcnhcgd18", timeout=10)
+
+def run(cmd):
+    stdin, stdout, stderr = ssh.exec_command(cmd)
+    out = stdout.read().decode(errors='replace')
+    err = stderr.read().decode(errors='replace')
+    if out.strip(): print(out.strip()[:1000])
+    if err.strip(): print(err.strip()[:500])
+
+# Fix docker-compose.yml on server directly
+compose = """services:
   backend:
     build:
       context: ./backend
@@ -30,10 +43,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # 笔记站：构建 Quartz 后取消注释下方两行，把路径换成你的 public 目录
-      # - /home/ubuntu/notes-content/public:/usr/share/nginx/notes:ro
-      # SSL 证书：如已用 certbot 获取证书，取消注释下行
-      # - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /home/ubuntu/notes-content/public:/usr/share/nginx/notes:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
     restart: unless-stopped
@@ -41,3 +52,13 @@ services:
 volumes:
   blog_data:
   blog_uploads:
+"""
+
+run(f"cat > ~/blog/docker-compose.yml << 'COMPOSEEOF'\n{compose}COMPOSEEOF")
+print("Config written")
+
+# Rebuild
+run("cd ~/blog && docker compose up -d --build 2>&1")
+run("docker ps --format '{{.Names}} {{.Ports}}'")
+
+ssh.close()

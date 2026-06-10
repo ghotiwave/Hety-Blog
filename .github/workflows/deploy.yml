@@ -33,6 +33,21 @@ jobs:
             --exclude='*.db' \
             ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/blog/
 
+      - name: Apply production config
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+            cd ~/blog
+            # Enable SSL in nginx.conf
+            sed -i 's|# ssl_certificate_key |ssl_certificate_key |' frontend/nginx.conf
+            sed -i 's|# ssl_certificate |ssl_certificate |' frontend/nginx.conf
+            sed -i 's|# ssl_protocols|ssl_protocols|' frontend/nginx.conf
+            sed -i 's|# ssl_ciphers|ssl_ciphers|' frontend/nginx.conf
+            sed -i 's|your-domain|gianniiss.top|g' frontend/nginx.conf
+            # Enable SSL cert mount and notes volume in docker-compose.yml
+            sed -i 's|# - /etc/letsencrypt|      - /etc/letsencrypt|' docker-compose.yml
+            sed -i 's|# - /home/ubuntu/notes-content|      - /home/ubuntu/notes-content|' docker-compose.yml
+          "
+
       - name: Rebuild containers
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
