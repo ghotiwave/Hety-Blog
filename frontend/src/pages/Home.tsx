@@ -22,10 +22,20 @@ interface Profile {
 
 const iconCls = "text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
 
-function copyToClipboard(text: string, label: string) {
-  navigator.clipboard.writeText(text).then(() => {
-    // brief visual feedback - could add toast later
-  }).catch(() => {})
+function copyToClipboard(text: string) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).catch(() => {})
+  } else {
+    // Fallback for HTTP (non-secure context)
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+  }
 }
 
 function ProfileModal({ profile, onClose }: { profile: Profile; onClose: () => void }) {
@@ -117,7 +127,7 @@ export function Home() {
               )}
               {profile.qq && (
                 <button
-                  onClick={() => { navigator.clipboard.writeText(profile.qq!); setCopied('qq'); setTimeout(() => setCopied(''), 1500) }}
+                  onClick={() => { copyToClipboard(profile.qq!); setCopied('qq'); setTimeout(() => setCopied(''), 1500) }}
                   className={`${iconCls} cursor-pointer relative`}
                   title="复制 QQ 号"
                 >
@@ -127,7 +137,7 @@ export function Home() {
               )}
               {profile.douyin && (
                 <button
-                  onClick={() => { navigator.clipboard.writeText(profile.douyin!); setCopied('douyin'); setTimeout(() => setCopied(''), 1500) }}
+                  onClick={() => { copyToClipboard(profile.douyin!); setCopied('douyin'); setTimeout(() => setCopied(''), 1500) }}
                   className={`${iconCls} cursor-pointer relative`}
                   title="复制抖音号"
                 >

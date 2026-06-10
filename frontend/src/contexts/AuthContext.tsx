@@ -14,7 +14,8 @@ interface AuthState {
   token: string | null
   isAdmin: boolean
   login: (username: string, password: string) => Promise<void>
-  register: (username: string, email: string, password: string, turnstile_token?: string) => Promise<any>
+  register: (username: string, email: string, password: string, code: string, turnstile_token?: string) => Promise<any>
+  sendCode: (email: string) => Promise<void>
   logout: () => void
 }
 
@@ -38,14 +39,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u)
   }
 
-  async function register(username: string, email: string, password: string, turnstile_token?: string) {
-    const res = await api.post('/auth/register', { username, email, password, turnstile_token })
-    const { access_token, user: u, verify_url } = res.data
+  async function register(username: string, email: string, password: string, code: string, turnstile_token?: string) {
+    const res = await api.post('/auth/register', { username, email, password, code, turnstile_token })
+    const { access_token, user: u } = res.data
     localStorage.setItem('token', access_token)
     localStorage.setItem('user', JSON.stringify(u))
     setToken(access_token)
     setUser(u)
-    return { verify_url }
+  }
+
+  async function sendCode(email: string) {
+    await api.post('/auth/send-code', { email })
   }
 
   function logout() {
@@ -56,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isAdmin, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, isAdmin, login, register, sendCode, logout }}>
       {children}
     </AuthContext.Provider>
   )

@@ -1,10 +1,15 @@
 from pydantic import BaseModel, EmailStr
 
 
+class SendCodeRequest(BaseModel):
+    email: str
+
+
 class RegisterRequest(BaseModel):
     username: str
     email: str
     password: str
+    code: str = ""
     turnstile_token: str = ""
 
 

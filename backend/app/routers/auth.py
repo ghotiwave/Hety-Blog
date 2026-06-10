@@ -11,13 +11,15 @@ import httpx
 from app.database import get_db
 from app.config import settings
 from app.models.user import User
-from app.schemas.user import RegisterRequest, LoginRequest, TokenResponse, UserResponse
+from app.schemas.user import RegisterRequest, LoginRequest, TokenResponse, UserResponse, SendCodeRequest
 from app.dependencies import get_current_user
+from app.services.email_service import send_verification_code, verify_code
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 # Simple in-memory rate limiter
 _register_attempts: dict[str, list[float]] = {}
+_code_attempts: dict[str, list[float]] = {}
 
 
 def _validate_username(username: str):
@@ -68,6 +70,48 @@ def user_to_response(user: User) -> dict:
     }
 
 
+def _check_code_rate_limit(key: str, max_attempts: int = 3, window: int = 60) -> bool:
+    now = time.time()
+    attempts = [t for t in _code_attempts.get(key, []) if now - t < window]
+    _code_attempts[key] = attempts
+    return len(attempts) < max_attempts
+
+
+def _record_code_attempt(key: str):
+    if key not in _code_attempts:
+        _code_attempts[key] = []
+    _code_attempts[key].append(time.time())
+
+
+@router.post("/send-code")
+def send_code(request: Request, req: SendCodeRequest, db: Session = Depends(get_db)):
+    """Send a 6-digit verification code to the email."""
+    email = req.email.strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=422, detail="请提供有效的邮箱地址")
+
+    # Rate limit per email: 3 per minute, 10 per hour
+    if not _check_code_rate_limit(email, 3, 60):
+        raise HTTPException(status_code=429, detail="发送过于频繁，请 1 分钟后再试")
+    if not _check_code_rate_limit(f"hourly:{email}", 10, 3600):
+        raise HTTPException(status_code=429, detail="发送次数过多，请 1 小时后再试")
+
+    _record_code_attempt(email)
+    _record_code_attempt(f"hourly:{email}")
+
+    if settings.RESEND_API_KEY:
+        ok = send_verification_code(email)
+        if not ok:
+            raise HTTPException(status_code=500, detail="邮件发送失败，请稍后再试")
+    else:
+        # Dev mode: log the code
+        from app.services.email_service import store_code
+        code = store_code(email)
+        print(f"[DEV] Verification code for {email}: {code}")
+
+    return {"message": "验证码已发送"}
+
+
 @router.post("/register")
 async def register(request: Request, req: RegisterRequest, db: Session = Depends(get_db)):
     client_ip = request.client.host if request.client else "unknown"
@@ -95,29 +139,33 @@ async def register(request: Request, req: RegisterRequest, db: Session = Depends
     if req.email and db.query(User).filter(User.email == req.email).first():
         raise HTTPException(status_code=400, detail="邮箱已被注册")
 
+    # Verify email code
+    email = req.email.strip().lower()
+    if not settings.RESEND_API_KEY:
+        # Dev mode: skip verification or accept "000000"
+        if req.code and req.code != "000000":
+            # Allow any code in dev
+            pass
+    else:
+        if not req.code:
+            raise HTTPException(status_code=400, detail="请输入邮箱验证码")
+        if not verify_code(email, req.code):
+            raise HTTPException(status_code=400, detail="验证码错误或已过期")
+
     _record_attempt(client_ip)
 
-    verify_token = secrets.token_urlsafe(32)
     user = User(
         username=req.username,
-        email=req.email,
-        verification_token=verify_token,
+        email=email,
+        email_verified=1,
         password_hash=bcrypt.hashpw(req.password.encode(), bcrypt.gensalt()).decode(),
     )
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    # Send verification email via Resend (or fall back to returning the link)
-    from app.services.email_service import send_verification_email
-    sent = send_verification_email(req.email, verify_token)
-
     token = create_token(user)
-    resp = TokenResponse(access_token=token, user=user_to_response(user))
-    result = resp.model_dump()
-    if not sent:
-        result["verify_url"] = f"{settings.SITE_URL}/api/auth/verify/{verify_token}"
-    return result
+    return TokenResponse(access_token=token, user=user_to_response(user))
 
 
 @router.get("/verify/{token}", response_class=HTMLResponse)
