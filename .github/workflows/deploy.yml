@@ -8,17 +8,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup SSH Keys
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
-      - name: Deploy
+      - name: Rsync code to server
+        run: |
+          rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            --exclude='dist' \
+            --exclude='data' \
+            --exclude='uploads' \
+            --exclude='.env' \
+            --exclude='*.db' \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:~/blog/
+
+      - name: Rebuild containers
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
             cd ~/blog
-            git pull origin main
-            docker compose down
             docker compose up -d --build
             docker system prune -f
           "
