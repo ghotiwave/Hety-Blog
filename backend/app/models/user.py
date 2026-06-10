@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
+from app.timezone_utils import BEIJING_TZ
 from app.database import Base
 
 
@@ -16,6 +17,6 @@ class User(Base):
     signature = Column(String(200), nullable=True)
     password_hash = Column(String(255), nullable=False)
     role = Column(String(10), default="user")
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(BEIJING_TZ))
 
     scores = relationship("Score", back_populates="user", cascade="all, delete-orphan")

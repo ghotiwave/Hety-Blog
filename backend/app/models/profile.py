@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from datetime import datetime, timezone
+from app.timezone_utils import BEIJING_TZ
 from app.database import Base
 
 
@@ -20,6 +21,6 @@ class Profile(Base):
     email_public = Column(String(200), nullable=True)
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(BEIJING_TZ),
+        onupdate=lambda: datetime.now(BEIJING_TZ),
     )

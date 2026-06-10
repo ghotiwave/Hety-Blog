@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timezone
+from app.timezone_utils import BEIJING_TZ
 from openai import OpenAI
 from sqlalchemy.orm import Session
 from app.config import settings
@@ -23,7 +24,7 @@ def generate_daily_digest(db: Session) -> NewsDigest:
 
 ## 严格要求（必须遵守）
 
-1. 日报第一行为 `# 技术日报 - {datetime.now(timezone.utc).strftime('%Y-%m-%d')}`
+1. 日报第一行为 `# 技术日报 - {datetime.now(BEIJING_TZ).strftime('%Y-%m-%d')}`
 
 2. 用 `##` 标题分类（如 `## AI/大模型`、`## 前端/工具`、`## 开源项目`、`## 综合资讯`）
 
@@ -76,7 +77,7 @@ def generate_daily_digest(db: Session) -> NewsDigest:
         finish = resp.choices[0].finish_reason
         raise Exception(f"AI 返回空内容 (finish_reason={finish})，请检查模型名 '{settings.AI_MODEL}' 是否正确")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(BEIJING_TZ)
     today_str = now.strftime('%Y-%m-%d')
     # Check for existing digests today to avoid slug conflict
     existing = db.query(NewsDigest).filter(NewsDigest.slug.like(f'{today_str}%')).count()

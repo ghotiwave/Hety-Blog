@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
+from app.timezone_utils import BEIJING_TZ
 from app.database import Base
 
 
@@ -17,11 +18,11 @@ class Post(Base):
     slug = Column(String(200), nullable=True, unique=True)
     view_count = Column(Integer, default=0)
     published = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(BEIJING_TZ))
     updated_at = Column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(BEIJING_TZ),
+        onupdate=lambda: datetime.now(BEIJING_TZ),
     )
 
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")

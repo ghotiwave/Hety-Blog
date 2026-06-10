@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from jose import jwt
 from datetime import datetime, timedelta, timezone
+from app.timezone_utils import BEIJING_TZ
 import bcrypt
 import httpx
 from app.database import get_db
@@ -52,7 +53,7 @@ def _record_attempt(ip: str):
 
 
 def create_token(user: User) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(BEIJING_TZ) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": str(user.id), "exp": expire}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
 

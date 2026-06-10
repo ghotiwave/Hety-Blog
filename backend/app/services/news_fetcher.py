@@ -12,7 +12,7 @@ AIHOT_UA = (
 def fetch_aihot_selected(since_hours=24):
     """Fetch curated AI news from aihot.virxact.com"""
     try:
-        since = (datetime.now(timezone.utc) - timedelta(hours=since_hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        since = (datetime.now(BEIJING_TZ) - timedelta(hours=since_hours)).strftime("%Y-%m-%dT%H:%M:%SZ")
         resp = requests.get(
             "https://aihot.virxact.com/api/public/items",
             params={"mode": "selected", "since": since, "take": 30},
@@ -37,7 +37,7 @@ def fetch_aihot_selected(since_hours=24):
 
 def fetch_github_trending():
     try:
-        since = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+        since = (datetime.now(BEIJING_TZ) - timedelta(days=1)).strftime("%Y-%m-%d")
         resp = requests.get(
             "https://api.github.com/search/repositories",
             params={
