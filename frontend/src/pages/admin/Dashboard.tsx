@@ -16,9 +16,9 @@ export function Dashboard() {
 
   const handleGenerateDigest = async () => {
     setDigesting(true)
-    setDigestMsg('')
+    setDigestMsg('正在生成日报，请耐心等待（约 2 分钟）...')
     try {
-      const res = await api.post('/admin/digests/generate')
+      const res = await api.post('/admin/digests/generate', null, { timeout: 300000 })
       setDigestMsg(`日报生成成功：${res.data.title}`)
       setStats(null)
       api.get('/admin/dashboard/stats').then((res) => setStats(res.data))
