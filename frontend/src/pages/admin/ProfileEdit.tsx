@@ -17,6 +17,7 @@ export function ProfileEdit() {
   const [douyin, setDouyin] = useState('')
   const [aboutPage, setAboutPage] = useState('')
   const [emailPublic, setEmailPublic] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -34,6 +35,7 @@ export function ProfileEdit() {
       setDouyin(p.douyin || '')
       setAboutPage(p.about_page || '')
       setEmailPublic(p.email_public || '')
+      setAvatarUrl(p.avatar_url || '')
     })
   }, [])
 
@@ -60,10 +62,22 @@ export function ProfileEdit() {
     } finally { setUploading(false) }
   }
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return
+    setUploading(true)
+    const form = new FormData(); form.append('file', file)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/admin/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form })
+      const data = await res.json()
+      if (data.url) setAvatarUrl(data.url)
+    } finally { setUploading(false) }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    await api.put('/admin/profile', { name, bio, interests, experience, github_url: githubUrl, twitter_url: twitterUrl, qq, douyin, about_page: aboutPage, email_public: emailPublic })
+    await api.put('/admin/profile', { name, bio, interests, experience, github_url: githubUrl, twitter_url: twitterUrl, qq, douyin, about_page: aboutPage, email_public: emailPublic, avatar_url: avatarUrl })
     setSaving(false)
     setMsg('保存成功')
     setTimeout(() => setMsg(''), 2000)
@@ -73,6 +87,21 @@ export function ProfileEdit() {
     <div>
       <h1 className="text-2xl font-bold text-[var(--color-text)] mb-6">个人资料</h1>
       <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
+        {/* Avatar upload */}
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] shrink-0">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-2xl text-[var(--color-text-muted)]">?</div>
+            )}
+          </div>
+          <label className={`cursor-pointer text-sm text-[var(--color-primary)] hover:underline ${uploading ? 'opacity-50' : ''}`}>
+            {uploading ? '上传中...' : '更换头像'}
+            <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+          </label>
+        </div>
+
         <Input placeholder="姓名" value={name} onChange={(e) => setName(e.target.value)} />
         <Textarea placeholder="个人简介（支持 Markdown）" value={bio} onChange={(e) => setBio(e.target.value)} className="min-h-[100px]" />
         {bio && (

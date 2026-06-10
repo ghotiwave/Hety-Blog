@@ -2,21 +2,17 @@ import paramiko
 ssh = paramiko.SSHClient()
 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 ssh.connect("106.54.211.108", username="ubuntu", password="Zcnhcgd18", timeout=15)
-print("Connected\n")
-
+print("Connected")
+sftp = ssh.open_sftp()
+sftp.put("D:/MySite/blog/frontend/src/pages/admin/ProfileEdit.tsx", "/home/ubuntu/blog/frontend/src/pages/admin/ProfileEdit.tsx")
+sftp.close()
+print("Uploaded")
 def run(cmd):
     stdin, stdout, stderr = ssh.exec_command(cmd)
     out = stdout.read().decode().strip()
     err = stderr.read().decode().strip()
     if out: print(out)
     if err: print(err)
-
-# Send code
-print("=== Sending ===")
-run("curl -s http://localhost:8000/api/auth/send-code -X POST -H 'Content-Type: application/json' -d '{\"email\":\"hety3413@gmail.com\"}'")
-
-# Check logs
-print("\n=== Logs ===")
-run("docker logs blog-backend-1 2>&1 | tail -10")
-
+run("cd ~/blog && docker compose up -d --build frontend 2>&1")
+run("curl -s -o /dev/null -w '%{http_code}' http://localhost")
 ssh.close()
