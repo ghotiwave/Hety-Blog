@@ -15,6 +15,9 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
+      - name: Add server host key
+        run: ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
       - name: Rsync code to server
         run: |
           rsync -avz --delete \
@@ -31,7 +34,7 @@ jobs:
 
       - name: Rebuild containers
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
             cd ~/blog
             docker compose up -d --build
             docker system prune -f
