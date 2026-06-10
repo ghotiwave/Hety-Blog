@@ -25,9 +25,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "80:80"
-    # 笔记站（可选）：如不需要，注释掉下一行
+    # 笔记站（可选）：构建 Quartz 后取消注释，路径改为你的 public 目录
     # volumes:
-    #   - ../notes/public:/usr/share/nginx/notes:ro
+    #   - /home/ubuntu/notes-content/public:/usr/share/nginx/notes:ro
     depends_on:
       - backend
     restart: unless-stopped
