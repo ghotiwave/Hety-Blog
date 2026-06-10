@@ -54,7 +54,9 @@ def send_verification_code(to_email: str) -> bool:
                 "html": body,
             })
             return True
-        except Exception:
-            pass
+        except Exception as e:
+            import traceback
+            print(f"[EMAIL ERROR] {e}")
+            traceback.print_exc()
 
     return False

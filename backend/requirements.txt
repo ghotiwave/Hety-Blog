@@ -10,3 +10,4 @@ apscheduler==3.10.4
 openai==1.57.0
 requests==2.32.3
 Pillow==11.1.0
+resend

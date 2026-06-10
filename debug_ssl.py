@@ -10,18 +10,17 @@ def run(cmd):
     err = stderr.read().decode().strip()
     if out: print(out)
     if err: print(err)
-    return out
 
-# Check nginx error log
-print("=== Nginx error log ===")
-run("docker exec blog-frontend-1 tail -20 /var/log/nginx/error.log 2>&1")
-
-# Check file exists in container
-print("\n=== Check files in container ===")
-run("docker exec blog-frontend-1 ls -la /usr/share/nginx/notes/ 2>&1 | head -15")
+# Check cert in container
+print("=== Cert in container ===")
+run("docker exec blog-frontend-1 ls /etc/letsencrypt/live/gianniiss.top/ 2>&1")
 
 # Check nginx config
 print("\n=== Nginx config ===")
 run("docker exec blog-frontend-1 cat /etc/nginx/conf.d/default.conf 2>&1")
+
+# Check nginx error log
+print("\n=== Nginx error ===")
+run("docker exec blog-frontend-1 cat /var/log/nginx/error.log 2>&1 | tail -10")
 
 ssh.close()
