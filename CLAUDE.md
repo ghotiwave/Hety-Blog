@@ -142,6 +142,7 @@ const res = await api.post('/auth/login', { username, password })
 - 服务器（106.54.211.108）在中国，无法访问 GitHub
 - CI/CD 用 rsync 从 Actions runner 推代码，不靠服务器 pull
 - 手动修复服务器时用 SFTP（paramiko）上传
+- 本机 git 配了 `http.proxy=http://127.0.0.1:7890`，代理没开时 push 用 `git -c http.proxy= -c https.proxy= push`
 
 ### 数据库
 - SQLite 存在 Docker volume `blog_data` 中
@@ -154,6 +155,7 @@ const res = await api.post('/auth/login', { username, password })
 - `.env` 中 `AI_MODEL` 用户可改为任何 OpenAI 兼容模型
 - 日报生成约需 1-2 分钟，nginx `proxy_read_timeout` 设为 180s
 - 同一天多次生成的 slug 自动加 `-2`、`-3` 后缀
+- **`news_fetcher.py` 只用 `timezone.utc`，不要引入 `BEIJING_TZ`**——该文件有两处 `datetime.now()` 且被 `except Exception: return []` 包裹，未导入的变量会导致新闻源静默失败，日报内容大幅缩水
 
 ### 笔记站
 - Quartz 生成 clean URL（无 `.html`），nginx 需 `try_files $uri $uri.html $uri/`
@@ -181,6 +183,8 @@ const res = await api.post('/auth/login', { username, password })
 - nginx SSL 证书在服务器 `/etc/letsencrypt/live/gianniiss.top/`
 - 证书自动续期 cron：`0 3 * * * certbot renew`
 - CI/CD 工作流会自动解注释 docker-compose 和 nginx 的 SSL/Notes 配置
+- 改服务器 `.env`（如 API Key）需 SSH 手动编辑 `~/blog/.env`，然后 `docker compose up -d backend`。CI/CD 通过 `--exclude='.env'` 保护服务器端 .env 不被覆盖
+- 运维指南在 `D:\MySite\Deploy guide.md`（不在仓库内）
 
 ## CI/CD
 
