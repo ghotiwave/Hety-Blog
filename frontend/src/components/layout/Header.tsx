@@ -14,10 +14,10 @@ export function Header() {
     <header className="sticky top-0 z-50 bg-[var(--color-bg)]/90 backdrop-blur-sm border-b border-[var(--color-border)]/50">
       <div className="max-w-5xl mx-auto flex items-center justify-between px-6 h-14">
         <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
+          <a href="https://gianniiss.top" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
             <img src={logoImg} alt={siteConfig.shortName} className="h-8 w-auto object-contain" />
             <span className="text-sm text-[var(--color-text)] tracking-wider">{siteConfig.shortName}</span>
-          </Link>
+          </a>
           <nav className="flex items-center gap-6 text-sm">
             <Link to="/blog" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">博客</Link>
             {siteConfig.features.notes && (

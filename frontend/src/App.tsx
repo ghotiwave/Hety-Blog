@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { Layout } from '@/components/layout/Layout'
-import { Home } from '@/pages/Home'
 import { Blog } from '@/pages/Blog'
 import { PostDetail } from '@/pages/PostDetail'
 import { About } from '@/pages/About'
@@ -15,7 +14,6 @@ import { DigestDetail } from '@/pages/DigestDetail'
 import { UserHistory } from '@/pages/UserHistory'
 import { UserProfile } from '@/pages/UserProfile'
 import { UserLikes } from '@/pages/UserLikes'
-import { Notes } from '@/pages/Notes'
 import { Dashboard } from '@/pages/admin/Dashboard'
 import { PostManage } from '@/pages/admin/PostManage'
 import { PostEdit } from '@/pages/admin/PostEdit'
@@ -70,10 +68,9 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Navigate to="/blog" replace />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:id" element={<PostDetail />} />
-            {siteConfig.features.notes && <Route path="/notes" element={<Notes />} />}
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
