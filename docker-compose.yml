@@ -26,9 +26,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    # 只发布到宿主机本地；公网 TLS 与路由由 Caddy 网关负责（reverse_proxy → :8080）
+    # 绑到 docker 网关地址：Caddy 网关（host.docker.internal→172.17.0.1）够得着，但不对公网开放
     ports:
-      - "127.0.0.1:8080:80"
+      - "172.17.0.1:8080:80"
     depends_on:
       - backend
     restart: unless-stopped
