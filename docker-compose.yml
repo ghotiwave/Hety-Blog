@@ -29,6 +29,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    # 让容器内 nginx 能反代到宿主机上的服务（如抢座工具 :8123）
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       # 笔记站：构建 Quartz 后取消注释下方两行，把路径换成你的 public 目录
       # - /home/ubuntu/notes-content/public:/usr/share/nginx/notes:ro
