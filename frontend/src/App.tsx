@@ -34,7 +34,7 @@ function AdminShell() {
     ['/admin/dashboard', '控制面板'],
     ['/admin/posts', '文章管理'],
     ['/admin/comments', '评论管理'],
-    ['/admin/profile', '个人资料'],
+    ['/admin/profile', '关于页'],
     ['/admin/users', '用户管理'],
   ]
   return (
