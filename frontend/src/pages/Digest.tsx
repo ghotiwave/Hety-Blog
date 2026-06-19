@@ -27,8 +27,8 @@ export function Digest() {
 
   return (
     <div>
-      <h1 className="text-2xl text-[var(--color-text)] mb-2 font-light tracking-wide">AI 日报</h1>
-      <p className="text-sm text-[var(--color-text-muted)] mb-8">每日 AI 行业动态，自动生成。</p>
+      <h1 className="text-2xl text-[var(--color-text)] mb-2 font-light tracking-wide">科技日报</h1>
+      <p className="text-sm text-[var(--color-text-muted)] mb-8">AI 科技新闻，每日早八点更新。</p>
 
       {/* Archive navigation */}
       {archives.length > 0 && (
