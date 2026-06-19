@@ -44,7 +44,7 @@ blog/
 | AI | 兼容 OpenAI 接口（DeepSeek 默认） |
 | 定时任务 | APScheduler（北京时间 8:00 生成日报） |
 | 邮件 | Resend（验证码注册） |
-| 部署 | Docker Compose（Nginx 反代 + Uvicorn） |
+| 部署 | Docker Compose（前端 Nginx + 后端 Uvicorn）；HTTPS 由上游 Caddy 网关统一管理 |
 
 ## 本地开发
 
@@ -158,9 +158,9 @@ const res = await api.post('/auth/login', { username, password })
 - **`news_fetcher.py` 只用 `timezone.utc`，不要引入 `BEIJING_TZ`**——该文件有两处 `datetime.now()` 且被 `except Exception: return []` 包裹，未导入的变量会导致新闻源静默失败，日报内容大幅缩水
 
 ### 笔记站
-- Quartz 生成 clean URL（无 `.html`），nginx 需 `try_files $uri $uri.html $uri/`
+- 笔记站已独立为 `notes.gianniiss.top`（Quartz，由 **Caddy 网关**直接服务静态产物），**不再挂在博客下**。
+- Quartz 生成 clean URL（无 `.html`），由网关 `try_files {path} {path}.html {path}/index.html` 处理。
 - SPA 模式在子路径下导航有 bug，已关闭（`enableSPA: false`）
-- 笔记间链接无 `.html` 后缀
 
 ### 时区
 - 服务器/容器使用 UTC
@@ -173,23 +173,28 @@ const res = await api.post('/auth/login', { username, password })
 
 ## 部署架构
 
+博客是 MySite 多站架构中的**一个子站**，跑在 `blog.gianniiss.top`。整站边缘由独立的 **Caddy 网关**（`~/gateway`，另一个项目）统一终止 HTTPS、按子域分发——博客本身**不再终止 TLS、也不再服务 notes**。
+
 ```
-客户端 → :443 (nginx) → 前端静态文件
-                       → /api/* → backend:8000 (FastAPI)
-                       → /uploads/* → backend:8000
-                       → /notes/* → 静态文件（Quartz 构建产物）
+浏览器 ──https──> Caddy 网关 (:443，自动证书)
+                     │  blog.gianniiss.top
+                     ▼
+        blog 前端容器（宿主机 172.17.0.1:8080，容器内 nginx listen 80）
+                     ├─ /          → 前端静态文件（SPA）
+                     ├─ /api/*     → backend:8000 (FastAPI)
+                     └─ /uploads/* → backend:8000
 ```
 
-- nginx SSL 证书在服务器 `/etc/letsencrypt/live/gianniiss.top/`
-- 证书自动续期 cron：`0 3 * * * certbot renew`
-- CI/CD 工作流会自动解注释 docker-compose 和 nginx 的 SSL/Notes 配置
-- 改服务器 `.env`（如 API Key）需 SSH 手动编辑 `~/blog/.env`，然后 `docker compose up -d backend`。CI/CD 通过 `--exclude='.env'` 保护服务器端 .env 不被覆盖
-- 运维指南在 `D:\MySite\Deploy guide.md`（不在仓库内）
+- 前端容器只发布到宿主机 `172.17.0.1:8080`，**不对公网**；公网只走网关的 443。
+- 证书由 **Caddy 自动管理**（HTTP-01），博客侧已无任何 certbot / SSL 配置（旧的 `/etc/letsencrypt` + `certbot renew` 已弃用）。
+- 改服务器 `.env`（如 API Key）需 SSH 手动编辑 `~/blog/.env`，然后 `docker compose up -d backend`。CI 通过 `--exclude='.env'` 保护服务器端 .env。
+- 数据库每天凌晨 3 点自动备份到 `~/blog-backups/`。
+- **完整多站架构（网关 / 主页 / 笔记 / 工具、域名拓扑、密钥位置）见 `D:\MySite\PROJECT_MEMORY.md`**；运维细节见 `D:\MySite\Deploy guide.md`（均不在本仓库）。
 
 ## CI/CD
 
 ### 博客站（Hety-Blog）
-`push main` → rsync 代码到服务器 → 解注释生产配置 → `docker compose up -d --build`
+`push main` → rsync 代码到服务器 `~/blog/` → `docker compose up -d --build`（TLS 归 Caddy 网关，CI 不再处理 SSL/域名/notes）
 
 ### 笔记站（Hety-Wiki）
 `push main` → npm ci → Quartz 构建 → rsync `public/` 到服务器
