@@ -20,9 +20,6 @@ export function Header() {
           </a>
           <nav className="flex items-center gap-6 text-sm">
             <Link to="/blog" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">博客</Link>
-            {siteConfig.features.notes && (
-              <a href={siteConfig.notesUrl} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">笔记</a>
-            )}
             {siteConfig.features.digest && (
               <Link to="/digest" className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">AI 日报</Link>
             )}
