@@ -40,7 +40,7 @@ export function Dashboard() {
             </Button>
           )}
           <Link to="/admin/posts/new">
-            <Button>新文章</Button>
+            <Button>发博客</Button>
           </Link>
         </div>
       </div>

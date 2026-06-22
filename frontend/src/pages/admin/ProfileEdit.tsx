@@ -60,7 +60,7 @@ export function ProfileEdit() {
           <label className="text-sm font-medium text-[var(--color-text)] block mb-2">「关于本站」内容（支持 Markdown）</label>
           <Textarea
             id="about-page-textarea"
-            placeholder="编辑「关于本站」页面内容（支持 Markdown）"
+            placeholder="编辑「关于本站」页面内容"
             value={aboutPage}
             onChange={(e) => setAboutPage(e.target.value)}
             className="min-h-[300px]"
