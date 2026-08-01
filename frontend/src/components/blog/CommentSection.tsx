@@ -36,7 +36,7 @@ function UserCard({ comment, onClose }: { comment: Comment; onClose: () => void 
         </div>
         {comment.signature ? (
           <div className="text-xs text-[var(--color-text-muted)] leading-relaxed border-t border-[var(--color-border)]/50 pt-2">
-            <MarkdownRenderer allowedElements={['strong','a','code','em','p']}>{comment.signature}</MarkdownRenderer>
+            <MarkdownRenderer allowedElements={['strong','a','code','em','p','h1','h2','h3','h4']}>{comment.signature}</MarkdownRenderer>
           </div>
         ) : (
           <div className="text-xs text-[var(--color-text-muted)]/50 italic border-t border-[var(--color-border)]/50 pt-2">暂无签名</div>

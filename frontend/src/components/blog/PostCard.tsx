@@ -19,19 +19,19 @@ export function PostCard({ id, slug, title, summary, coverImage, tags, createdAt
   const tagList = (tags || '').split(',').map((t) => t.trim()).filter(Boolean)
 
   return (
-    <Link to={`/blog/${slug || id}`} className="block group py-5 border-b border-[var(--color-border)]/60 hover:bg-[var(--color-surface)]/50 transition-colors px-2 -mx-2">
-      <div className="flex gap-5">
+    <Link to={`/blog/${slug || id}`} className="block group mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg)]/70 shadow-[0_8px_24px_rgba(0,0,0,0.035)] hover:bg-[var(--color-surface)] hover:border-[var(--color-primary)]/40 hover:-translate-y-0.5 transition-all overflow-hidden">
+      <div className="flex gap-4 p-4 md:p-5">
         {coverImage && (
-          <img src={coverImage} alt={title} className="w-24 h-24 object-cover rounded flex-shrink-0" />
+          <img src={coverImage} alt={title} className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl flex-shrink-0" />
         )}
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors mb-1 leading-snug font-normal tracking-wide">
+          <h3 className="text-base md:text-lg text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors mb-1.5 leading-snug font-semibold tracking-tight">
             {title}
           </h3>
-          {summary && <p className="text-sm text-[var(--color-text-muted)] mb-2 line-clamp-2">{summary}</p>}
+          {summary && <p className="text-sm text-[var(--color-text-muted)] mb-3 line-clamp-2 leading-relaxed">{summary}</p>}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-[var(--color-text-muted)]">
-              {new Date(createdAt).toLocaleDateString('zh-CN')} · {commentCount} 评论 · {likeCount} 赞 · {viewCount} 阅读
+              {new Date(createdAt).toLocaleDateString('zh-CN')} · {viewCount} 阅读
             </span>
             {tagList.length > 0 && tagList.map((tag) => (
               <span
@@ -39,7 +39,7 @@ export function PostCard({ id, slug, title, summary, coverImage, tags, createdAt
                 onClick={(e) => { e.preventDefault(); onTagClick?.(tag) }}
                 className={`px-2 py-0.5 text-[10px] cursor-pointer transition-colors ${
                   activeTag === tag
-                    ? 'bg-[#8b7355] text-white'
+                    ? 'bg-[var(--color-primary)] text-white'
                     : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-border)]'
                 }`}
               >

@@ -6,6 +6,7 @@ import api from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { CommentSection } from '@/components/blog/CommentSection'
 import { ArticleLayout } from '@/components/blog/ArticleLayout'
+import { fetchAllArticleNavItems, type ArticleNavItem } from '@/services/articleNavigation'
 
 interface Post {
   id: number
@@ -27,7 +28,7 @@ export function PostDetail() {
   const [likeLoading, setLikeLoading] = useState(false)
   const { user } = useAuth()
 
-  const [adjacent, setAdjacent] = useState<{ prev: any; next: any }>({ prev: null, next: null })
+  const [navItems, setNavItems] = useState<ArticleNavItem[]>([])
 
   useEffect(() => {
     api.get(`/posts/${id}`).then((res) => {
@@ -36,16 +37,13 @@ export function PostDetail() {
       setLikeCount(p.like_count || 0)
       setLoading(false)
 
-      // Adjacent posts
-      api.get('/posts', { params: { page_size: 50 } }).then((r) => {
-        const posts = r.data.items
-        const idx = posts.findIndex((x: any) => x.id === p.id)
-        if (idx >= 0) setAdjacent({ prev: posts[idx + 1] || null, next: posts[idx - 1] || null })
-      })
-
       if (user) api.post(`/posts/${p.id}/view`).catch(() => {})
     }).catch(() => setLoading(false))
   }, [id, user])
+
+  useEffect(() => {
+    fetchAllArticleNavItems('/posts', { type: 'blog' }).then(setNavItems).catch(() => {})
+  }, [])
 
   const toggleLike = async () => {
     if (!user || likeLoading || !post) return
@@ -67,30 +65,36 @@ export function PostDetail() {
   const timeStr = ts.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <ArticleLayout content={post.content} prevPost={adjacent.prev} nextPost={adjacent.next}>
-    <article className="max-w-3xl mx-auto">
+    <ArticleLayout
+      content={post.content}
+      navItems={navItems}
+      currentId={post.id}
+      navBasePath="/blog"
+      navTitle="全部文章"
+    >
+    <article className="max-w-4xl mx-auto pb-6">
       {post.cover_image && (
         <img src={post.cover_image} alt={post.title} className="w-full h-64 object-cover rounded-xl mb-6" />
       )}
-      <h1 className="text-3xl text-[var(--color-text)] mb-2" style={{ fontFamily: 'Georgia, serif', fontWeight: 400 }}>
+      <h1 className="text-3xl md:text-4xl leading-tight text-[var(--color-text)] mb-4" style={{ fontFamily: 'Georgia, serif', fontWeight: 400 }}>
         {post.title}
       </h1>
-      <div className="flex items-center gap-4 text-sm text-stone-400 italic mb-8">
+      <div className="flex items-center gap-4 text-sm text-[var(--color-text-muted)] italic mb-10">
         <span>{dateStr} {timeStr}</span>
         <span>{post.view_count} views</span>
       </div>
-      <div className="prose max-w-none mb-8">
+      <div className="prose max-w-none mb-12">
         <MarkdownRenderer>
           {post.content}
         </MarkdownRenderer>
       </div>
 
-      <div className="flex items-center gap-6 py-4 border-t border-b border-amber-200/60 mb-8">
+      <div className="flex items-center gap-6 py-5 border-t border-b border-[var(--color-border)] mb-10">
         <button
           onClick={toggleLike}
           disabled={!user || likeLoading}
           className={`flex items-center gap-1 text-sm px-3 py-1 rounded-full cursor-pointer transition-colors ${
-            liked ? 'bg-red-100 text-red-600' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
+            liked ? 'bg-red-100 text-red-600' : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-accent)]'
           } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {liked ? '❤️' : '🤍'} {likeCount}

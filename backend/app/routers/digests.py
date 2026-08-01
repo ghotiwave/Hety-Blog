@@ -1,11 +1,20 @@
 import math
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.database import get_db
 from app.models.digest import NewsDigest
 from app.schemas.digest import DigestResponse, PaginatedDigests
 
 router = APIRouter(prefix="/api/digests", tags=["digests"])
+
+
+@router.get("/archives")
+def list_archives(db: Session = Depends(get_db)):
+    """Return every month with digests, independent of the paginated feed."""
+    month = func.substr(NewsDigest.created_at, 1, 7)
+    rows = db.query(month.label("month"), func.count(NewsDigest.id).label("count")).group_by(month).order_by(month.desc()).all()
+    return [{"month": row.month, "count": row.count} for row in rows if row.month]
 
 
 @router.get("", response_model=PaginatedDigests)

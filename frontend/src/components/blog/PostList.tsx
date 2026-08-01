@@ -9,6 +9,7 @@ interface Post {
   summary: string | null
   cover_image: string | null
   tags: string | null
+  slug: string | null
   created_at: string
   comment_count: number
   like_count: number
@@ -41,24 +42,25 @@ export function PostList({ postType }: { postType?: string }) {
   }, [])
 
   return (
-    <div>
-      <Input
-        placeholder="Search posts..."
+    <div className="grid grid-cols-1 lg:grid-cols-[9rem_minmax(0,1fr)] gap-6 lg:gap-8">
+      <aside className="lg:sticky lg:top-24 h-fit">
+        <p className="text-[11px] font-mono tracking-[0.16em] text-[var(--color-text-muted)] mb-3">BROWSE</p>
+        <Input
+        placeholder="搜索文章"
         value={q}
         onChange={(e) => { setQ(e.target.value); setPage(1) }}
-        className="mb-4"
+        className="mb-4 bg-[var(--color-surface)]"
       />
-
       {allTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex lg:flex-col flex-wrap gap-1.5">
           {allTags.map((tag) => (
             <button
               key={tag}
               onClick={() => toggleTag(tag)}
-              className={`px-3 py-0.5 rounded-full text-xs cursor-pointer transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-left text-xs cursor-pointer transition-colors ${
                 activeTag === tag
-                  ? 'bg-amber-700 text-white'
-                  : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                  ? 'bg-[var(--color-accent)] text-[var(--color-primary)]'
+                  : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]'
               }`}
             >
               {tag}
@@ -66,11 +68,13 @@ export function PostList({ postType }: { postType?: string }) {
           ))}
         </div>
       )}
+      </aside>
 
+      <div>
       {loading ? (
-        <div className="text-center text-stone-300 py-12 italic">Loading...</div>
+        <div className="text-center text-[var(--color-text-muted)] py-12">正在加载文章…</div>
       ) : posts.length === 0 ? (
-        <div className="text-center text-stone-300 py-12 italic">No posts yet.</div>
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 text-center text-[var(--color-text-muted)] py-12">没有找到匹配的文章。</div>
       ) : (
         <>
           {posts.map((p) => (
@@ -97,7 +101,7 @@ export function PostList({ postType }: { postType?: string }) {
                   key={i}
                   onClick={() => setPage(i + 1)}
                   className={`px-3 py-1 rounded text-sm cursor-pointer ${
-                    page === i + 1 ? 'bg-amber-700 text-white' : 'bg-stone-200 text-stone-600 hover:bg-stone-300'
+                    page === i + 1 ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-border)]'
                   }`}
                 >
                   {i + 1}
@@ -107,6 +111,7 @@ export function PostList({ postType }: { postType?: string }) {
           )}
         </>
       )}
+      </div>
     </div>
   )
 }

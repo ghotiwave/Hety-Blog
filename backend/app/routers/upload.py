@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 import os
 import io
-from PIL import Image
+from PIL import Image, ImageOps
 from app.config import settings
+from app.dependencies import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -11,7 +13,7 @@ MAX_DIM = 800
 
 
 @router.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...), _: User = Depends(get_current_user)):
     ext = (file.filename or "png").rsplit(".", 1)[-1].lower()
     if ext not in ("png", "jpg", "jpeg", "gif", "webp"):
         raise HTTPException(status_code=400, detail="不支持的文件类型")
@@ -21,7 +23,8 @@ async def upload_image(file: UploadFile = File(...)):
     # Always compress and resize to keep avatars small
     if ext in ("jpg", "jpeg", "png", "webp"):
         try:
-            img = Image.open(io.BytesIO(contents))
+            # Apply the camera's EXIF orientation before stripping metadata during JPEG export.
+            img = ImageOps.exif_transpose(Image.open(io.BytesIO(contents)))
             img = img.convert("RGBA") if img.mode in ("RGBA", "P") else img.convert("RGB")
             # Resize large images
             if max(img.size) > MAX_DIM:

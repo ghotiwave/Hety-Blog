@@ -8,6 +8,7 @@ import 'katex/dist/katex.min.css'
 import api from '@/services/api'
 import { ArticleLayout } from '@/components/blog/ArticleLayout'
 import { Button } from '@/components/ui/Button'
+import { fetchAllArticleNavItems, type ArticleNavItem } from '@/services/articleNavigation'
 
 interface Digest {
   id: number; title: string; topic: string; content: string
@@ -196,10 +197,15 @@ export function DigestDetail() {
   const [digest, setDigest] = useState<Digest | null>(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<NewsItem | null>(null)
+  const [navItems, setNavItems] = useState<ArticleNavItem[]>([])
 
   useEffect(() => {
     api.get(`/digests/${id}`).then((res) => setDigest(res.data)).finally(() => setLoading(false))
   }, [id])
+
+  useEffect(() => {
+    fetchAllArticleNavItems('/digests').then(setNavItems).catch(() => {})
+  }, [])
 
   const parsed = useMemo(() => {
     if (!digest) return null
@@ -219,27 +225,33 @@ export function DigestDetail() {
   const { spotlightItems, sectionBlocks, sourceUrls } = parsed
 
   return (
-    <ArticleLayout content={digest.content}>
-      <div className="max-w-6xl mx-auto">
+    <ArticleLayout
+      content={digest.content}
+      navItems={navItems}
+      currentId={digest.id}
+      navBasePath="/digest"
+      navTitle="全部日报"
+    >
+      <div className="max-w-5xl mx-auto pb-8">
         <Link to="/digest">
           <Button variant="ghost" size="sm" className="mb-4">← 返回</Button>
         </Link>
 
         {/* Masthead */}
-        <header className="mb-8 pb-4 border-b-2 border-[var(--color-text)]">
-          <h1 className="text-2xl text-[var(--color-text)] font-bold tracking-tight mb-1">{digest.title}</h1>
-          <p className="text-xs text-[var(--color-text-muted)]">
+        <header className="mb-10 pb-6 border-b-2 border-[var(--color-text)]">
+          <h1 className="text-3xl md:text-4xl leading-tight text-[var(--color-text)] font-bold tracking-tight mb-3">{digest.title}</h1>
+          <p className="text-sm text-[var(--color-text-muted)]">
             {new Date(digest.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </header>
 
         {/* Spotlight — 3-col grid */}
         {spotlightItems.length > 0 && (
-          <section className="mb-8 p-6 md:p-8 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface)]/60">
-            <h2 id={slugId("🔥 今日特别关注")} className="text-lg font-bold text-[var(--color-text)] mb-5 pb-3 border-b border-[var(--color-border)]">
+          <section className="mb-10 p-7 md:p-10 border border-[var(--color-border)] rounded-2xl bg-[var(--color-surface)]/60">
+            <h2 id={slugId("🔥 今日特别关注")} className="text-xl font-bold text-[var(--color-text)] mb-7 pb-4 border-b border-[var(--color-border)]">
               🔥 今日特别关注
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-stretch">
               {spotlightItems.map((item, i) => (
                 <NewsCard key={i} item={item} onClick={() => setExpanded(item)} />
               ))}
@@ -248,24 +260,24 @@ export function DigestDetail() {
         )}
 
         {/* Section boxes */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           {sectionBlocks.map((sec, si) => (
             <section
               key={si}
-              className="p-6 md:p-8 border border-[var(--color-border)] rounded-xl bg-[var(--color-surface)]/60"
+              className="p-7 md:p-10 border border-[var(--color-border)] rounded-2xl bg-[var(--color-surface)]/60"
             >
-              <h2 id={slugId(sec.heading)} className="text-lg font-bold text-[var(--color-text)] mb-5 pb-3 border-b border-[var(--color-border)]">
+              <h2 id={slugId(sec.heading)} className="text-xl font-bold text-[var(--color-text)] mb-7 pb-4 border-b border-[var(--color-border)]">
                 {sec.heading}
               </h2>
               {sec.subBlocks.map((sub, sbi) => (
-                <div key={sbi} className={sbi > 0 ? 'mt-6' : ''}>
+                <div key={sbi} className={sbi > 0 ? 'mt-8' : ''}>
                   {sub.subheading && (
-                    <h3 className="text-sm font-bold text-[var(--color-text)] mb-3 tracking-wide">
+                    <h3 className="text-[15px] font-bold text-[var(--color-text)] mb-4 tracking-wide">
                       {sub.subheading}
                     </h3>
                   )}
                   {sub.items.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 items-stretch">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                       {sub.items.map((item, ii) => (
                         <NewsCard key={ii} item={item} onClick={() => setExpanded(item)} />
                       ))}

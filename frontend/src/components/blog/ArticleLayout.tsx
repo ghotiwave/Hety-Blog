@@ -1,12 +1,15 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import type { ArticleNavItem } from '@/services/articleNavigation'
 
 interface TOCItem { id: string; text: string; level: number }
 
 interface Props {
   content: string
-  prevPost?: { id: number; title: string } | null
-  nextPost?: { id: number; title: string } | null
+  navItems: ArticleNavItem[]
+  currentId: number
+  navBasePath: '/blog' | '/digest'
+  navTitle: string
   children: React.ReactNode
 }
 
@@ -30,60 +33,101 @@ function extractTOC(md: string): TOCItem[] {
   return items
 }
 
-export function ArticleLayout({ content, prevPost, nextPost, children }: Props) {
+export function ArticleLayout({ content, navItems, currentId, navBasePath, navTitle, children }: Props) {
   const toc = useMemo(() => extractTOC(content), [content])
+  const tocTrackRef = useRef<HTMLDivElement>(null)
+  const [activeHeading, setActiveHeading] = useState('')
+  const [progressTop, setProgressTop] = useState(0)
+
+  useEffect(() => {
+    let frame = 0
+    const updateReadingPosition = () => {
+      frame = 0
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+      const progress = maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0
+      const trackHeight = tocTrackRef.current?.clientHeight ?? 0
+      setProgressTop(progress * Math.max(0, trackHeight - 40))
+
+      let current = toc[0]?.id ?? ''
+      for (const item of toc) {
+        const heading = document.getElementById(item.id)
+        if (heading && heading.getBoundingClientRect().top <= 160) current = item.id
+        else if (heading) break
+      }
+      setActiveHeading(current)
+    }
+    const requestUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(updateReadingPosition)
+    }
+
+    updateReadingPosition()
+    window.addEventListener('scroll', requestUpdate, { passive: true })
+    window.addEventListener('resize', requestUpdate)
+    return () => {
+      window.removeEventListener('scroll', requestUpdate)
+      window.removeEventListener('resize', requestUpdate)
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [toc])
 
   return (
-    <div className="flex justify-center relative">
-      {/* Left: article navigation — hover reveal */}
-      <div className="sidebar-left fixed left-0 top-1/2 -translate-y-1/2 z-50 flex" style={{ minWidth: 6 }}>
-        {/* Hover strip */}
-        <div className="w-2.5 bg-[var(--color-primary)]/20 hover:bg-[var(--color-primary)]/50 rounded-r cursor-pointer shrink-0 transition-colors" />
-        {/* Panel */}
-        <div className="sidebar-panel bg-[var(--color-surface)] border border-[var(--color-border)] rounded-r-lg shadow-lg p-6 w-80 ml-1">
-          <h4 className="text-sm text-[var(--color-text-muted)] tracking-wider mb-3 uppercase">导航</h4>
-          <div className="space-y-3">
-            {prevPost ? (
-              <Link to={`/blog/${prevPost.slug || prevPost.id}`} className="block group">
-                <span className="text-[10px] text-[var(--color-text-muted)]">← Previous</span>
-                <p className="text-base text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors mt-0.5 line-clamp-3">{prevPost.title}</p>
-              </Link>
-            ) : <p className="text-xs text-[var(--color-text-muted)]">第一篇</p>}
-            {nextPost ? (
-              <Link to={`/blog/${nextPost.slug || nextPost.id}`} className="block group">
-                <span className="text-[10px] text-[var(--color-text-muted)]">Next →</span>
-                <p className="text-base text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors mt-0.5 line-clamp-3">{nextPost.title}</p>
-              </Link>
-            ) : <p className="text-xs text-[var(--color-text-muted)]">最新一篇</p>}
+    <div className="min-[1220px]:grid min-[1220px]:grid-cols-[minmax(0,1fr)_minmax(0,3fr)_minmax(0,1fr)] max-w-[84rem] mx-auto">
+      {/* MkDocs/Zensical-style collection navigation. */}
+      <aside className="hidden min-[1220px]:block sticky top-24 h-fit py-6 pr-6">
+        <nav className="max-h-[calc(100vh-8rem)] overflow-y-auto pr-2" aria-label={navTitle}>
+          <h4 className="text-[11px] text-[var(--color-text-muted)] tracking-[0.18em] mb-4 uppercase">{navTitle}</h4>
+          <div className="space-y-0.5 border-l border-[var(--color-border)]">
+            {navItems.map((item) => {
+              const active = item.id === currentId
+              return (
+                <Link
+                  key={item.id}
+                  to={`${navBasePath}/${item.slug || item.id}`}
+                  aria-current={active ? 'page' : undefined}
+                  className={`block -ml-px border-l-2 py-1.5 pl-4 pr-2 text-[13px] leading-5 transition-colors ${
+                    active
+                      ? 'border-[var(--color-primary)] text-[var(--color-primary)] bg-[var(--color-accent)]/45 font-medium'
+                      : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--color-border)]'
+                  }`}
+                >
+                  {item.title}
+                </Link>
+              )
+            })}
           </div>
-        </div>
-      </div>
+        </nav>
+      </aside>
 
       {/* Main content */}
-      <div className="max-w-3xl w-full">{children}</div>
+      <div className="min-w-0 min-[1220px]:px-7">{children}</div>
 
-      {/* Right: TOC — hover reveal */}
+      {/* Right: current document table of contents. */}
       {toc.length > 0 && (
-        <div className="sidebar-right fixed right-0 top-1/2 -translate-y-1/2 z-50 flex" style={{ minWidth: 6 }}>
-          {/* Panel */}
-          <div className="sidebar-panel bg-[var(--color-surface)] border border-[var(--color-border)] rounded-l-lg shadow-lg p-6 w-80 mr-1" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
-            <h4 className="text-sm text-[var(--color-text-muted)] tracking-wider mb-3 uppercase">目录</h4>
-            <div className="border-l-2 border-[var(--color-border)] pl-3 space-y-0.5">
+        <aside className="hidden min-[1220px]:block sticky top-24 h-fit py-6 pl-6" style={{ maxHeight: 'calc(100vh - 8rem)', overflowY: 'auto' }}>
+          <div>
+            <h4 className="text-xs text-[var(--color-text-muted)] tracking-[0.18em] mb-4 uppercase">本页目录</h4>
+            <div ref={tocTrackRef} className="relative border-l border-[var(--color-border)] space-y-0.5">
+              <span
+                aria-hidden="true"
+                className="absolute -left-px top-0 h-10 w-0.5 rounded-full bg-[var(--color-primary)] transition-transform duration-150 motion-reduce:transition-none"
+                style={{ transform: `translateY(${progressTop}px)` }}
+              />
               {toc.map((item) => (
-                <div
+                <button
+                  type="button"
                   key={item.id}
                   onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-primary)] cursor-pointer transition-colors block py-0.5 truncate"
-                  style={{ paddingLeft: (item.level - 2) * 10 }}
+                  className={`w-full text-left text-sm leading-6 hover:text-[var(--color-primary)] cursor-pointer transition-colors block py-1.5 pr-2 ${
+                    activeHeading === item.id ? 'text-[var(--color-primary)] font-medium' : 'text-[var(--color-text-muted)]'
+                  }`}
+                  style={{ paddingLeft: 16 + (item.level - 2) * 12 }}
                 >
                   {item.text}
-                </div>
+                </button>
               ))}
             </div>
           </div>
-          {/* Hover strip */}
-          <div className="w-2.5 bg-[var(--color-primary)]/20 hover:bg-[var(--color-primary)]/50 rounded-l cursor-pointer shrink-0 transition-colors" />
-        </div>
+        </aside>
       )}
     </div>
   )
