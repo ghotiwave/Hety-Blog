@@ -14,6 +14,8 @@ interface Post {
   comment_count: number
   like_count: number
   view_count: number
+  word_count: number
+  reading_minutes: number
 }
 
 export function PostList({ postType }: { postType?: string }) {
@@ -34,7 +36,7 @@ export function PostList({ postType }: { postType?: string }) {
       setPosts(res.data.items)
       setTotalPages(res.data.total_pages)
     }).finally(() => setLoading(false))
-  }, [page, q, activeTag])
+  }, [page, q, activeTag, postType])
 
   const toggleTag = useCallback((tag: string) => {
     setActiveTag((prev) => (prev === tag ? '' : tag))
@@ -90,24 +92,42 @@ export function PostList({ postType }: { postType?: string }) {
               commentCount={p.comment_count}
               likeCount={p.like_count}
               viewCount={p.view_count}
+              wordCount={p.word_count}
+              readingMinutes={p.reading_minutes}
               activeTag={activeTag}
               onTagClick={toggleTag}
             />
           ))}
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-8">
+            <nav className="flex items-center justify-center gap-2 mt-8" aria-label="博客分页">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 rounded-lg text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] disabled:opacity-35 disabled:cursor-not-allowed"
+              >
+                上一页
+              </button>
               {Array.from({ length: totalPages }, (_, i) => (
                 <button
                   key={i}
                   onClick={() => setPage(i + 1)}
-                  className={`px-3 py-1 rounded text-sm cursor-pointer ${
+                  className={`min-w-8 px-2.5 py-1.5 rounded-lg text-sm cursor-pointer ${
                     page === i + 1 ? 'bg-[var(--color-primary)] text-white' : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-border)]'
                   }`}
                 >
                   {i + 1}
                 </button>
               ))}
-            </div>
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                disabled={page === totalPages}
+                className="px-3 py-1.5 rounded-lg text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] disabled:opacity-35 disabled:cursor-not-allowed"
+              >
+                下一页
+              </button>
+            </nav>
           )}
         </>
       )}

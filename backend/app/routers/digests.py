@@ -5,6 +5,7 @@ from sqlalchemy import func
 from app.database import get_db
 from app.models.digest import NewsDigest
 from app.schemas.digest import DigestResponse, PaginatedDigests
+from app.utils.reading import reading_stats
 
 router = APIRouter(prefix="/api/digests", tags=["digests"])
 
@@ -35,8 +36,10 @@ def list_digests(
         .limit(page_size)
         .all()
     )
-    items = [
-        DigestResponse(
+    items = []
+    for d in digests:
+        word_count, reading_minutes = reading_stats(d.content)
+        items.append(DigestResponse(
             id=d.id,
             title=d.title,
             topic=d.topic,
@@ -44,9 +47,9 @@ def list_digests(
             source_urls=d.source_urls,
             slug=d.slug,
             created_at=d.created_at.isoformat() if d.created_at else "",
-        )
-        for d in digests
-    ]
+            word_count=word_count,
+            reading_minutes=reading_minutes,
+        ))
     return PaginatedDigests(
         items=items,
         total=total,
@@ -62,6 +65,7 @@ def latest_digest(db: Session = Depends(get_db)):
     if not d:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="No digests available")
+    word_count, reading_minutes = reading_stats(d.content)
     return DigestResponse(
         id=d.id,
         title=d.title,
@@ -69,6 +73,8 @@ def latest_digest(db: Session = Depends(get_db)):
         content=d.content,
         source_urls=d.source_urls,
         created_at=d.created_at.isoformat() if d.created_at else "",
+        word_count=word_count,
+        reading_minutes=reading_minutes,
     )
 
 
@@ -81,6 +87,7 @@ def get_digest(digest_id: str, db: Session = Depends(get_db)):
     if not d:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Digest not found")
+    word_count, reading_minutes = reading_stats(d.content)
     return DigestResponse(
         id=d.id,
         title=d.title,
@@ -88,4 +95,6 @@ def get_digest(digest_id: str, db: Session = Depends(get_db)):
         content=d.content,
         source_urls=d.source_urls,
         created_at=d.created_at.isoformat() if d.created_at else "",
+        word_count=word_count,
+        reading_minutes=reading_minutes,
     )

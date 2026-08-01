@@ -77,8 +77,8 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const hasMore = page < totalPages
 
-  const fetchComments = useCallback((p?: number) => {
-    const pg = p ?? page
+  const fetchComments = useCallback((p = 1) => {
+    const pg = p
     api.get(`/posts/${postId}/comments`, { params: { sort, page: pg } }).then((res) => {
       if (pg === 1) {
         setComments(res.data.items)
@@ -87,9 +87,15 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
       }
       setTotal(res.data.total)
     }).finally(() => setLoadingMore(false))
-  }, [postId, sort, page])
+  }, [postId, sort])
 
-  useEffect(() => { fetchComments(1) }, [sort])
+  useEffect(() => {
+    setComments([])
+    setPage(1)
+    setTotal(0)
+    setReplyTarget(null)
+    fetchComments(1)
+  }, [fetchComments])
 
   const loadMore = () => {
     setLoadingMore(true)
@@ -102,7 +108,7 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
     <div className="mt-12">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl text-[var(--color-text)] font-light tracking-wide">
-          评论 ({totalComments})
+          评论 ({total || totalComments})
         </h2>
         <div className="flex gap-2 text-sm">
           {(['time', 'hot'] as const).map((s) => (

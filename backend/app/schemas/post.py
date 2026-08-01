@@ -53,6 +53,8 @@ class PostListItem(BaseModel):
     like_count: int = 0
     view_count: int = 0
     comment_count: int = 0
+    word_count: int = 0
+    reading_minutes: int = 1
 
     model_config = {"from_attributes": True}
 

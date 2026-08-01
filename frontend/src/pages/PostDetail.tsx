@@ -104,7 +104,7 @@ export function PostDetail() {
         {!user && <span className="text-xs text-stone-300">登录后点赞</span>}
       </div>
 
-      <CommentSection postId={post.id} totalComments={post.comment_count} />
+      <CommentSection key={post.id} postId={post.id} totalComments={post.comment_count} />
 
     </article>
     </ArticleLayout>

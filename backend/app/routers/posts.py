@@ -7,6 +7,7 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.models.like import Like
 from app.schemas.post import PostResponse, PostListItem, PaginatedPosts
+from app.utils.reading import reading_stats
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
 
@@ -41,6 +42,7 @@ def list_posts(
     for p in posts:
         comment_count = db.query(func.count(Comment.id)).filter(Comment.post_id == p.id).scalar()
         like_count = db.query(func.count(Like.id)).filter(Like.post_id == p.id).scalar()
+        word_count, reading_minutes = reading_stats(p.content)
         items.append(
             PostListItem(
                 id=p.id,
@@ -55,6 +57,8 @@ def list_posts(
                 like_count=like_count or 0,
                 view_count=p.view_count or 0,
                 comment_count=comment_count or 0,
+                word_count=word_count,
+                reading_minutes=reading_minutes,
             )
         )
     return PaginatedPosts(

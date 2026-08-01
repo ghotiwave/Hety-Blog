@@ -11,11 +11,13 @@ interface Props {
   commentCount: number
   likeCount?: number
   viewCount?: number
+  wordCount?: number
+  readingMinutes?: number
   activeTag?: string
   onTagClick?: (tag: string) => void
 }
 
-export function PostCard({ id, slug, title, summary, coverImage, tags, createdAt, commentCount, likeCount = 0, viewCount = 0, activeTag, onTagClick }: Props) {
+export function PostCard({ id, slug, title, summary, coverImage, tags, createdAt, likeCount = 0, wordCount = 0, readingMinutes = 1, activeTag, onTagClick }: Props) {
   const tagList = (tags || '').split(',').map((t) => t.trim()).filter(Boolean)
 
   return (
@@ -29,10 +31,8 @@ export function PostCard({ id, slug, title, summary, coverImage, tags, createdAt
             {title}
           </h3>
           {summary && <p className="text-sm text-[var(--color-text-muted)] mb-3 line-clamp-2 leading-relaxed">{summary}</p>}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-[var(--color-text-muted)]">
-              {new Date(createdAt).toLocaleDateString('zh-CN')} · {viewCount} 阅读
-            </span>
+          <div className="flex items-center gap-x-3 gap-y-2 flex-wrap">
+            <span className="text-xs text-[var(--color-text-muted)]">{new Date(createdAt).toLocaleDateString('zh-CN')}</span>
             {tagList.length > 0 && tagList.map((tag) => (
               <span
                 key={tag}
@@ -46,6 +46,9 @@ export function PostCard({ id, slug, title, summary, coverImage, tags, createdAt
                 {tag}
               </span>
             ))}
+            <span className="text-xs text-[var(--color-text-muted)]">{likeCount} likes</span>
+            <span className="text-xs text-[var(--color-text-muted)]">{wordCount} 字</span>
+            <span className="text-xs text-[var(--color-text-muted)]">{readingMinutes} min read</span>
           </div>
         </div>
       </div>
