@@ -4,6 +4,7 @@ from app.database import get_db
 from app.models.profile import Profile
 from app.models.user import User
 from app.schemas.profile import ProfileResponse
+from app.utils.timestamps import beijing_isoformat
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
@@ -28,7 +29,7 @@ def _serialize(p, db: Session):
         douyin=p.douyin,
         about_page=p.about_page,
         email_public=p.email_public,
-        updated_at=p.updated_at.isoformat() if p.updated_at else "",
+        updated_at=beijing_isoformat(p.updated_at),
     )
 
 

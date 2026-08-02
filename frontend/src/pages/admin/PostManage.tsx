@@ -115,7 +115,8 @@ export function PostManage() {
         </div>
       </div>
       <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/45 px-4 py-3 text-xs leading-6 text-[var(--color-text-muted)]">
-        <p><strong className="text-[var(--color-text)]">纯 Markdown：</strong>可直接导入 `.md`；网络图片和现有 `/uploads/…` 链接保持原样。</p>
+        <p><strong className="text-[var(--color-text)]">纯 Markdown：</strong>可直接导入 `.md`，无需固定前置信息；标题依次读取 YAML `title`、第一个一级标题、文件名。</p>
+        <p><strong className="text-[var(--color-text)]">可选元数据：</strong>需要摘要、标签、封面、发布状态或固定 slug 时，再添加 YAML front matter；网络图片和现有 `/uploads/…` 链接保持原样。</p>
         <p><strong className="text-[var(--color-text)]">包含本地图片：</strong>保持 Markdown 中的相对路径，把 `.md` 与图片目录一起压缩成 `.zip` 再导入。</p>
         <p><strong className="text-[var(--color-text)]">导出：</strong>生成包含 `article.md` 与 `assets/` 的 ZIP，站内上传图片会自动打包并改写为可迁移的相对路径。</p>
       </div>

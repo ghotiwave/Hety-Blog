@@ -8,6 +8,7 @@ from app.models.post import Post
 from app.models.like import Like
 from app.models.reading_history import ReadingHistory
 from app.dependencies import get_current_user
+from app.utils.timestamps import beijing_isoformat
 
 router = APIRouter(prefix="/api", tags=["user-actions"])
 
@@ -95,7 +96,7 @@ def reading_history(
             "post_id": row.post_id,
             "slug": row.slug,
             "title": row.title,
-            "visited_at": row.last_visit.isoformat() if row.last_visit else "",
+            "visited_at": beijing_isoformat(row.last_visit),
         })
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
@@ -127,6 +128,6 @@ def liked_posts(
             "post_id": p.id,
             "slug": p.slug,
             "title": p.title,
-            "created_at": r.created_at.isoformat() if r.created_at else "",
+            "created_at": beijing_isoformat(r.created_at),
         })
     return {"items": items, "total": total, "page": page, "page_size": page_size}

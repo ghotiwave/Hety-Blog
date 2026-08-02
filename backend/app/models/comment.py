@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime, timezone
-from app.timezone_utils import BEIJING_TZ
+from app.utils.timestamps import beijing_now_naive
 from app.database import Base
 
 
@@ -15,7 +14,7 @@ class Comment(Base):
     reply_to_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     content = Column(Text, nullable=False)
     like_count = Column(Integer, default=0)
-    created_at = Column(DateTime, default=lambda: datetime.now(BEIJING_TZ))
+    created_at = Column(DateTime, default=beijing_now_naive)
 
     post = relationship("Post", back_populates="comments")
     user = relationship("User", foreign_keys=[user_id])
@@ -30,4 +29,4 @@ class CommentLike(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     comment_id = Column(Integer, ForeignKey("comments.id", ondelete="CASCADE"), nullable=False)
     liked = Column(Integer, default=1)  # 1=like, 0=not used, could be -1 for dislike
-    created_at = Column(DateTime, default=lambda: datetime.now(BEIJING_TZ))
+    created_at = Column(DateTime, default=beijing_now_naive)

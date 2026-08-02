@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship
-from datetime import datetime, timezone
-from app.timezone_utils import BEIJING_TZ
+from app.utils.timestamps import beijing_now_naive
 from app.database import Base
 
 
@@ -12,7 +11,7 @@ class Like(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(BEIJING_TZ))
+    created_at = Column(DateTime, default=beijing_now_naive)
 
     user = relationship("User")
     post = relationship("Post")

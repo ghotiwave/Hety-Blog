@@ -7,6 +7,7 @@ from app.models.comment import Comment
 from app.models.user import User
 from app.models.like import Like
 from app.dependencies import get_current_admin
+from app.utils.timestamps import beijing_isoformat
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -48,7 +49,7 @@ def list_comments(
             "post_title": post.title if post else "(deleted)",
             "author_name": user.username if user else "anonymous",
             "content": c.content,
-            "created_at": c.created_at.isoformat() if c.created_at else "",
+            "created_at": beijing_isoformat(c.created_at),
         })
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
@@ -66,7 +67,7 @@ def delete_comment(comment_id: int, db: Session = Depends(get_db), _: User = Dep
 @router.get("/users")
 def list_users(db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     users = db.query(User).order_by(User.created_at.desc()).all()
-    return [{"id": u.id, "username": u.username, "role": u.role, "avatar_url": u.avatar_url, "signature": u.signature, "created_at": u.created_at.isoformat() if u.created_at else ""} for u in users]
+    return [{"id": u.id, "username": u.username, "role": u.role, "avatar_url": u.avatar_url, "signature": u.signature, "created_at": beijing_isoformat(u.created_at)} for u in users]
 
 
 @router.delete("/users/{user_id}")

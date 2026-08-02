@@ -44,4 +44,15 @@ describe('PostManage Markdown bundles', () => {
     expect(mocks.apiPost).toHaveBeenCalledWith('/admin/posts/import', expect.any(FormData))
     expect(await screen.findByText('已导入《导入文章》')).toBeInTheDocument()
   })
+
+  it('explains the title fallback for plain Markdown', async () => {
+    render(
+      <MemoryRouter>
+        <PostManage />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByText(/无需固定前置信息/)).toBeInTheDocument()
+    expect(screen.getByText(/YAML `title`、第一个一级标题、文件名/)).toBeInTheDocument()
+  })
 })

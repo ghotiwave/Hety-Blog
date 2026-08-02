@@ -21,6 +21,8 @@ ALLOWED_POST_TYPES = {"blog", "note"}
 MARKDOWN_IMAGE_RE = re.compile(
     r"(!\[[^\]\r\n]*\]\(\s*)(<[^>\r\n]+>|[^\s)]+)([^)\r\n]*\))"
 )
+ATX_HEADING_RE = re.compile(r"^[ \t]{0,3}#[ \t]+(.+?)\s*$")
+FENCE_RE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})")
 
 
 @dataclass(frozen=True)
@@ -78,7 +80,34 @@ def _parse_bool(value: Any, default: bool = False) -> bool:
     raise ValueError("published 必须是布尔值")
 
 
-def parse_markdown_post(raw: bytes) -> ImportedPost:
+def _first_level_heading(markdown: str) -> str | None:
+    active_fence: tuple[str, int] | None = None
+    for line in markdown.splitlines():
+        fence = FENCE_RE.match(line)
+        if fence:
+            marker = fence.group(1)
+            fence_key = (marker[0], len(marker))
+            if active_fence is None:
+                active_fence = fence_key
+            elif fence_key[0] == active_fence[0] and fence_key[1] >= active_fence[1]:
+                active_fence = None
+            continue
+        if active_fence is not None:
+            continue
+        heading = ATX_HEADING_RE.match(line)
+        if heading:
+            return re.sub(r"[ \t]+#+[ \t]*$", "", heading.group(1)).strip() or None
+    return None
+
+
+def _filename_title(filename: str | None) -> str | None:
+    if not filename:
+        return None
+    normalized = filename.replace("\\", "/")
+    return PurePosixPath(normalized).stem.strip() or None
+
+
+def parse_markdown_post(raw: bytes, filename: str | None = None) -> ImportedPost:
     if len(raw) > MAX_MARKDOWN_BYTES:
         raise ValueError("Markdown 文件不能超过 2 MB")
     try:
@@ -86,30 +115,35 @@ def parse_markdown_post(raw: bytes) -> ImportedPost:
     except UnicodeDecodeError as exc:
         raise ValueError("Markdown 文件必须使用 UTF-8 编码") from exc
 
-    if not text.startswith("---"):
-        raise ValueError("缺少 YAML front matter（文件需以 --- 开头）")
+    metadata: dict[str, Any] = {}
+    content = text
+    if text.startswith("---"):
+        lines = text.splitlines(keepends=True)
+        closing_index = next(
+            (index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---"),
+            None,
+        )
+        if closing_index is None:
+            raise ValueError("YAML front matter 缺少结束分隔符 ---")
+        try:
+            parsed_metadata = yaml.safe_load("".join(lines[1:closing_index])) or {}
+        except yaml.YAMLError as exc:
+            raise ValueError("YAML front matter 格式错误") from exc
+        if not isinstance(parsed_metadata, dict):
+            raise ValueError("YAML front matter 必须是键值对象")
+        metadata = parsed_metadata
+        content = "".join(lines[closing_index + 1 :]).lstrip("\r\n")
 
-    lines = text.splitlines(keepends=True)
-    closing_index = next(
-        (index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---"),
-        None,
-    )
-    if closing_index is None:
-        raise ValueError("YAML front matter 缺少结束分隔符 ---")
-
-    try:
-        metadata = yaml.safe_load("".join(lines[1:closing_index])) or {}
-    except yaml.YAMLError as exc:
-        raise ValueError("YAML front matter 格式错误") from exc
-    if not isinstance(metadata, dict):
-        raise ValueError("YAML front matter 必须是键值对象")
-
-    title = _limited_text(metadata.get("title"), "title", 200)
-    content = "".join(lines[closing_index + 1 :]).lstrip("\r\n")
-    if not title:
-        raise ValueError("front matter 中必须填写 title")
     if not content.strip():
         raise ValueError("文章正文不能为空")
+
+    title = _limited_text(
+        _optional_text(metadata.get("title")) or _first_level_heading(content) or _filename_title(filename),
+        "title",
+        200,
+    )
+    if not title:
+        raise ValueError("无法确定文章标题；请添加 title、第一个一级标题，或使用有意义的文件名")
 
     post_type = (_optional_text(metadata.get("post_type")) or "blog").lower()
     if post_type not in ALLOWED_POST_TYPES:
@@ -198,7 +232,7 @@ def read_markdown_archive(raw: bytes) -> MarkdownArchive:
         raise ValueError("ZIP 中必须且只能包含一个 Markdown 文件")
     markdown_path = markdown_files[0]
     return MarkdownArchive(
-        post=parse_markdown_post(files[markdown_path]),
+        post=parse_markdown_post(files[markdown_path], markdown_path),
         markdown_path=markdown_path,
         files=files,
     )

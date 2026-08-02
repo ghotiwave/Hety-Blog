@@ -6,6 +6,7 @@ from app.models.score import Score
 from app.models.user import User
 from app.schemas.score import ScoreSubmit, ScoreResponse, LeaderboardResponse
 from app.dependencies import get_current_user
+from app.utils.timestamps import beijing_isoformat
 
 router = APIRouter(prefix="/api/scores", tags=["scores"])
 
@@ -31,7 +32,7 @@ def leaderboard(db: Session = Depends(get_db)):
             id=s.id,
             username=username,
             score=s.score,
-            played_at=s.played_at.isoformat() if s.played_at else "",
+            played_at=beijing_isoformat(s.played_at),
         )
         for s, username in rows
     ]
@@ -61,5 +62,5 @@ def submit_score(
         id=score.id,
         username=current_user.username,
         score=score.score,
-        played_at=score.played_at.isoformat() if score.played_at else "",
+        played_at=beijing_isoformat(score.played_at),
     )

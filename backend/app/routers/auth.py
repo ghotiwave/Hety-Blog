@@ -16,6 +16,7 @@ from app.models.user import User
 from app.schemas.user import RegisterRequest, LoginRequest, TokenResponse, UserResponse, SendCodeRequest
 from app.dependencies import get_current_user
 from app.services.email_service import send_verification_code, verify_code
+from app.utils.timestamps import beijing_isoformat
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -95,7 +96,7 @@ def user_to_response(user: User) -> dict:
         "avatar_url": user.avatar_url,
         "signature": user.signature,
         "role": user.role,
-        "created_at": user.created_at.isoformat() if user.created_at else "",
+        "created_at": beijing_isoformat(user.created_at),
     }
 
 

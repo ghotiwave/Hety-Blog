@@ -16,6 +16,7 @@ from app.schemas.post import PostCreate, PostUpdate, PostResponse, PostListItem,
 from app.dependencies import get_current_admin
 from app.config import settings
 from app.routers.upload import store_image_bytes
+from app.utils.timestamps import beijing_isoformat
 from app.utils.markdown_posts import (
     MAX_BUNDLE_BYTES,
     MAX_MARKDOWN_BYTES,
@@ -54,8 +55,8 @@ def _post_response(post: Post, db: Session) -> PostResponse:
         post_type=post.post_type or "blog",
         slug=post.slug,
         published=post.published,
-        created_at=post.created_at.isoformat() if post.created_at else "",
-        updated_at=post.updated_at.isoformat() if post.updated_at else "",
+        created_at=beijing_isoformat(post.created_at),
+        updated_at=beijing_isoformat(post.updated_at),
         like_count=like_count or 0,
         view_count=post.view_count or 0,
         comment_count=comment_count or 0,
@@ -90,7 +91,7 @@ def list_all_posts(
                 cover_image=p.cover_image,
                 tags=p.tags,
                 published=p.published,
-                created_at=p.created_at.isoformat() if p.created_at else "",
+                created_at=beijing_isoformat(p.created_at),
                 like_count=like_count or 0,
                 view_count=p.view_count or 0,
                 comment_count=comment_count or 0,
@@ -135,7 +136,7 @@ async def import_post(
             markdown_archive = read_markdown_archive(raw)
             imported = markdown_archive.post
         else:
-            imported = parse_markdown_post(raw)
+            imported = parse_markdown_post(raw, file.filename)
             local_assets = local_markdown_assets(imported)
             if local_assets:
                 raise ValueError(

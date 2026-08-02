@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models.digest import NewsDigest
 from app.schemas.digest import DigestResponse, PaginatedDigests
 from app.utils.reading import reading_stats
+from app.utils.timestamps import beijing_isoformat
 
 router = APIRouter(prefix="/api/digests", tags=["digests"])
 
@@ -46,7 +47,7 @@ def list_digests(
             content=d.content,
             source_urls=d.source_urls,
             slug=d.slug,
-            created_at=d.created_at.isoformat() if d.created_at else "",
+            created_at=beijing_isoformat(d.created_at),
             word_count=word_count,
             reading_minutes=reading_minutes,
         ))
@@ -72,7 +73,7 @@ def latest_digest(db: Session = Depends(get_db)):
         topic=d.topic,
         content=d.content,
         source_urls=d.source_urls,
-        created_at=d.created_at.isoformat() if d.created_at else "",
+        created_at=beijing_isoformat(d.created_at),
         word_count=word_count,
         reading_minutes=reading_minutes,
     )
@@ -94,7 +95,7 @@ def get_digest(digest_id: str, db: Session = Depends(get_db)):
         topic=d.topic,
         content=d.content,
         source_urls=d.source_urls,
-        created_at=d.created_at.isoformat() if d.created_at else "",
+        created_at=beijing_isoformat(d.created_at),
         word_count=word_count,
         reading_minutes=reading_minutes,
     )

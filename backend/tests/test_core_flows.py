@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 import zipfile
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -9,7 +10,7 @@ from types import SimpleNamespace
 import bcrypt
 from fastapi import HTTPException, UploadFile
 from pydantic import ValidationError
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from app.config import settings, validate_runtime_settings
@@ -39,6 +40,7 @@ from app.utils.markdown_posts import (
     read_markdown_archive,
 )
 from app.utils.digest_slugs import assign_unique_digest_slugs, next_digest_slug
+from app.utils.timestamps import beijing_isoformat, normalize_legacy_timestamps
 from app.services.ai_digest import has_digest_for_date
 from app.services.email_service import store_code, verify_code
 from app.services.news_fetcher import fetch_hackernews_top
@@ -210,6 +212,39 @@ class EmailCodeTests(unittest.TestCase):
         self.assertFalse(verify_code(email, code))
 
 
+class TimestampTests(unittest.TestCase):
+    def test_beijing_isoformat_marks_naive_storage_with_offset(self):
+        self.assertEqual(beijing_isoformat(datetime(2026, 8, 3, 9, 30)), "2026-08-03T09:30:00+08:00")
+        self.assertEqual(
+            beijing_isoformat(datetime(2026, 8, 3, 1, 30, tzinfo=timezone.utc)),
+            "2026-08-03T09:30:00+08:00",
+        )
+
+    def test_legacy_timestamp_migration_is_atomic_and_idempotent(self):
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "INSERT INTO posts "
+                    "(id, title, content, published, created_at, updated_at) "
+                    "VALUES (1, 'old', 'body', 1, :old, :old), "
+                    "(2, 'new', 'body', 1, :new, :new)"
+                ),
+                {"old": "2026-06-08 16:30:00.123456", "new": "2026-08-03 09:30:00.654321"},
+            )
+
+        self.assertEqual(normalize_legacy_timestamps(engine), 2)
+        self.assertEqual(normalize_legacy_timestamps(engine), 0)
+        with engine.connect() as connection:
+            rows = connection.execute(
+                text("SELECT id, created_at, updated_at FROM posts ORDER BY id")
+            ).mappings().all()
+        self.assertEqual(str(rows[0]["created_at"]), "2026-06-09 00:30:00.123456")
+        self.assertEqual(str(rows[0]["updated_at"]), "2026-06-09 00:30:00.123456")
+        self.assertEqual(str(rows[1]["created_at"]), "2026-08-03 09:30:00.654321")
+
+
 class MarkdownTests(unittest.TestCase):
     def test_exported_article_can_be_imported(self):
         post = SimpleNamespace(
@@ -230,9 +265,25 @@ class MarkdownTests(unittest.TestCase):
         self.assertTrue(imported.published)
         self.assertTrue(imported.content.startswith("# 正文"))
 
-    def test_import_rejects_missing_front_matter(self):
-        with self.assertRaisesRegex(ValueError, "front matter"):
-            parse_markdown_post(b"# missing metadata")
+    def test_plain_markdown_uses_first_h1_as_title(self):
+        imported = parse_markdown_post("# 普通文章\n\n无需前置元数据。".encode("utf-8"), "ignored.md")
+        self.assertEqual(imported.title, "普通文章")
+        self.assertEqual(imported.post_type, "blog")
+        self.assertFalse(imported.published)
+
+    def test_plain_markdown_falls_back_to_filename_and_ignores_fenced_h1(self):
+        raw = b"```md\n# code sample\n```\n\nBody without a heading."
+        imported = parse_markdown_post(raw, "notes/fallback-title.markdown")
+        self.assertEqual(imported.title, "fallback-title")
+
+    def test_front_matter_without_title_uses_body_h1(self):
+        imported = parse_markdown_post(b"---\ntags: [AI]\n---\n\n# Inferred title\n\nBody")
+        self.assertEqual(imported.title, "Inferred title")
+        self.assertEqual(imported.tags, "AI")
+
+    def test_import_requires_a_title_source(self):
+        with self.assertRaisesRegex(ValueError, "无法确定文章标题"):
+            parse_markdown_post(b"Body without a heading.")
 
     def test_import_rejects_metadata_that_exceeds_database_limits(self):
         raw = f"---\ntitle: ok\nsummary: {'x' * 501}\n---\nbody".encode()

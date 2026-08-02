@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime, timezone
-from app.timezone_utils import BEIJING_TZ
+from app.utils.timestamps import beijing_now_naive
 from app.database import Base
 
 
@@ -11,6 +10,6 @@ class Score(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     score = Column(Integer, nullable=False)
-    played_at = Column(DateTime, default=lambda: datetime.now(BEIJING_TZ))
+    played_at = Column(DateTime, default=beijing_now_naive)
 
     user = relationship("User", back_populates="scores")

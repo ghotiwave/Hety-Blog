@@ -5,6 +5,7 @@ from app.models.profile import Profile
 from app.models.user import User
 from app.schemas.profile import ProfileUpdate, ProfileResponse
 from app.dependencies import get_current_admin
+from app.utils.timestamps import beijing_isoformat
 
 router = APIRouter(prefix="/api/admin/profile", tags=["admin-profile"])
 
@@ -27,7 +28,7 @@ def _serialize(p, db=None):
         douyin=p.douyin,
         about_page=p.about_page,
         email_public=p.email_public,
-        updated_at=p.updated_at.isoformat() if p.updated_at else "",
+        updated_at=beijing_isoformat(p.updated_at),
     )
 
 

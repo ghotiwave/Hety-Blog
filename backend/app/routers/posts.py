@@ -10,6 +10,7 @@ from app.schemas.post import PostResponse, PostListItem, PaginatedPosts
 from app.utils.reading import reading_stats
 from app.models.user import User
 from app.dependencies import get_optional_user
+from app.utils.timestamps import beijing_isoformat
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
 
@@ -55,7 +56,7 @@ def list_posts(
                 post_type=p.post_type or "blog",
                 slug=p.slug,
                 published=p.published,
-                created_at=p.created_at.isoformat() if p.created_at else "",
+                created_at=beijing_isoformat(p.created_at),
                 like_count=like_count or 0,
                 view_count=p.view_count or 0,
                 comment_count=comment_count or 0,
@@ -102,8 +103,8 @@ def get_post(
         post_type=post.post_type or "blog",
         slug=post.slug,
         published=post.published,
-        created_at=post.created_at.isoformat() if post.created_at else "",
-        updated_at=post.updated_at.isoformat() if post.updated_at else "",
+        created_at=beijing_isoformat(post.created_at),
+        updated_at=beijing_isoformat(post.updated_at),
         like_count=like_count or 0,
         view_count=post.view_count or 0,
         comment_count=comment_count or 0,

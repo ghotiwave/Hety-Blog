@@ -7,6 +7,7 @@ from app.models.comment import Comment, CommentLike
 from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentResponse
 from app.dependencies import get_current_user, get_optional_user
+from app.utils.timestamps import beijing_isoformat
 
 router = APIRouter(prefix="/api/posts", tags=["comments"])
 
@@ -38,7 +39,7 @@ def _serialize(c, db: Session, current_user_id: int | None = None):
         "like_count": c.like_count or 0,
         "user_liked": user_liked,
         "reply_count": db.query(func.count(Comment.id)).filter(Comment.parent_id == c.id).scalar() or 0,
-        "created_at": c.created_at.isoformat() if c.created_at else "",
+        "created_at": beijing_isoformat(c.created_at),
     }
 
 
