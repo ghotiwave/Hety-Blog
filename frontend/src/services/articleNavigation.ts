@@ -6,6 +6,20 @@ export interface ArticleNavItem {
   slug?: string | null
 }
 
+export function disambiguateArticleTitles(items: ArticleNavItem[]): ArticleNavItem[] {
+  const totals = new Map<string, number>()
+  for (const item of items) totals.set(item.title, (totals.get(item.title) ?? 0) + 1)
+  const remaining = new Map(totals)
+
+  return items.map((item) => {
+    const total = totals.get(item.title) ?? 1
+    if (total === 1) return item
+    const version = remaining.get(item.title) ?? total
+    remaining.set(item.title, version - 1)
+    return { ...item, title: `${item.title} · v${version}` }
+  })
+}
+
 export async function fetchAllArticleNavItems(
   endpoint: '/posts' | '/digests',
   params: Record<string, string> = {},
@@ -23,5 +37,5 @@ export async function fetchAllArticleNavItems(
     for (const page of pages) items.push(...page.data.items)
   }
 
-  return items
+  return disambiguateArticleTitles(items)
 }

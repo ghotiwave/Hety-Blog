@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useId, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import api from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -21,7 +21,7 @@ function UserCard({ comment, onClose }: { comment: Comment; onClose: () => void 
       <div className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-4 w-56">
         <div className="flex items-center gap-3 mb-3">
           {comment.avatar_url ? (
-            <img src={comment.avatar_url} alt="" className="w-12 h-12 rounded-full object-cover border border-[var(--color-border)]" />
+            <img src={comment.avatar_url} alt="" referrerPolicy="no-referrer" className="w-12 h-12 rounded-full object-cover border border-[var(--color-border)]" />
           ) : (
             <div className="w-12 h-12 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-lg text-[var(--color-text-muted)]">
               {comment.author_name[0]}
@@ -35,8 +35,8 @@ function UserCard({ comment, onClose }: { comment: Comment; onClose: () => void 
           </div>
         </div>
         {comment.signature ? (
-          <div className="text-xs text-[var(--color-text-muted)] leading-relaxed border-t border-[var(--color-border)]/50 pt-2">
-            <MarkdownRenderer allowedElements={['strong','a','code','em','p','h1','h2','h3','h4']}>{comment.signature}</MarkdownRenderer>
+          <div className="prose markdown-compact max-w-none text-xs text-[var(--color-text-muted)] leading-relaxed border-t border-[var(--color-border)]/50 pt-2 break-words">
+            <MarkdownRenderer>{comment.signature}</MarkdownRenderer>
           </div>
         ) : (
           <div className="text-xs text-[var(--color-text-muted)]/50 italic border-t border-[var(--color-border)]/50 pt-2">暂无签名</div>
@@ -71,6 +71,8 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState('')
+  const requestIdRef = useRef(0)
   const { user } = useAuth()
   const [replyTarget, setReplyTarget] = useState<{ id: number; name: string } | null>(null)
 
@@ -79,23 +81,35 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
 
   const fetchComments = useCallback((p = 1) => {
     const pg = p
+    const requestId = ++requestIdRef.current
     api.get(`/posts/${postId}/comments`, { params: { sort, page: pg } }).then((res) => {
+      if (requestId !== requestIdRef.current) return
       if (pg === 1) {
         setComments(res.data.items)
       } else {
         setComments((prev) => [...prev, ...res.data.items])
       }
       setTotal(res.data.total)
-    }).finally(() => setLoadingMore(false))
+      setError('')
+    }).catch(() => {
+      if (requestId === requestIdRef.current) setError('评论加载失败，请稍后重试。')
+    }).finally(() => {
+      if (requestId === requestIdRef.current) setLoadingMore(false)
+    })
   }, [postId, sort])
 
   useEffect(() => {
+    fetchComments(1)
+  }, [fetchComments])
+
+  const changeSort = (nextSort: 'time' | 'hot') => {
+    if (nextSort === sort) return
     setComments([])
     setPage(1)
     setTotal(0)
     setReplyTarget(null)
-    fetchComments(1)
-  }, [fetchComments])
+    setSort(nextSort)
+  }
 
   const loadMore = () => {
     setLoadingMore(true)
@@ -114,7 +128,7 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
           {(['time', 'hot'] as const).map((s) => (
             <button
               key={s}
-              onClick={() => setSort(s)}
+              onClick={() => changeSort(s)}
               className={`px-3 py-1 rounded cursor-pointer transition-colors ${sort === s ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'}`}
             >
               {s === 'time' ? '最新' : '最热'}
@@ -143,6 +157,12 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
       )}
 
       <div className="space-y-0">
+        {error && (
+          <div className="rounded-xl border border-red-500/25 bg-red-500/5 px-4 py-6 text-center">
+            <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
+            <button type="button" onClick={() => fetchComments(1)} className="mt-3 text-sm text-[var(--color-primary)] hover:underline">重新加载</button>
+          </div>
+        )}
         {comments.map((c) => (
           <CommentItem
             key={c.id}
@@ -223,29 +243,36 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
   return (
     <div className="border-b border-[var(--color-border)]/60 py-4">
       <div className="flex items-start gap-4">
-        <button className="relative shrink-0" onClick={() => setShowUserCard(!showUserCard)}>
-          {comment.avatar_url ? (
-            <img src={comment.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover border border-[var(--color-border)] cursor-pointer hover:opacity-80 transition-opacity" />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-sm text-[var(--color-text-muted)] cursor-pointer hover:opacity-80 transition-opacity">
-              {comment.author_name[0]}
-            </div>
-          )}
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            aria-label={`查看 ${comment.author_name} 的资料`}
+            aria-expanded={showUserCard}
+            onClick={() => setShowUserCard(!showUserCard)}
+          >
+            {comment.avatar_url ? (
+              <img src={comment.avatar_url} alt="" referrerPolicy="no-referrer" className="w-10 h-10 rounded-full object-cover border border-[var(--color-border)] cursor-pointer hover:opacity-80 transition-opacity" />
+            ) : (
+              <span className="w-10 h-10 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-sm text-[var(--color-text-muted)] cursor-pointer hover:opacity-80 transition-opacity">
+                {comment.author_name[0]}
+              </span>
+            )}
+          </button>
           {showUserCard && <UserCard comment={comment} onClose={() => setShowUserCard(false)} />}
-        </button>
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-sm text-[var(--color-text)] cursor-pointer hover:text-[var(--color-primary)] transition-colors" onClick={() => setShowUserCard(!showUserCard)}>{comment.author_name}</span>
+            <button type="button" className="font-medium text-sm text-[var(--color-text)] cursor-pointer hover:text-[var(--color-primary)] transition-colors" onClick={() => setShowUserCard(!showUserCard)}>{comment.author_name}</button>
             {comment.author_role === 'admin' && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-medium">管理员</span>
             )}
             <span className="text-xs text-[var(--color-text-muted)]">{new Date(comment.created_at).toLocaleString('zh-CN')}</span>
           </div>
-          <div className="text-sm text-[var(--color-text)] prose max-w-none mb-2">
+          <div className="text-sm text-[var(--color-text)] prose markdown-compact max-w-none mb-2">
             {comment.reply_to_name && (
               <span className="text-[var(--color-primary)] mr-1">回复 @{comment.reply_to_name}:</span>
             )}
-            <MarkdownRenderer allowedElements={['strong','a','code','em','p','img','ul','ol','li','blockquote','pre','h3','h4']}>
+            <MarkdownRenderer>
               {comment.content}
             </MarkdownRenderer>
           </div>
@@ -269,7 +296,7 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
               {allReplies.map((r) => (
                 <div key={r.id} className="flex items-start gap-3">
                   {r.avatar_url ? (
-                    <img src={r.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    <img src={r.avatar_url} alt="" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover shrink-0" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-xs text-[var(--color-text-muted)] shrink-0">
                       {r.author_name[0]}
@@ -283,7 +310,7 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
                       )}
                       <span className="text-xs text-[var(--color-text-muted)]">{new Date(r.created_at).toLocaleString('zh-CN')}</span>
                     </div>
-                    <div className="text-sm text-[var(--color-text)]">
+                    <div className="text-sm text-[var(--color-text)] prose markdown-compact max-w-none">
                       {r.reply_to_name && <span className="text-[var(--color-primary)] mr-1">@ {r.reply_to_name}</span>}
                       <MarkdownRenderer>
                         {r.content}
@@ -348,7 +375,8 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
   const [submitting, setSubmitting] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
   const [preview, setPreview] = useState(false)
-  const textareaId = `comment-textarea-${postId}`
+  const [formError, setFormError] = useState('')
+  const textareaId = useId()
 
   const insertAtCursor = (text: string) => {
     const el = document.getElementById(textareaId) as HTMLTextAreaElement | null
@@ -368,19 +396,17 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
     setImageUploading(true)
+    setFormError('')
     const form = new FormData()
     form.append('file', file)
     try {
-      const token = localStorage.getItem('token')
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      })
-      const data = await res.json()
-      if (data.url) insertAtCursor(`![](${data.url})`)
+      const res = await api.post('/admin/upload', form)
+      if (res.data.url) insertAtCursor(`![](${res.data.url})`)
+    } catch {
+      setFormError('图片上传失败，请检查文件格式和大小后重试。')
     } finally {
       setImageUploading(false)
     }
@@ -390,15 +416,17 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
     e.preventDefault()
     if (!content.trim()) return
     setSubmitting(true)
+    setFormError('')
     try {
       await api.post(`/posts/${postId}/comments`, {
         content: content.trim(),
         parent_id: replyTarget?.id || null,
-        reply_to_user_id: replyTarget?.id || null,
       })
       setContent('')
       onCancelReply()
       onSubmit()
+    } catch {
+      setFormError('评论发送失败，请稍后重试。')
     } finally {
       setSubmitting(false)
     }
@@ -413,9 +441,9 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
         </div>
       )}
       {preview ? (
-        <div className="min-h-[100px] p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]/30 text-sm prose max-w-none prose-a:text-[var(--color-primary)]">
+        <div className="min-h-[100px] p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]/30 text-sm prose markdown-compact max-w-none prose-a:text-[var(--color-primary)]">
           {content ? (
-            <MarkdownRenderer allowedElements={['strong','a','code','em','p','img','ul','ol','li','blockquote','pre','h3','h4']}>
+            <MarkdownRenderer>
               {content}
             </MarkdownRenderer>
           ) : (
@@ -428,6 +456,7 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
           placeholder={replyTarget ? `回复 @${replyTarget.name}...` : placeholder}
           value={content}
           onChange={(e) => setContent(e.target.value)}
+          maxLength={5000}
           required
         />
       )}
@@ -438,7 +467,7 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
         <EmojiPicker onSelect={(text) => insertAtCursor(text)} />
         <label className={`px-2 py-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer transition-colors ${imageUploading ? 'opacity-50' : ''}`}>
           {imageUploading ? '⏳' : '🖼️'}
-          <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+          <input type="file" accept="image/*" onChange={handleImageUpload} disabled={imageUploading} className="hidden" />
         </label>
         <button
           type="button"
@@ -448,6 +477,10 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
           {preview ? '编辑' : '预览'}
         </button>
         <span className="text-[10px] text-[var(--color-text-muted)]">支持 Markdown / 图片 / 表情</span>
+      </div>
+      <div className="flex items-center justify-between gap-3 text-[10px]">
+        {formError ? <p role="alert" className="text-red-600 dark:text-red-300">{formError}</p> : <span />}
+        <span className="shrink-0 text-[var(--color-text-muted)]">{content.length}/5000</span>
       </div>
     </form>
   )

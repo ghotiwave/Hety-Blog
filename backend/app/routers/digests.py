@@ -81,7 +81,7 @@ def latest_digest(db: Session = Depends(get_db)):
 @router.get("/{digest_id}", response_model=DigestResponse)
 def get_digest(digest_id: str, db: Session = Depends(get_db)):
     try:
-        d = db.query(NewsDigest).get(int(digest_id))
+        d = db.get(NewsDigest, int(digest_id))
     except ValueError:
         d = db.query(NewsDigest).filter(NewsDigest.slug == digest_id).first()
     if not d:

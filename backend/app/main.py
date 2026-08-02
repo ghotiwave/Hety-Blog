@@ -1,31 +1,52 @@
 from contextlib import asynccontextmanager
+from datetime import datetime
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.database import init_db
-from app.config import settings
+from app.config import settings, validate_runtime_settings
+from app.timezone_utils import BEIJING_TZ
+
+
+logger = logging.getLogger(__name__)
 
 
 def scheduled_digest_job():
     from app.database import SessionLocal
-    from app.services.ai_digest import generate_daily_digest
+    from app.services.ai_digest import generate_daily_digest, has_digest_for_date
 
     db = SessionLocal()
     try:
+        today = datetime.now(BEIJING_TZ).strftime("%Y-%m-%d")
+        if has_digest_for_date(db, today):
+            logger.info("Daily digest already exists for %s; skipping scheduled generation", today)
+            return
         generate_daily_digest(db)
     except Exception:
-        pass
+        logger.exception("Scheduled daily digest generation failed")
     finally:
         db.close()
 
 
 scheduler = BackgroundScheduler(timezone="Asia/Shanghai")
-scheduler.add_job(scheduled_digest_job, "cron", hour=8, minute=0)
+scheduler.add_job(
+    scheduled_digest_job,
+    "cron",
+    id="daily-tech-digest",
+    hour=8,
+    minute=0,
+    coalesce=True,
+    max_instances=1,
+    misfire_grace_time=3600,
+    replace_existing=True,
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    validate_runtime_settings()
     init_db()
     scheduler.start()
     yield

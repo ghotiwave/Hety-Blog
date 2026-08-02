@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
-import rehypeSlug from 'rehype-slug'
 import 'katex/dist/katex.min.css'
 import api from '@/services/api'
 import { ArticleLayout } from '@/components/blog/ArticleLayout'
@@ -119,51 +119,66 @@ function parseSections(md: string): { spotlight: string; sections: { heading: st
 /** Mini card — equal-height flex column, badge pinned to bottom. Click to expand full content. */
 function NewsCard({ item, onClick }: { item: NewsItem; onClick: () => void }) {
   return (
-    <div
-      onClick={onClick}
-      className="h-full flex flex-col p-4 rounded-lg border border-[var(--color-border)]/60 bg-[var(--color-bg)] shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:shadow-md cursor-pointer"
-    >
-      <div className="flex-1">
-        <div className="text-sm font-semibold text-[var(--color-text)] mb-1.5 leading-snug prose-a:text-[var(--color-primary)] [&_strong]:text-[var(--color-text)]">
-          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em']}>
+    <article className="flex h-full flex-col rounded-lg border border-[var(--color-border)]/60 bg-[var(--color-bg)] p-4 shadow-sm transition-colors hover:border-[var(--color-primary)]/40 hover:shadow-md">
+      <button type="button" onClick={onClick} className="flex flex-1 cursor-pointer flex-col text-left">
+      <span className="block flex-1">
+        <span className="mb-1.5 block text-sm font-semibold leading-snug text-[var(--color-text)] [&_strong]:text-[var(--color-text)]">
+          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'code', 'em']} unwrapDisallowed>
             {item.title}
           </ReactMarkdown>
-        </div>
-        <div className="text-xs text-[var(--color-text)]/75 leading-relaxed mb-4 line-clamp-4">
-          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em', 'p']}>
+        </span>
+        <span className="mb-4 block line-clamp-4 text-xs leading-relaxed text-[var(--color-text)]/75">
+          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'code', 'em']} unwrapDisallowed>
             {item.desc}
           </ReactMarkdown>
-        </div>
-      </div>
+        </span>
+      </span>
+      </button>
       {item.sourceUrl && (
         <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
           className="inline-block text-xs px-2.5 py-1 rounded-full bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors truncate max-w-full w-fit"
         >
           {item.sourceLabel}
         </a>
       )}
-    </div>
+    </article>
   )
 }
 
 /** Full-content modal shown when a news card is clicked */
 function NewsModal({ item, onClose }: { item: NewsItem; onClose: () => void }) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    closeButtonRef.current?.focus()
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose} role="presentation">
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="news-dialog-title"
         className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 md:p-8 relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button
+          ref={closeButtonRef}
+          type="button"
           onClick={onClose}
+          aria-label="关闭新闻详情"
           className="absolute top-4 right-4 text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-2xl cursor-pointer leading-none"
         >
           &times;
         </button>
 
         <div className="pr-8">
-          <h2 className="text-lg font-bold text-[var(--color-text)] mb-4 leading-snug">
+          <h2 id="news-dialog-title" className="text-lg font-bold text-[var(--color-text)] mb-4 leading-snug">
             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} allowedElements={['strong', 'a', 'code', 'em']}>
               {item.title}
             </ReactMarkdown>
@@ -196,11 +211,27 @@ export function DigestDetail() {
   const { id } = useParams<{ id: string }>()
   const [digest, setDigest] = useState<Digest | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadedRouteId, setLoadedRouteId] = useState<string | undefined>()
+  const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<NewsItem | null>(null)
   const [navItems, setNavItems] = useState<ArticleNavItem[]>([])
 
   useEffect(() => {
-    api.get(`/digests/${id}`).then((res) => setDigest(res.data)).finally(() => setLoading(false))
+    const controller = new AbortController()
+    api.get(`/digests/${id}`, { signal: controller.signal }).then((res) => {
+      setDigest(res.data)
+      setLoadedRouteId(id)
+      setError('')
+    }).catch((requestError) => {
+      if (!axios.isCancel(requestError)) {
+        setDigest(null)
+        setLoadedRouteId(id)
+        setError(requestError.response?.status === 404 ? '日报不存在。' : '日报加载失败，请稍后重试。')
+      }
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false)
+    })
+    return () => controller.abort()
   }, [id])
 
   useEffect(() => {
@@ -219,8 +250,8 @@ export function DigestDetail() {
     })() : [] }
   }, [digest])
 
-  if (loading) return <div className="text-center text-[var(--color-text-muted)] py-12">加载中...</div>
-  if (!digest || !parsed) return <div className="text-center text-[var(--color-text-muted)] py-12">日报未找到。</div>
+  if (loading || loadedRouteId !== id) return <div className="text-center text-[var(--color-text-muted)] py-12">正在加载日报…</div>
+  if (!digest || !parsed) return <div className="text-center text-[var(--color-text-muted)] py-12">{error || '日报未找到。'}</div>
 
   const { spotlightItems, sectionBlocks, sourceUrls } = parsed
 

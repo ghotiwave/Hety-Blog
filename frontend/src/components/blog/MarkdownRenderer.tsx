@@ -1,22 +1,16 @@
-import { useState, createElement } from 'react'
+import { Children, isValidElement, useState, type ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
+import rehypeSlug from 'rehype-slug'
 import type { Components } from 'react-markdown'
 
-function slugId(text: string): string {
-  return text
-    .replace(/[^\w\s一-鿿-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .toLowerCase()
-}
-
-function headingId(children: React.ReactNode): string {
-  const text = Array.isArray(children)
-    ? children.map((c) => (typeof c === 'string' ? c : '')).join('')
-    : String(children ?? '')
-  return slugId(text)
+function nodeText(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(nodeText).join('')
+  if (isValidElement<{ children?: ReactNode }>(node)) return nodeText(node.props.children)
+  return ''
 }
 
 interface Props {
@@ -57,41 +51,52 @@ function CopyButton({ code }: { code: string }) {
   )
 }
 
+function MarkdownImage({ src, alt }: { src?: string; alt?: string }) {
+  const [failed, setFailed] = useState(false)
+  if (!src) return null
+  if (failed) {
+    return (
+      <span className="markdown-image-error" role="status">
+        图片加载失败
+        <a href={src} target="_blank" rel="noreferrer">打开原图</a>
+      </span>
+    )
+  }
+  return (
+    <span className="markdown-image">
+      <img
+        src={src}
+        alt={alt || ''}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
+      />
+    </span>
+  )
+}
+
 const components: Components = {
-  h1({ children, ...props }) {
-    return createElement('h1', { ...props, id: headingId(children) }, children)
-  },
-  h2({ children, ...props }) {
-    return createElement('h2', { ...props, id: headingId(children) }, children)
-  },
-  h3({ children, ...props }) {
-    return createElement('h3', { ...props, id: headingId(children) }, children)
-  },
-  h4({ children, ...props }) {
-    return createElement('h4', { ...props, id: headingId(children) }, children)
+  img({ src, alt }) {
+    return <MarkdownImage src={src} alt={alt} />
   },
   pre({ children }) {
-    return <pre>{children}</pre>
-  },
-  code({ className, children, ...props }) {
-    const match = /language-(\w+)/.exec(className || '')
-    const codeStr = String(children).replace(/\n$/, '')
-
-    // Inline code
-    if (!match) {
-      return <code className={className} {...props}>{children}</code>
-    }
-
-    // Block code
+    const child = Children.toArray(children)[0]
+    const className = isValidElement<{ className?: string }>(child) ? child.props.className : ''
+    const language = /language-([\w-]+)/.exec(className || '')?.[1]
+    const code = nodeText(child).replace(/\n$/, '')
     return (
       <div className="code-block-wrapper">
-        <div className="absolute top-2 left-3 text-[10px] text-[var(--color-text-muted)]/60 uppercase tracking-wider">
-          {match[1]}
-        </div>
-        <CopyButton code={codeStr} />
-        <code className={className} {...props}>{children}</code>
+        {language && (
+          <div className="code-language-label">{language}</div>
+        )}
+        <CopyButton code={code} />
+        <pre>{children}</pre>
       </div>
     )
+  },
+  code({ className, children, ...props }) {
+    return <code className={className} {...props}>{children}</code>
   },
 }
 
@@ -99,8 +104,8 @@ export function MarkdownRenderer({ children, allowedElements, className }: Props
   return (
     <div className={className}>
       <ReactMarkdown
-        remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeSlug, rehypeKatex]}
         components={components}
         allowedElements={allowedElements}
       >

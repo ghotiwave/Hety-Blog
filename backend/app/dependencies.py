@@ -6,12 +6,10 @@ from app.config import settings
 from app.database import get_db
 
 security = HTTPBearer()
+optional_security = HTTPBearer(auto_error=False)
 
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db),
-):
+def _resolve_user(credentials: HTTPAuthorizationCredentials, db: Session):
     from app.models.user import User
 
     token = credentials.credentials
@@ -28,6 +26,22 @@ def get_current_user(
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
     return user
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+):
+    return _resolve_user(credentials, db)
+
+
+def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_security),
+    db: Session = Depends(get_db),
+):
+    if credentials is None:
+        return None
+    return _resolve_user(credentials, db)
 
 
 def get_current_admin(current_user=Depends(get_current_user)):

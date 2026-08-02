@@ -1,6 +1,9 @@
-import json
+import logging
 import requests
 from datetime import datetime, timezone, timedelta
+
+
+logger = logging.getLogger(__name__)
 
 
 AIHOT_UA = (
@@ -19,19 +22,19 @@ def fetch_aihot_selected(since_hours=24):
             headers={"User-Agent": AIHOT_UA},
             timeout=15,
         )
-        if resp.status_code == 200:
-            items = resp.json().get("items", [])
-            return [
-                {
-                    "title": item.get("title") or item.get("titleCn") or item.get("titleEn", "Untitled"),
-                    "url": item.get("url", ""),
-                    "description": item.get("summaryCn") or item.get("summary", ""),
-                    "source": f"AI HOT · {item.get('category', 'AI')}",
-                }
-                for item in items
-            ]
-        return []
-    except Exception:
+        resp.raise_for_status()
+        items = resp.json().get("items", [])
+        return [
+            {
+                "title": item.get("title") or item.get("titleCn") or item.get("titleEn", "Untitled"),
+                "url": item.get("url", ""),
+                "description": item.get("summaryCn") or item.get("summary", ""),
+                "source": f"AI HOT · {item.get('category', 'AI')}",
+            }
+            for item in items
+        ]
+    except Exception as exc:
+        logger.warning("Failed to fetch AI HOT news: %s", exc)
         return []
 
 
@@ -49,19 +52,19 @@ def fetch_github_trending():
             headers={"Accept": "application/vnd.github.v3+json"},
             timeout=15,
         )
-        if resp.status_code == 200:
-            items = resp.json().get("items", [])
-            return [
-                {
-                    "title": item["full_name"],
-                    "url": item["html_url"],
-                    "description": item.get("description", "No description"),
-                    "source": "GitHub Trending",
-                }
-                for item in items
-            ]
-        return []
-    except Exception:
+        resp.raise_for_status()
+        items = resp.json().get("items", [])
+        return [
+            {
+                "title": item["full_name"],
+                "url": item["html_url"],
+                "description": item.get("description", "No description"),
+                "source": "GitHub Trending",
+            }
+            for item in items
+        ]
+    except Exception as exc:
+        logger.warning("Failed to fetch GitHub news: %s", exc)
         return []
 
 
@@ -71,25 +74,28 @@ def fetch_hackernews_top():
             "https://hacker-news.firebaseio.com/v0/topstories.json",
             timeout=15,
         )
-        if resp.status_code == 200:
-            ids = resp.json()[:10]
-            items = []
-            for sid in ids:
+        resp.raise_for_status()
+        ids = resp.json()[:10]
+        items = []
+        for sid in ids:
+            try:
                 detail = requests.get(
                     f"https://hacker-news.firebaseio.com/v0/item/{sid}.json",
                     timeout=10,
                 )
-                if detail.status_code == 200:
-                    d = detail.json()
-                    items.append({
-                        "title": d.get("title", "Untitled"),
-                        "url": d.get("url", f"https://news.ycombinator.com/item?id={sid}"),
-                        "description": f"{d.get('score', 0)} points, {d.get('descendants', 0)} comments",
-                        "source": "Hacker News",
-                    })
-            return items
-        return []
-    except Exception:
+                detail.raise_for_status()
+                d = detail.json()
+                items.append({
+                    "title": d.get("title", "Untitled"),
+                    "url": d.get("url", f"https://news.ycombinator.com/item?id={sid}"),
+                    "description": f"{d.get('score', 0)} points, {d.get('descendants', 0)} comments",
+                    "source": "Hacker News",
+                })
+            except Exception as exc:
+                logger.warning("Failed to fetch Hacker News item %s: %s", sid, exc)
+        return items
+    except Exception as exc:
+        logger.warning("Failed to fetch Hacker News index: %s", exc)
         return []
 
 

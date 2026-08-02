@@ -1,4 +1,4 @@
-import random
+import secrets
 import time
 from app.config import settings
 
@@ -16,7 +16,7 @@ def _clean_expired():
 def store_code(email: str) -> str:
     """Generate a 6-digit code and store it for 5 minutes."""
     _clean_expired()
-    code = f"{random.randint(0, 999999):06d}"
+    code = f"{secrets.randbelow(1_000_000):06d}"
     _pending_codes[email] = (code, time.time() + 300)
     return code
 

@@ -6,6 +6,18 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models.digest import NewsDigest
 from app.services.news_fetcher import fetch_all_news
+from app.utils.digest_slugs import next_digest_slug
+
+
+def has_digest_for_date(db: Session, date_slug: str) -> bool:
+    return bool(
+        db.query(NewsDigest.id)
+        .filter(
+            (NewsDigest.slug == date_slug)
+            | NewsDigest.slug.like(f"{date_slug}-%")
+        )
+        .first()
+    )
 
 
 def generate_daily_digest(db: Session) -> NewsDigest:
@@ -79,9 +91,7 @@ def generate_daily_digest(db: Session) -> NewsDigest:
 
     now = datetime.now(BEIJING_TZ)
     today_str = now.strftime('%Y-%m-%d')
-    # Check for existing digests today to avoid slug conflict
-    existing = db.query(NewsDigest).filter(NewsDigest.slug.like(f'{today_str}%')).count()
-    slug = today_str if existing == 0 else f'{today_str}-{existing + 1}'
+    slug = next_digest_slug(db, today_str)
     digest = NewsDigest(
         title=f"技术日报 - {today_str}",
         topic="综合",

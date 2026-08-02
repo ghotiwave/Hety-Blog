@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { useAuth } from '@/contexts/AuthContext'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-import { Card, CardContent } from '@/components/ui/Card'
+import { AuthShell } from '@/components/auth/AuthShell'
 
 export function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,33 +19,45 @@ export function Login() {
     setError('')
     setLoading(true)
     try {
-      await login(username, password)
+      await login(identifier, password)
       navigate('/')
-    } catch {
-      setError('用户名或密码错误')
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const detail = error.response?.data?.detail
+        if (typeof detail === 'string') {
+          setError(detail)
+        } else if (error.response?.status === 401) {
+          setError('用户名、邮箱或密码错误')
+        } else {
+          setError('登录服务暂时不可用，请稍后重试')
+        }
+      } else {
+        setError('登录服务暂时不可用，请稍后重试')
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="max-w-sm mx-auto pt-12">
-      <Card>
-        <CardContent>
-          <h1 className="text-2xl font-bold text-center mb-6 text-[var(--color-text)]">登录</h1>
+    <AuthShell mode="login" title="登录" description="使用用户名或邮箱继续访问你的个人空间。">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input placeholder="用户名" value={username} onChange={(e) => setUsername(e.target.value)} required />
-            <Input type="password" placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            <Input
+              type="text"
+              name="username"
+              autoComplete="username"
+              placeholder="用户名或邮箱"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              maxLength={100}
+              required
+            />
+            <Input type="password" autoComplete="current-password" placeholder="密码" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={128} required />
+            {error && <p role="alert" className="rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-300">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? '登录中...' : '登录'}
             </Button>
           </form>
-          <p className="text-sm text-center text-stone-400 mt-4">
-            还没有账号？ <Link to="/register" className="text-amber-700 hover:underline">注册</Link>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    </AuthShell>
   )
 }

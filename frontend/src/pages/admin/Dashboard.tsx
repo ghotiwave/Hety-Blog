@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
 import api from '@/services/api'
 import { DashboardStats } from '@/components/admin/DashboardStats'
 import { Button } from '@/components/ui/Button'
@@ -22,8 +23,9 @@ export function Dashboard() {
       setDigestMsg(`日报生成成功：${res.data.title}`)
       setStats(null)
       api.get('/admin/dashboard/stats').then((res) => setStats(res.data))
-    } catch (e: any) {
-      setDigestMsg(`生成失败：${e.response?.data?.detail || e.message}`)
+    } catch (error: unknown) {
+      const detail = axios.isAxiosError(error) ? error.response?.data?.detail : null
+      setDigestMsg(`生成失败：${typeof detail === 'string' ? detail : '请稍后重试'}`)
     } finally {
       setDigesting(false)
     }
@@ -31,9 +33,9 @@ export function Dashboard() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-[var(--color-text)]">控制面板</h1>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 sm:gap-3">
           {siteConfig.features.digest && (
             <Button variant="secondary" onClick={handleGenerateDigest} disabled={digesting}>
               {digesting ? '生成中...' : '生成日报'}

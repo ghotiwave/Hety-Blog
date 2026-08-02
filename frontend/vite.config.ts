@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
+const apiProxyTarget = process.env.BLOG_API_PROXY_TARGET || 'http://localhost:9000'
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -12,8 +14,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:9000',
-      '/uploads': 'http://localhost:9000',
+      '/api': apiProxyTarget,
+      '/uploads': apiProxyTarget,
     },
   },
 })

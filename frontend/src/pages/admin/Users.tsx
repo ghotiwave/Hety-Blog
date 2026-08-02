@@ -1,8 +1,18 @@
 import { useState, useEffect } from 'react'
+import axios from 'axios'
 import api from '@/services/api'
 
+interface ManagedUser {
+  id: number
+  username: string
+  role: string
+  avatar_url: string | null
+  signature: string | null
+  created_at: string
+}
+
 export function AdminUsers() {
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<ManagedUser[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchUsers = () => {
@@ -15,8 +25,9 @@ export function AdminUsers() {
     try {
       await api.delete(`/admin/users/${id}`)
       fetchUsers()
-    } catch (e: any) {
-      alert(e?.response?.data?.detail || '操作失败')
+    } catch (error: unknown) {
+      const detail = axios.isAxiosError(error) ? error.response?.data?.detail : null
+      alert(typeof detail === 'string' ? detail : '操作失败')
     }
   }
 
@@ -27,8 +38,8 @@ export function AdminUsers() {
       <h1 className="text-2xl font-bold text-[var(--color-text)] mb-6">用户管理</h1>
       <div className="space-y-2">
         {users.map((u) => (
-          <div key={u.id} className="flex items-center justify-between bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] px-4 py-3">
-            <div className="flex items-center gap-4">
+          <div key={u.id} className="flex flex-col gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               {u.avatar_url ? (
                 <img src={u.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover border border-[var(--color-border)]" />
               ) : (
@@ -36,16 +47,16 @@ export function AdminUsers() {
                   {u.username[0]}
                 </div>
               )}
-              <div>
-                <span className="font-medium text-sm text-[var(--color-text)]">{u.username}</span>
-                {u.signature && <p className="text-[10px] text-[var(--color-text-muted)] truncate max-w-[200px]">{u.signature}</p>}
+              <div className="min-w-0">
+                <span className="block truncate font-medium text-sm text-[var(--color-text)]">{u.username}</span>
+                {u.signature && <p className="max-w-full truncate text-[10px] text-[var(--color-text-muted)] sm:max-w-[240px]">{u.signature}</p>}
               </div>
               <span className={`text-xs px-2 py-0.5 rounded-full ${u.role === 'admin' ? 'bg-red-500/10 text-red-400' : 'bg-blue-500/10 text-blue-400'}`}>
                 {u.role === 'admin' ? '管理员' : '用户'}
               </span>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-[var(--color-text-muted)]">{new Date(u.created_at).toLocaleDateString('zh-CN')}</span>
+            <div className="flex items-center justify-between gap-4 pl-11 sm:justify-end sm:pl-0">
+              <span className="font-mono text-[10px] text-[var(--color-text-muted)]">{new Date(u.created_at).toLocaleDateString('zh-CN')}</span>
               {u.role !== 'admin' && (
                 <button onClick={() => handleDelete(u.id)} className="text-xs text-red-400 hover:text-red-500 cursor-pointer">
                   删除

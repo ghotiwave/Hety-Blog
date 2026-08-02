@@ -5,9 +5,15 @@ import { useAuth } from '@/contexts/AuthContext'
 import api from '@/services/api'
 import { Button } from '@/components/ui/Button'
 
+interface Score {
+  id: number
+  username: string
+  score: number
+}
+
 export function Game() {
   const { user } = useAuth()
-  const [top5, setTop5] = useState<any[]>([])
+  const [top5, setTop5] = useState<Score[]>([])
 
   useEffect(() => {
     api.get('/scores/leaderboard').then((res) => setTop5(res.data.leaderboard.slice(0, 5)))

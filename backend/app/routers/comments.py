@@ -6,7 +6,7 @@ from app.models.post import Post
 from app.models.comment import Comment, CommentLike
 from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentResponse
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_optional_user
 
 router = APIRouter(prefix="/api/posts", tags=["comments"])
 
@@ -48,6 +48,7 @@ def list_comments(
     sort: str = Query("time", alias="sort"),
     page: int = Query(1, ge=1),
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
 ):
     post = db.query(Post).filter(Post.id == post_id, Post.published == True).first()
     if not post:
@@ -66,7 +67,7 @@ def list_comments(
 
     result = []
     for root in roots:
-        item = _serialize(root, db)
+        item = _serialize(root, db, current_user.id if current_user else None)
         # Top 3 replies
         replies = (
             db.query(Comment)
@@ -75,7 +76,7 @@ def list_comments(
             .limit(3)
             .all()
         )
-        item["replies"] = [_serialize(r, db) for r in replies]
+        item["replies"] = [_serialize(r, db, current_user.id if current_user else None) for r in replies]
         result.append(item)
 
     total_roots = db.query(func.count(Comment.id)).filter(
@@ -91,18 +92,35 @@ def list_replies(
     comment_id: int,
     page: int = Query(1, ge=1),
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
 ):
-    total = db.query(func.count(Comment.id)).filter(Comment.parent_id == comment_id).scalar() or 0
+    parent = (
+        db.query(Comment)
+        .join(Post, Post.id == Comment.post_id)
+        .filter(
+            Comment.id == comment_id,
+            Comment.post_id == post_id,
+            Post.published == True,
+        )
+        .first()
+    )
+    if not parent:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    total = db.query(func.count(Comment.id)).filter(
+        Comment.parent_id == comment_id,
+        Comment.post_id == post_id,
+    ).scalar() or 0
     replies = (
         db.query(Comment)
-        .filter(Comment.parent_id == comment_id)
+        .filter(Comment.parent_id == comment_id, Comment.post_id == post_id)
         .order_by(Comment.created_at.asc())
         .offset((page - 1) * 20)
         .limit(20)
         .all()
     )
     return {
-        "items": [_serialize(r, db) for r in replies],
+        "items": [_serialize(r, db, current_user.id if current_user else None) for r in replies],
         "total": total,
         "page": page,
     }

@@ -3,6 +3,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import api from '@/services/api'
 import initRunnerFn from 't-rex-runner/dist/runner.js'
 
+interface RunnerInstance {
+  distanceMeter?: { digits?: string[] }
+  distanceRan: number
+  crashed: boolean
+  destroy?: () => void
+}
+
 export function TrexRunner() {
   const containerRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
@@ -17,7 +24,7 @@ export function TrexRunner() {
     const old = container.querySelector('.interstitial-wrapper')
     if (old) container.innerHTML = ''
 
-    let runner: any = null
+    let runner: RunnerInstance | null = null
     try {
       runner = initRunnerFn('#trex-container')
     } catch (e) {
@@ -40,7 +47,7 @@ export function TrexRunner() {
     return () => {
       destroyedRef.current = true
       clearInterval(poll)
-      try { runner?.destroy?.() } catch {}
+      try { runner?.destroy?.() } catch { runner = null }
       if (container) container.innerHTML = ''
       // Re-allow init on next mount
       setTimeout(() => { destroyedRef.current = false }, 100)

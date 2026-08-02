@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/admin/comments", tags=["admin-comments"])
 
 @router.delete("/{comment_id}", status_code=204)
 def delete_comment(comment_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
-    comment = db.query(Comment).get(comment_id)
+    comment = db.get(Comment, comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     db.delete(comment)

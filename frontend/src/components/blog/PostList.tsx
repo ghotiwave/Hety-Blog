@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useDeferredValue } from 'react'
+import axios from 'axios'
 import api from '@/services/api'
 import { PostCard } from './PostCard'
 import { Input } from '@/components/ui/Input'
@@ -25,18 +26,28 @@ export function PostList({ postType }: { postType?: string }) {
   const [activeTag, setActiveTag] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [error, setError] = useState('')
+  const [requestVersion, setRequestVersion] = useState(0)
+  const deferredQuery = useDeferredValue(q)
 
   const allTags = [...new Set(posts.flatMap((p) => (p.tags || '').split(',').map((t) => t.trim()).filter(Boolean)))]
 
   useEffect(() => {
-    setLoading(true)
+    const controller = new AbortController()
     api.get('/posts', {
-      params: { page, q: q || undefined, tag: activeTag || undefined, type: postType || undefined },
+      params: { page, q: deferredQuery || undefined, tag: activeTag || undefined, type: postType || undefined },
+      signal: controller.signal,
     }).then((res) => {
       setPosts(res.data.items)
       setTotalPages(res.data.total_pages)
-    }).finally(() => setLoading(false))
-  }, [page, q, activeTag, postType])
+      setError('')
+    }).catch((requestError) => {
+      if (!axios.isCancel(requestError)) setError('文章加载失败，请检查网络后重试。')
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false)
+    })
+    return () => controller.abort()
+  }, [page, deferredQuery, activeTag, postType, requestVersion])
 
   const toggleTag = useCallback((tag: string) => {
     setActiveTag((prev) => (prev === tag ? '' : tag))
@@ -57,6 +68,7 @@ export function PostList({ postType }: { postType?: string }) {
         <div className="flex lg:flex-col flex-wrap gap-1.5">
           {allTags.map((tag) => (
             <button
+              type="button"
               key={tag}
               onClick={() => toggleTag(tag)}
               className={`px-3 py-1.5 rounded-lg text-left text-xs cursor-pointer transition-colors ${
@@ -75,6 +87,11 @@ export function PostList({ postType }: { postType?: string }) {
       <div>
       {loading ? (
         <div className="text-center text-[var(--color-text-muted)] py-12">正在加载文章…</div>
+      ) : error ? (
+        <div className="rounded-2xl border border-red-500/25 bg-red-500/5 px-5 py-10 text-center">
+          <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
+          <button type="button" onClick={() => { setLoading(true); setRequestVersion((value) => value + 1) }} className="mt-4 text-sm text-[var(--color-primary)] hover:underline">重新加载</button>
+        </div>
       ) : posts.length === 0 ? (
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/60 text-center text-[var(--color-text-muted)] py-12">没有找到匹配的文章。</div>
       ) : (
@@ -110,6 +127,7 @@ export function PostList({ postType }: { postType?: string }) {
               </button>
               {Array.from({ length: totalPages }, (_, i) => (
                 <button
+                  type="button"
                   key={i}
                   onClick={() => setPage(i + 1)}
                   className={`min-w-8 px-2.5 py-1.5 rounded-lg text-sm cursor-pointer ${

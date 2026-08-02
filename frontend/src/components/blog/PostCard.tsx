@@ -17,7 +17,7 @@ interface Props {
   onTagClick?: (tag: string) => void
 }
 
-export function PostCard({ id, slug, title, summary, coverImage, tags, createdAt, likeCount = 0, wordCount = 0, readingMinutes = 1, activeTag, onTagClick }: Props) {
+export function PostCard({ id, slug, title, summary, coverImage, tags, createdAt, likeCount = 0, viewCount = 0, wordCount = 0, readingMinutes = 1, activeTag, onTagClick }: Props) {
   const tagList = (tags || '').split(',').map((t) => t.trim()).filter(Boolean)
 
   return (
@@ -46,9 +46,10 @@ export function PostCard({ id, slug, title, summary, coverImage, tags, createdAt
                 {tag}
               </span>
             ))}
-            <span className="text-xs text-[var(--color-text-muted)]">{likeCount} likes</span>
             <span className="text-xs text-[var(--color-text-muted)]">{wordCount} 字</span>
             <span className="text-xs text-[var(--color-text-muted)]">{readingMinutes} min read</span>
+            <span className="text-xs text-[var(--color-text-muted)]">{viewCount} views</span>
+            <span className="text-xs text-[var(--color-text-muted)]">{likeCount} likes</span>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
+import axios from 'axios'
 import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 import 'katex/dist/katex.min.css'
 import api from '@/services/api'
@@ -17,12 +18,15 @@ interface Post {
   like_count: number
   view_count: number
   comment_count: number
+  user_liked: boolean
 }
 
 export function PostDetail() {
   const { id } = useParams<{ id: string }>()
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadedRouteId, setLoadedRouteId] = useState<string | undefined>()
+  const [error, setError] = useState('')
   const [liked, setLiked] = useState(false)
   const [likeCount, setLikeCount] = useState(0)
   const [likeLoading, setLikeLoading] = useState(false)
@@ -31,14 +35,26 @@ export function PostDetail() {
   const [navItems, setNavItems] = useState<ArticleNavItem[]>([])
 
   useEffect(() => {
-    api.get(`/posts/${id}`).then((res) => {
+    const controller = new AbortController()
+    api.get(`/posts/${id}`, { signal: controller.signal }).then((res) => {
       const p = res.data
       setPost(p)
       setLikeCount(p.like_count || 0)
+      setLiked(Boolean(p.user_liked))
+      setLoadedRouteId(id)
+      setError('')
       setLoading(false)
 
       if (user) api.post(`/posts/${p.id}/view`).catch(() => {})
-    }).catch(() => setLoading(false))
+    }).catch((requestError) => {
+      if (!axios.isCancel(requestError)) {
+        setPost(null)
+        setLoadedRouteId(id)
+        setError(requestError.response?.status === 404 ? '文章不存在或尚未发布。' : '文章加载失败，请稍后重试。')
+        setLoading(false)
+      }
+    })
+    return () => controller.abort()
   }, [id, user])
 
   useEffect(() => {
@@ -57,8 +73,8 @@ export function PostDetail() {
     }
   }
 
-  if (loading) return <div className="text-center text-stone-300 py-12 italic">Loading...</div>
-  if (!post) return <div className="text-center text-stone-300 py-12 italic">Post not found.</div>
+  if (loading || loadedRouteId !== id) return <div className="py-12 text-center text-[var(--color-text-muted)]">正在加载文章…</div>
+  if (!post) return <div className="py-12 text-center text-[var(--color-text-muted)]">{error || '文章不存在或尚未发布。'}</div>
 
   const ts = new Date(post.created_at)
   const dateStr = ts.toLocaleDateString('zh-CN')
@@ -76,10 +92,10 @@ export function PostDetail() {
       {post.cover_image && (
         <img src={post.cover_image} alt={post.title} className="w-full h-64 object-cover rounded-xl mb-6" />
       )}
-      <h1 className="text-3xl md:text-4xl leading-tight text-[var(--color-text)] mb-4" style={{ fontFamily: 'Georgia, serif', fontWeight: 400 }}>
+      <h1 className="mb-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--color-text)] md:text-4xl">
         {post.title}
       </h1>
-      <div className="flex items-center gap-4 text-sm text-[var(--color-text-muted)] italic mb-10">
+      <div className="mb-10 flex flex-wrap items-center gap-4 text-sm italic text-[var(--color-text-muted)]">
         <span>{dateStr} {timeStr}</span>
         <span>{post.view_count} views</span>
       </div>
@@ -99,9 +115,9 @@ export function PostDetail() {
         >
           {liked ? '❤️' : '🤍'} {likeCount}
         </button>
-        <span className="text-sm text-stone-400">{post.comment_count} 评论</span>
-        <span className="text-sm text-stone-300">{post.view_count} 阅读</span>
-        {!user && <span className="text-xs text-stone-300">登录后点赞</span>}
+        <span className="text-sm text-[var(--color-text-muted)]">{post.comment_count} 评论</span>
+        <span className="text-sm text-[var(--color-text-muted)]">{post.view_count} 阅读</span>
+        {!user && <span className="text-xs text-[var(--color-text-muted)]">登录后点赞</span>}
       </div>
 
       <CommentSection key={post.id} postId={post.id} totalComments={post.comment_count} />

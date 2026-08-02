@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import api from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
-import { Input } from '@/components/ui/Input'
 import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 
 export function UserProfile() {
-  const { user, setUser } = useAuth()
+  const { refreshUser } = useAuth()
   const [avatarUrl, setAvatarUrl] = useState('')
   const [signature, setSignature] = useState('')
   const [msg, setMsg] = useState('')
@@ -28,13 +27,10 @@ export function UserProfile() {
     const form = new FormData()
     form.append('file', file)
     try {
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: form,
-      })
-      const data = await res.json()
-      setAvatarUrl(data.url)
+      const res = await api.post('/admin/upload', form)
+      setAvatarUrl(res.data.url)
+    } catch {
+      setMsg('图片上传失败，请重试')
     } finally {
       setImageUploading(false)
     }
@@ -45,6 +41,7 @@ export function UserProfile() {
     setSaving(true)
     try {
       await api.put('/user/profile', { avatar_url: avatarUrl, signature })
+      await refreshUser()
       setMsg('保存成功')
       setTimeout(() => setMsg(''), 2000)
     } finally {
@@ -53,13 +50,17 @@ export function UserProfile() {
   }
 
   return (
-    <div className="max-w-md mx-auto pt-8">
-      <h1 className="text-2xl text-[var(--color-text)] mb-8 font-light tracking-wide">个人资料</h1>
-      <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="mx-auto max-w-2xl py-4 sm:py-8">
+      <header className="mb-7 border-b border-[var(--color-border)] pb-5">
+        <p className="font-mono text-[10px] tracking-[0.2em] text-[var(--color-primary)]">ACCOUNT / PROFILE</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--color-text)]">个人资料</h1>
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">头像和个性签名会显示在你的评论旁。</p>
+      </header>
+      <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg)] p-5 sm:p-7">
         {/* Avatar */}
         <div>
           <label className="text-xs text-[var(--color-text-muted)] tracking-wider mb-2 block">头像</label>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             {avatarUrl ? (
               <img src={avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover border border-[var(--color-border)]" />
             ) : (
@@ -95,7 +96,7 @@ export function UserProfile() {
           )}
         </div>
 
-        {msg && <p className="text-sm text-green-600">{msg}</p>}
+        {msg && <p role="status" className="text-sm text-[var(--color-primary)]">{msg}</p>}
 
         <Button type="submit" disabled={saving} className="w-full">
           {saving ? '保存中...' : '保存'}

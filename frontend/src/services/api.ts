@@ -2,8 +2,11 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
 })
+
+export function shouldClearStoredSession(status?: number, requestUrl?: string): boolean {
+  return status === 401 && !requestUrl?.endsWith('/auth/login')
+}
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
@@ -16,9 +19,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    if (shouldClearStoredSession(err.response?.status, err.config?.url)) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      window.dispatchEvent(new Event('auth:unauthorized'))
     }
     return Promise.reject(err)
   }

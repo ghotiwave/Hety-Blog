@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
 import api from '@/services/api'
 
 interface Digest {
@@ -14,22 +15,37 @@ export function Digest() {
   const [archives, setArchives] = useState<{ month: string; count: number }[]>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [error, setError] = useState('')
+  const [requestVersion, setRequestVersion] = useState(0)
 
   useEffect(() => {
-    setLoading(true)
+    const controller = new AbortController()
     api.get('/digests', {
       params: { page, page_size: 10, date: dateFilter || undefined },
+      signal: controller.signal,
     }).then((res) => {
       setDigests(res.data.items)
       setTotalPages(res.data.total_pages)
-    }).finally(() => setLoading(false))
-  }, [dateFilter, page])
+      setError('')
+    }).catch((requestError) => {
+      if (!axios.isCancel(requestError)) setError('日报加载失败，请检查网络后重试。')
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false)
+    })
+    return () => controller.abort()
+  }, [dateFilter, page, requestVersion])
 
   useEffect(() => {
     api.get('/digests/archives').then((res) => setArchives(res.data)).catch(() => {})
   }, [])
 
   if (loading) return <div className="text-center text-[var(--color-text-muted)] py-12">加载中...</div>
+  if (error) return (
+    <div className="rounded-2xl border border-red-500/25 bg-red-500/5 px-5 py-12 text-center">
+      <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
+      <button type="button" onClick={() => { setLoading(true); setRequestVersion((value) => value + 1) }} className="mt-4 text-sm text-[var(--color-primary)] hover:underline">重新加载</button>
+    </div>
+  )
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -39,23 +55,25 @@ export function Digest() {
       {/* Archive navigation */}
       {archives.length > 0 && (
         <div className="flex items-center gap-2 mb-10 flex-wrap border-y border-[var(--color-border)] py-4">
-          <span
+          <button
+            type="button"
             onClick={() => { setDateFilter(''); setPage(1) }}
             className={`px-4 py-2 text-sm cursor-pointer rounded-lg transition-colors ${!dateFilter ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]'}`}
           >
             全部
-          </span>
+          </button>
           {archives.map(({ month, count }) => {
-            const [, m] = month.split('-')
-            const label = `${m}月`
+            const [year, m] = month.split('-')
+            const label = `${year} / ${m}`
             return (
-              <span
+              <button
+                type="button"
                 key={month}
                 onClick={() => { setDateFilter(month); setPage(1) }}
                 className={`px-4 py-2 text-sm cursor-pointer rounded-lg transition-colors ${dateFilter === month ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]'}`}
               >
                 {label} <span className="opacity-60 text-xs">{count}</span>
-              </span>
+              </button>
             )
           })}
         </div>

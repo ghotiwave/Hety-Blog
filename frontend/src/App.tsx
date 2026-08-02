@@ -1,26 +1,36 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, NavLink, Outlet } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { Layout } from '@/components/layout/Layout'
-import { Blog } from '@/pages/Blog'
-import { PostDetail } from '@/pages/PostDetail'
-import { About } from '@/pages/About'
-import { Login } from '@/pages/Login'
-import { Register } from '@/pages/Register'
-import { Game } from '@/pages/Game'
-import { Leaderboard } from '@/pages/Leaderboard'
-import { Digest } from '@/pages/Digest'
-import { DigestDetail } from '@/pages/DigestDetail'
-import { UserHistory } from '@/pages/UserHistory'
-import { UserProfile } from '@/pages/UserProfile'
-import { UserLikes } from '@/pages/UserLikes'
-import { Dashboard } from '@/pages/admin/Dashboard'
-import { PostManage } from '@/pages/admin/PostManage'
-import { PostEdit } from '@/pages/admin/PostEdit'
-import { AdminComments } from '@/pages/admin/Comments'
-import { ProfileEdit } from '@/pages/admin/ProfileEdit'
-import { AdminUsers } from '@/pages/admin/Users'
 import { siteConfig } from '@/config'
+
+const Blog = lazy(() => import('@/pages/Blog').then((module) => ({ default: module.Blog })))
+const PostDetail = lazy(() => import('@/pages/PostDetail').then((module) => ({ default: module.PostDetail })))
+const About = lazy(() => import('@/pages/About').then((module) => ({ default: module.About })))
+const Login = lazy(() => import('@/pages/Login').then((module) => ({ default: module.Login })))
+const Register = lazy(() => import('@/pages/Register').then((module) => ({ default: module.Register })))
+const Game = lazy(() => import('@/pages/Game').then((module) => ({ default: module.Game })))
+const Leaderboard = lazy(() => import('@/pages/Leaderboard').then((module) => ({ default: module.Leaderboard })))
+const Digest = lazy(() => import('@/pages/Digest').then((module) => ({ default: module.Digest })))
+const DigestDetail = lazy(() => import('@/pages/DigestDetail').then((module) => ({ default: module.DigestDetail })))
+const UserHistory = lazy(() => import('@/pages/UserHistory').then((module) => ({ default: module.UserHistory })))
+const UserProfile = lazy(() => import('@/pages/UserProfile').then((module) => ({ default: module.UserProfile })))
+const UserLikes = lazy(() => import('@/pages/UserLikes').then((module) => ({ default: module.UserLikes })))
+const Dashboard = lazy(() => import('@/pages/admin/Dashboard').then((module) => ({ default: module.Dashboard })))
+const PostManage = lazy(() => import('@/pages/admin/PostManage').then((module) => ({ default: module.PostManage })))
+const PostEdit = lazy(() => import('@/pages/admin/PostEdit').then((module) => ({ default: module.PostEdit })))
+const AdminComments = lazy(() => import('@/pages/admin/Comments').then((module) => ({ default: module.AdminComments })))
+const ProfileEdit = lazy(() => import('@/pages/admin/ProfileEdit').then((module) => ({ default: module.ProfileEdit })))
+const AdminUsers = lazy(() => import('@/pages/admin/Users').then((module) => ({ default: module.AdminUsers })))
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-56 items-center justify-center" role="status">
+      <span className="font-mono text-xs tracking-[0.16em] text-[var(--color-text-muted)]">LOADING MODULE…</span>
+    </div>
+  )
+}
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { user, isAdmin } = useAuth()
@@ -39,17 +49,21 @@ function AdminShell() {
   ]
   return (
     <AdminGuard>
-      <div className="flex gap-8">
-        <aside className="w-48 shrink-0">
-          <nav className="flex flex-col gap-1 sticky top-20">
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
+        <aside className="w-full shrink-0 lg:w-48">
+          <nav className="sticky top-16 flex gap-1 overflow-x-auto border-b border-[var(--color-border)] bg-[var(--color-bg)] py-2 lg:top-20 lg:flex-col lg:overflow-visible lg:border-0 lg:bg-transparent lg:py-0">
             {navItems.map(([path, label]) => (
-              <a
+              <NavLink
                 key={path}
-                href={path}
-                className="px-3 py-2 rounded-lg text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)] transition-colors"
+                to={path}
+                className={({ isActive }) => `shrink-0 rounded-lg px-3 py-2 text-sm transition-colors ${
+                  isActive
+                    ? 'bg-[var(--color-accent)] text-[var(--color-primary-dark)]'
+                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]'
+                }`}
               >
                 {label}
-              </a>
+              </NavLink>
             ))}
           </nav>
         </aside>
@@ -66,6 +80,7 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider>
       <AuthProvider>
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Navigate to="/blog" replace />} />
@@ -83,6 +98,7 @@ export default function App() {
             <Route path="/profile" element={<UserProfile />} />
 
             <Route element={<AdminShell />}>
+              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/admin/dashboard" element={<Dashboard />} />
               <Route path="/admin/posts" element={<PostManage />} />
               <Route path="/admin/posts/new" element={<PostEdit />} />
@@ -93,6 +109,7 @@ export default function App() {
             </Route>
           </Route>
         </Routes>
+        </Suspense>
       </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

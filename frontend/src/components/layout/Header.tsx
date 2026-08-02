@@ -34,7 +34,7 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-1 sm:gap-3">
-          <button onClick={toggle} className="text-lg cursor-pointer px-2 py-1 rounded hover:bg-[var(--color-surface)] dark:hover:bg-[#3d3d3a] transition-colors" title={dark ? '切到亮色' : '切到暗色'}>
+          <button onClick={toggle} className="text-lg cursor-pointer px-2 py-1 rounded hover:bg-[var(--color-surface)] transition-colors" title={dark ? '切到亮色' : '切到暗色'} aria-label={dark ? '切换到亮色主题' : '切换到暗色主题'}>
             {dark ? '☀' : '☾'}
           </button>
           <div className="hidden md:flex items-center gap-3">
@@ -56,17 +56,31 @@ export function Header() {
               <Button size="sm" onClick={() => navigate('/register')}>注册</Button>
           </>)}
           </div>
-          <button onClick={() => setMenuOpen((open) => !open)} className="md:hidden p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]" aria-label="打开导航" aria-expanded={menuOpen}>☰</button>
+          <button onClick={() => setMenuOpen((open) => !open)} className="md:hidden p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]" aria-label={menuOpen ? '关闭导航' : '打开导航'} aria-controls="mobile-navigation" aria-expanded={menuOpen}>☰</button>
         </div>
       </div>
-      {menuOpen && <div className="md:hidden border-t border-[var(--color-border)] bg-[var(--color-bg)] px-5 py-4 space-y-1 shadow-lg">
+      <div className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out md:hidden ${menuOpen ? 'grid-rows-[1fr] opacity-100' : 'pointer-events-none grid-rows-[0fr] opacity-0'}`}>
+      <div id="mobile-navigation" className="overflow-hidden" aria-hidden={!menuOpen} inert={!menuOpen}>
+      <nav className="space-y-1 border-t border-[var(--color-border)] bg-[var(--color-bg)] px-5 py-4 shadow-lg" aria-label="移动端导航">
         <NavLink to="/blog" onClick={() => setMenuOpen(false)} className={({ isActive }) => `${navClass({ isActive })} block py-2.5`}>博客</NavLink>
         {siteConfig.features.digest && <NavLink to="/digest" onClick={() => setMenuOpen(false)} className={({ isActive }) => `${navClass({ isActive })} block py-2.5`}>科技日报</NavLink>}
         <NavLink to="/about" onClick={() => setMenuOpen(false)} className={({ isActive }) => `${navClass({ isActive })} block py-2.5`}>关于</NavLink>
-        <div className="border-t border-[var(--color-border)] mt-2 pt-3">
-          {user ? <button onClick={() => { navigate('/profile'); setMenuOpen(false) }} className="text-sm text-[var(--color-text-muted)] py-2">{user.username} 的资料</button> : <button onClick={() => { navigate('/login'); setMenuOpen(false) }} className="text-sm text-[var(--color-text-muted)] py-2">登录或注册</button>}
+        {siteConfig.features.game && <NavLink to="/game" onClick={() => setMenuOpen(false)} className={({ isActive }) => `${navClass({ isActive })} block py-2.5`}>Game</NavLink>}
+        <div className="mt-2 flex flex-col border-t border-[var(--color-border)] pt-3">
+          {user ? <>
+            <button onClick={() => { navigate('/profile'); setMenuOpen(false) }} className="text-left text-sm text-[var(--color-text-muted)] py-2">{user.username} 的资料</button>
+            <button onClick={() => { navigate('/history'); setMenuOpen(false) }} className="text-left text-sm text-[var(--color-text-muted)] py-2">阅读历史</button>
+            <button onClick={() => { navigate('/likes'); setMenuOpen(false) }} className="text-left text-sm text-[var(--color-text-muted)] py-2">我的点赞</button>
+            {isAdmin && <button onClick={() => { navigate('/admin/dashboard'); setMenuOpen(false) }} className="text-left text-sm text-[var(--color-text-muted)] py-2">管理后台</button>}
+            <button onClick={() => { logout(); setMenuOpen(false) }} className="text-left text-sm text-red-500 py-2">退出登录</button>
+          </> : <>
+            <button onClick={() => { navigate('/login'); setMenuOpen(false) }} className="text-left text-sm text-[var(--color-text-muted)] py-2">登录</button>
+            <button onClick={() => { navigate('/register'); setMenuOpen(false) }} className="text-left text-sm text-[var(--color-primary)] py-2">创建账号</button>
+          </>}
         </div>
-      </div>}
+      </nav>
+      </div>
+      </div>
     </header>
   )
 }

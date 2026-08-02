@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import api from '@/services/api'
 
 interface User {
@@ -13,25 +13,44 @@ interface AuthState {
   user: User | null
   token: string | null
   isAdmin: boolean
-  login: (username: string, password: string) => Promise<void>
-  register: (username: string, email: string, password: string, code: string, turnstile_token?: string) => Promise<any>
+  login: (identifier: string, password: string) => Promise<void>
+  register: (username: string, email: string, password: string, code: string, turnstile_token?: string) => Promise<void>
   sendCode: (email: string) => Promise<void>
+  refreshUser: () => Promise<void>
   logout: () => void
 }
 
 const AuthContext = createContext<AuthState | null>(null)
 
+function readStoredUser(): User | null {
+  const stored = localStorage.getItem('user')
+  if (!stored) return null
+  try {
+    return JSON.parse(stored) as User
+  } catch {
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('user')
-    return stored ? JSON.parse(stored) : null
-  })
+  const [user, setUser] = useState<User | null>(readStoredUser)
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'))
+
+  useEffect(() => {
+    const clearSession = () => {
+      setToken(null)
+      setUser(null)
+    }
+    window.addEventListener('auth:unauthorized', clearSession)
+    return () => window.removeEventListener('auth:unauthorized', clearSession)
+  }, [])
 
   const isAdmin = user?.role === 'admin'
 
-  async function login(username: string, password: string) {
-    const res = await api.post('/auth/login', { username, password })
+  async function login(identifier: string, password: string) {
+    const res = await api.post('/auth/login', { username: identifier, password })
     const { access_token, user: u } = res.data
     localStorage.setItem('token', access_token)
     localStorage.setItem('user', JSON.stringify(u))
@@ -52,6 +71,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await api.post('/auth/send-code', { email })
   }
 
+  async function refreshUser() {
+    const res = await api.get('/auth/me')
+    localStorage.setItem('user', JSON.stringify(res.data))
+    setUser(res.data)
+  }
+
   function logout() {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
@@ -60,12 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isAdmin, login, register, sendCode, logout }}>
+    <AuthContext.Provider value={{ user, token, isAdmin, login, register, sendCode, refreshUser, logout }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
+// Context hooks intentionally live beside their provider.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be inside AuthProvider')

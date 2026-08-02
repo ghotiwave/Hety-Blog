@@ -1,21 +1,21 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, Field
 
 
 class SendCodeRequest(BaseModel):
-    email: str
+    email: str = Field(min_length=3, max_length=100)
 
 
 class RegisterRequest(BaseModel):
-    username: str
-    email: str
-    password: str
-    code: str = ""
-    turnstile_token: str = ""
+    username: str = Field(min_length=1, max_length=20)
+    email: str = Field(min_length=3, max_length=100)
+    password: str = Field(min_length=8, max_length=128)
+    code: str = Field(default="", max_length=6)
+    turnstile_token: str = Field(default="", max_length=2048)
 
 
 class LoginRequest(BaseModel):
-    username: str
-    password: str
+    username: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=1, max_length=128)
 
 
 class TokenResponse(BaseModel):

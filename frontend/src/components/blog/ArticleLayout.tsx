@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { ArticleNavItem } from '@/services/articleNavigation'
-
-interface TOCItem { id: string; text: string; level: number }
+import { extractTOC } from '@/services/articleToc'
 
 interface Props {
   content: string
@@ -11,26 +10,6 @@ interface Props {
   navBasePath: '/blog' | '/digest'
   navTitle: string
   children: React.ReactNode
-}
-
-function slugId(text: string): string {
-  return text
-    .replace(/[^\w\s一-鿿-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .toLowerCase()
-}
-
-function extractTOC(md: string): TOCItem[] {
-  const items: TOCItem[] = []
-  for (const line of md.split('\n')) {
-    const m = line.match(/^(#{2,4})\s+(.+)/)
-    if (m) {
-      const text = m[2].replace(/[`*_~\[\]()#]+/g, '').trim()
-      items.push({ id: slugId(text), text, level: m[1].length })
-    }
-  }
-  return items
 }
 
 export function ArticleLayout({ content, navItems, currentId, navBasePath, navTitle, children }: Props) {
@@ -120,7 +99,7 @@ export function ArticleLayout({ content, navItems, currentId, navBasePath, navTi
                   className={`w-full text-left text-sm leading-6 hover:text-[var(--color-primary)] cursor-pointer transition-colors block py-1.5 pr-2 ${
                     activeHeading === item.id ? 'text-[var(--color-primary)] font-medium' : 'text-[var(--color-text-muted)]'
                   }`}
-                  style={{ paddingLeft: 16 + (item.level - 2) * 12 }}
+                  style={{ paddingLeft: 16 + (item.level - 1) * 12 }}
                 >
                   {item.text}
                 </button>

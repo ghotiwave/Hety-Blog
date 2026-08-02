@@ -1,5 +1,10 @@
 import math
-from fastapi import APIRouter, Depends, HTTPException, Query
+import os
+import re
+from urllib.parse import quote
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
@@ -9,8 +14,52 @@ from app.models.like import Like
 from app.models.user import User
 from app.schemas.post import PostCreate, PostUpdate, PostResponse, PostListItem, PaginatedPosts
 from app.dependencies import get_current_admin
+from app.config import settings
+from app.routers.upload import store_image_bytes
+from app.utils.markdown_posts import (
+    MAX_BUNDLE_BYTES,
+    MAX_MARKDOWN_BYTES,
+    export_markdown_bundle,
+    local_markdown_assets,
+    materialize_archive_images,
+    parse_markdown_post,
+    read_markdown_archive,
+)
 
 router = APIRouter(prefix="/api/admin/posts", tags=["admin-posts"])
+
+
+def _remove_uploaded_urls(urls: list[str]) -> None:
+    for url in urls:
+        filename = url.rsplit("/", 1)[-1]
+        if not filename:
+            continue
+        path = os.path.join(settings.UPLOAD_DIR, filename)
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
+
+
+def _post_response(post: Post, db: Session) -> PostResponse:
+    comment_count = db.query(func.count(Comment.id)).filter(Comment.post_id == post.id).scalar()
+    like_count = db.query(func.count(Like.id)).filter(Like.post_id == post.id).scalar()
+    return PostResponse(
+        id=post.id,
+        title=post.title,
+        content=post.content,
+        summary=post.summary,
+        cover_image=post.cover_image,
+        tags=post.tags,
+        post_type=post.post_type or "blog",
+        slug=post.slug,
+        published=post.published,
+        created_at=post.created_at.isoformat() if post.created_at else "",
+        updated_at=post.updated_at.isoformat() if post.updated_at else "",
+        like_count=like_count or 0,
+        view_count=post.view_count or 0,
+        comment_count=comment_count or 0,
+    )
 
 
 @router.get("", response_model=PaginatedPosts)
@@ -58,26 +107,98 @@ def list_all_posts(
 
 @router.get("/{post_id}", response_model=PostResponse)
 def get_post(post_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
-    post = db.query(Post).get(post_id)
+    post = db.get(Post, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    comment_count = db.query(func.count(Comment.id)).filter(Comment.post_id == post.id).scalar()
-    like_count = db.query(func.count(Like.id)).filter(Like.post_id == post.id).scalar()
-    return PostResponse(
-        id=post.id,
-        title=post.title,
-        content=post.content,
-        summary=post.summary,
-        cover_image=post.cover_image,
-        tags=post.tags,
-        post_type=post.post_type or "blog",
-        slug=post.slug,
-        published=post.published,
-        created_at=post.created_at.isoformat() if post.created_at else "",
-        updated_at=post.updated_at.isoformat() if post.updated_at else "",
-        like_count=like_count or 0,
-        view_count=post.view_count or 0,
-        comment_count=comment_count or 0,
+    return _post_response(post, db)
+
+
+@router.post("/import", response_model=PostResponse, status_code=201)
+async def import_post(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_admin),
+):
+    filename = (file.filename or "").lower()
+    is_archive = filename.endswith(".zip")
+    if not is_archive and not filename.endswith((".md", ".markdown")):
+        raise HTTPException(status_code=400, detail="请选择 .md、.markdown 或 .zip 文件")
+    max_bytes = MAX_BUNDLE_BYTES if is_archive else MAX_MARKDOWN_BYTES
+    raw = await file.read(max_bytes + 1)
+    if len(raw) > max_bytes:
+        limit = "50 MB" if is_archive else "2 MB"
+        raise HTTPException(status_code=413, detail=f"文件不能超过 {limit}")
+
+    saved_urls: list[str] = []
+    try:
+        if is_archive:
+            markdown_archive = read_markdown_archive(raw)
+            imported = markdown_archive.post
+        else:
+            imported = parse_markdown_post(raw)
+            local_assets = local_markdown_assets(imported)
+            if local_assets:
+                raise ValueError(
+                    "Markdown 引用了本地图片；请将 Markdown 与图片按原相对路径一起压缩为 ZIP 后导入"
+                )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    if imported.slug and db.query(Post).filter(Post.slug == imported.slug).first():
+        raise HTTPException(status_code=409, detail=f"slug 已存在：{imported.slug}")
+
+    if is_archive:
+        def save_archive_image(image_name: str, contents: bytes) -> str:
+            url = store_image_bytes(image_name, contents)
+            saved_urls.append(url)
+            return url
+
+        try:
+            imported = materialize_archive_images(markdown_archive, save_archive_image)
+        except ValueError as exc:
+            _remove_uploaded_urls(saved_urls)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except HTTPException:
+            _remove_uploaded_urls(saved_urls)
+            raise
+
+    post = Post(
+        title=imported.title,
+        content=imported.content,
+        summary=imported.summary,
+        cover_image=imported.cover_image,
+        tags=imported.tags,
+        post_type=imported.post_type,
+        published=imported.published,
+        slug=imported.slug,
+    )
+    try:
+        db.add(post)
+        db.commit()
+        db.refresh(post)
+    except Exception:
+        db.rollback()
+        _remove_uploaded_urls(saved_urls)
+        raise
+    return _post_response(post, db)
+
+
+@router.get("/{post_id}/export")
+def export_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_admin),
+):
+    post = db.get(Post, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    safe_name = re.sub(r"[^\w\-\u4e00-\u9fff]+", "-", post.title).strip("-") or f"post-{post.id}"
+    filename = f"{safe_name}.md"
+    bundle_name = filename.rsplit(".", 1)[0] + ".zip"
+    return Response(
+        content=export_markdown_bundle(post, settings.UPLOAD_DIR),
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(bundle_name)}"},
     )
 
 
@@ -89,56 +210,24 @@ def create_post(req: PostCreate, db: Session = Depends(get_db), _: User = Depend
     db.add(post)
     db.commit()
     db.refresh(post)
-    return PostResponse(
-        id=post.id,
-        title=post.title,
-        content=post.content,
-        summary=post.summary,
-        cover_image=post.cover_image,
-        tags=post.tags,
-        post_type=post.post_type or "blog",
-        slug=post.slug,
-        published=post.published,
-        created_at=post.created_at.isoformat() if post.created_at else "",
-        updated_at=post.updated_at.isoformat() if post.updated_at else "",
-        like_count=0,
-        view_count=0,
-        comment_count=0,
-    )
+    return _post_response(post, db)
 
 
 @router.put("/{post_id}", response_model=PostResponse)
 def update_post(post_id: int, req: PostUpdate, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
-    post = db.query(Post).get(post_id)
+    post = db.get(Post, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     for k, v in req.model_dump(exclude_unset=True).items():
         setattr(post, k, v)
     db.commit()
     db.refresh(post)
-    comment_count = db.query(func.count(Comment.id)).filter(Comment.post_id == post.id).scalar()
-    like_count = db.query(func.count(Like.id)).filter(Like.post_id == post.id).scalar()
-    return PostResponse(
-        id=post.id,
-        title=post.title,
-        content=post.content,
-        summary=post.summary,
-        cover_image=post.cover_image,
-        tags=post.tags,
-        post_type=post.post_type or "blog",
-        slug=post.slug,
-        published=post.published,
-        created_at=post.created_at.isoformat() if post.created_at else "",
-        updated_at=post.updated_at.isoformat() if post.updated_at else "",
-        like_count=like_count or 0,
-        view_count=post.view_count or 0,
-        comment_count=comment_count or 0,
-    )
+    return _post_response(post, db)
 
 
 @router.delete("/{post_id}", status_code=204)
 def delete_post(post_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
-    post = db.query(Post).get(post_id)
+    post = db.get(Post, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     db.delete(post)

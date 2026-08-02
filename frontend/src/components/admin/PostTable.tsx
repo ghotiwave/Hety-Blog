@@ -13,9 +13,10 @@ interface Post {
 interface Props {
   posts: Post[]
   onDelete: (id: number) => void
+  onExport: (post: Post) => void
 }
 
-export function PostTable({ posts, onDelete }: Props) {
+export function PostTable({ posts, onDelete, onExport }: Props) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -40,10 +41,11 @@ export function PostTable({ posts, onDelete }: Props) {
               <td className="py-3 px-4 text-[var(--color-text-muted)]">{new Date(p.created_at).toLocaleDateString('zh-CN')}</td>
               <td className="py-3 px-4 text-[var(--color-text-muted)]">{p.comment_count}</td>
               <td className="py-3 px-4 text-right">
-                <div className="flex justify-end gap-2">
+                <div className="flex min-w-max justify-end gap-1 sm:gap-2">
                   <Link to={`/admin/posts/${p.id}/edit`}>
                     <Button variant="ghost" size="sm">编辑</Button>
                   </Link>
+                  <Button variant="ghost" size="sm" onClick={() => onExport(p)}>导出资源包</Button>
                   <Button variant="danger" size="sm" onClick={() => onDelete(p.id)}>删除</Button>
                 </div>
               </td>

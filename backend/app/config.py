@@ -28,3 +28,15 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def validate_runtime_settings() -> None:
+    secret = settings.SECRET_KEY.strip()
+    insecure_values = {
+        "",
+        "change-me-in-production",
+        "generate-a-random-string-here",
+        "replace-with-at-least-32-random-characters",
+    }
+    if secret in insecure_values or len(secret) < 32:
+        raise RuntimeError("SECRET_KEY 必须设置为至少 32 位的随机字符串，不能使用示例值")

@@ -37,6 +37,7 @@ def init_db():
     from app.models.reading_history import ReadingHistory
     from app.models.like import Like
     from app.models.comment import Comment, CommentLike
+    from app.utils.digest_slugs import repair_digest_slugs
     import bcrypt
 
     Base.metadata.create_all(bind=engine)
@@ -69,6 +70,10 @@ def init_db():
                 experience="Your experience here",
             )
             db.add(profile)
+
+        # Older databases predate the unique slug constraint and may contain
+        # multiple daily digests that all resolve to the same detail URL.
+        repair_digest_slugs(db)
 
         db.commit()
     finally:

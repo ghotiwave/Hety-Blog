@@ -15,6 +15,7 @@ interface Props {
     summary: string | null
     cover_image: string | null
     tags: string | null
+    post_type?: string
     published: boolean
   }
 }
@@ -26,28 +27,27 @@ export function PostForm({ post }: Props) {
   const [summary, setSummary] = useState(post?.summary ?? '')
   const [coverImage, setCoverImage] = useState(post?.cover_image ?? '')
   const [tags, setTags] = useState(post?.tags ?? '')
-  const [postType, setPostType] = useState((post as any)?.post_type ?? 'blog')
+  const [postType] = useState(post?.post_type ?? 'blog')
   const [published, setPublished] = useState(post?.published ?? false)
   const [saving, setSaving] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
   const [contentImageUploading, setContentImageUploading] = useState(false)
   const [preview, setPreview] = useState(false)
+  const [formError, setFormError] = useState('')
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
     setImageUploading(true)
+    setFormError('')
     const form = new FormData()
     form.append('file', file)
     try {
-      const token = localStorage.getItem('token')
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      })
-      const data = await res.json()
-      setCoverImage(data.url)
+      const res = await api.post('/admin/upload', form)
+      setCoverImage(res.data.url)
+    } catch {
+      setFormError('封面上传失败，请检查文件格式和大小后重试。')
     } finally {
       setImageUploading(false)
     }
@@ -56,6 +56,7 @@ export function PostForm({ post }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
+    setFormError('')
     try {
       const payload = { title, content, summary, tags, post_type: postType, cover_image: coverImage, published }
       if (post?.id) {
@@ -64,13 +65,15 @@ export function PostForm({ post }: Props) {
         await api.post('/admin/posts', payload)
       }
       navigate('/admin/posts')
+    } catch {
+      setFormError('文章保存失败，请检查字段内容后重试。')
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-3xl">
+    <form onSubmit={handleSubmit} className="max-w-3xl space-y-5">
       <Input
         placeholder="标题"
         value={title}
@@ -89,7 +92,7 @@ export function PostForm({ post }: Props) {
       />
       <div>
         <label className="block text-sm font-medium text-[var(--color-text)] mb-1">封面图片</label>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             placeholder="图片链接或上传"
             value={coverImage}
@@ -149,16 +152,17 @@ export function PostForm({ post }: Props) {
               <label className={`cursor-pointer hover:text-[var(--color-primary)] transition-colors ${contentImageUploading ? 'opacity-50' : ''}`}>
                 {contentImageUploading ? '⏳ 上传中...' : '🖼️ 插入图片'}
                 <input type="file" accept="image/*" onChange={async (e) => {
-                  const file = e.target.files?.[0]; if (!file) return
+                  const file = e.target.files?.[0]
+                  e.target.value = ''
+                  if (!file) return
                   setContentImageUploading(true)
+                  setFormError('')
                   const form = new FormData(); form.append('file', file)
                   try {
-                    const token = localStorage.getItem('token')
-                    const res = await fetch('/api/admin/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form })
-                    const data = await res.json()
-                    if (data.url) {
+                    const res = await api.post('/admin/upload', form)
+                    if (res.data.url) {
                       const el = document.getElementById('post-content-textarea') as HTMLTextAreaElement | null
-                      const md = `![](${data.url})`
+                      const md = `![](${res.data.url})`
                       if (el) {
                         const s = el.selectionStart; const e = el.selectionEnd
                         setContent(content.slice(0, s) + md + content.slice(e))
@@ -166,8 +170,10 @@ export function PostForm({ post }: Props) {
                         setContent((prev) => prev + '\n' + md + '\n')
                       }
                     }
+                  } catch {
+                    setFormError('正文图片上传失败，请检查文件格式和大小后重试。')
                   } finally { setContentImageUploading(false) }
-                }} className="hidden" />
+                }} disabled={contentImageUploading} className="hidden" />
               </label>
               <span>支持 Markdown / 图片 / 表情</span>
             </div>
@@ -183,11 +189,12 @@ export function PostForm({ post }: Props) {
         />
         发布
       </label>
-      <div className="flex gap-3">
+      {formError && <p role="alert" className="text-sm text-red-600 dark:text-red-300">{formError}</p>}
+      <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={saving}>
           {saving ? '保存中...' : post ? '更新文章' : '创建文章'}
         </Button>
-        <Button variant="secondary" onClick={() => navigate('/admin/posts')}>
+        <Button type="button" variant="secondary" onClick={() => navigate('/admin/posts')}>
           取消
         </Button>
       </div>

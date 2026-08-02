@@ -10,14 +10,19 @@ import { Button } from '@/components/ui/Button'
 // 只提交 about_page，其它字段不受影响。
 export function ProfileEdit() {
   const [aboutPage, setAboutPage] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState('')
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     api.get('/admin/profile').then((res) => {
       setAboutPage(res.data.about_page || '')
-    })
+    }).catch(() => {
+      setLoadError(true)
+      setNotice({ type: 'error', text: '关于页内容加载失败，请刷新后重试' })
+    }).finally(() => setLoading(false))
   }, [])
 
   const insertAtCursor = (text: string) => {
@@ -32,29 +37,42 @@ export function ProfileEdit() {
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
     setUploading(true)
+    setNotice(null)
     const form = new FormData(); form.append('file', file)
     try {
-      const token = localStorage.getItem('token')
-      const res = await fetch('/api/admin/upload', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form })
-      const data = await res.json()
-      if (data.url) insertAtCursor(`![](${data.url})`)
+      const res = await api.post('/admin/upload', form)
+      if (res.data.url) insertAtCursor(`![](${res.data.url})`)
+    } catch {
+      setNotice({ type: 'error', text: '图片上传失败，请检查格式和大小后重试' })
     } finally { setUploading(false) }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    await api.put('/admin/profile', { about_page: aboutPage })
-    setSaving(false)
-    setMsg('保存成功')
-    setTimeout(() => setMsg(''), 2000)
+    setNotice(null)
+    try {
+      await api.put('/admin/profile', { about_page: aboutPage })
+      setNotice({ type: 'success', text: '保存成功' })
+    } catch {
+      setNotice({ type: 'error', text: '保存失败，请稍后重试' })
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-[var(--color-text)] mb-6">关于页面</h1>
+      {loading && <p role="status" className="text-sm text-[var(--color-text-muted)]">正在加载关于页内容…</p>}
+      {!loading && loadError && (
+        <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-300">{notice?.text}</p>
+      )}
+      {!loading && !loadError && (
       <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
         <div>
           <label className="text-sm font-medium text-[var(--color-text)] block mb-2">「关于本站」内容（支持 Markdown）</label>
@@ -69,7 +87,7 @@ export function ProfileEdit() {
             <EmojiPicker onSelect={(text) => insertAtCursor(text)} />
             <label className={`cursor-pointer hover:text-[var(--color-primary)] transition-colors ${uploading ? 'opacity-50' : ''}`}>
               {uploading ? '⏳ 上传中...' : '🖼️ 插入图片'}
-              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="hidden" />
             </label>
             <span>支持 Markdown / 图片 / 表情</span>
           </div>
@@ -82,9 +100,14 @@ export function ProfileEdit() {
 
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
-          {msg && <span className="text-sm text-green-500">{msg}</span>}
+          {notice && (
+            <span role={notice.type === 'error' ? 'alert' : 'status'} className={`text-sm ${notice.type === 'error' ? 'text-red-600 dark:text-red-300' : 'text-green-600 dark:text-green-400'}`}>
+              {notice.text}
+            </span>
+          )}
         </div>
       </form>
+      )}
     </div>
   )
 }

@@ -8,6 +8,8 @@ from app.models.comment import Comment
 from app.models.like import Like
 from app.schemas.post import PostResponse, PostListItem, PaginatedPosts
 from app.utils.reading import reading_stats
+from app.models.user import User
+from app.dependencies import get_optional_user
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
 
@@ -71,7 +73,11 @@ def list_posts(
 
 
 @router.get("/{post_id}", response_model=PostResponse)
-def get_post(post_id: str, db: Session = Depends(get_db)):
+def get_post(
+    post_id: str,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_user),
+):
     try:
         pid = int(post_id)
         post = db.query(Post).filter(Post.id == pid, Post.published == True).first()
@@ -82,6 +88,10 @@ def get_post(post_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Post not found")
     comment_count = db.query(func.count(Comment.id)).filter(Comment.post_id == post.id).scalar()
     like_count = db.query(func.count(Like.id)).filter(Like.post_id == post.id).scalar()
+    user_liked = bool(
+        current_user
+        and db.query(Like).filter(Like.post_id == post.id, Like.user_id == current_user.id).first()
+    )
     return PostResponse(
         id=post.id,
         title=post.title,
@@ -97,4 +107,5 @@ def get_post(post_id: str, db: Session = Depends(get_db)):
         like_count=like_count or 0,
         view_count=post.view_count or 0,
         comment_count=comment_count or 0,
+        user_liked=user_liked,
     )

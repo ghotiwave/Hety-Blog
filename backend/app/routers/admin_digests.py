@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -6,6 +8,7 @@ from app.dependencies import get_current_admin
 from app.services.ai_digest import generate_daily_digest
 
 router = APIRouter(prefix="/api/admin/digests", tags=["admin-digests"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/generate")
@@ -13,6 +16,7 @@ def trigger_digest(db: Session = Depends(get_db), _: User = Depends(get_current_
     try:
         digest = generate_daily_digest(db)
         return {"message": "Digest generated", "id": digest.id, "title": digest.title}
-    except Exception as e:
+    except Exception:
         from fastapi import HTTPException
-        raise HTTPException(status_code=500, detail=f"Failed to generate digest: {str(e)}")
+        logger.exception("Manual daily digest generation failed")
+        raise HTTPException(status_code=500, detail="日报生成失败，请查看服务端日志")

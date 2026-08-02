@@ -24,6 +24,11 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
 /* Dark mode overrides */
 .dark {
   --color-primary: #86a5ff;
@@ -70,12 +75,33 @@ body {
 .prose code { background: var(--color-surface); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--color-primary-dark); }
 .prose pre { background: var(--color-surface); border: 1px solid var(--color-border); padding: 1.25rem; border-radius: 8px; overflow-x: auto; margin: 1.75rem 0; position: relative; }
 .prose pre code { background: none; padding: 0; color: var(--color-text); }
-.dark .prose code { background: #2d2d2a; color: #c5a880; }
-.dark .prose pre { background: #121210; border-color: #3d3d3a; }
+.prose table { width: 100%; margin: 1.5rem 0; border-collapse: collapse; font-size: 0.95em; }
+.prose th, .prose td { border: 1px solid var(--color-border); padding: 0.55rem 0.75rem; text-align: left; }
+.prose th { background: var(--color-surface); font-weight: 600; }
+.prose del { color: var(--color-text-muted); }
+.prose input[type='checkbox'] { margin-right: 0.45rem; accent-color: var(--color-primary); }
+.prose.markdown-compact h1,
+.prose.markdown-compact h2,
+.prose.markdown-compact h3,
+.prose.markdown-compact h4 { margin: 0.75rem 0 0.35rem; font-family: inherit; font-size: 1em; line-height: 1.5; }
+.prose.markdown-compact p { margin: 0.4rem 0; font-size: inherit; line-height: inherit; }
+.prose.markdown-compact ul,
+.prose.markdown-compact ol { margin: 0.4rem 0; padding-left: 1.25rem; }
+.prose.markdown-compact li { margin: 0.15rem 0; line-height: inherit; }
+.prose.markdown-compact blockquote { margin: 0.5rem 0; padding-left: 0.75rem; }
+.prose.markdown-compact > div > :first-child { margin-top: 0; }
+.prose.markdown-compact > div > :last-child { margin-bottom: 0; }
+.dark .prose code { background: #1d2333; color: #a9bcff; }
+.dark .prose pre { background: #11141b; border-color: #2b3345; }
 .dark .prose pre code { color: #d0cec8; }
 
 /* Code block copy button */
 .code-block-wrapper { position: relative; }
+.code-block-wrapper .code-language-label {
+  position: absolute; top: 0.65rem; left: 0.8rem; z-index: 1;
+  color: var(--color-text-muted); font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 .code-block-wrapper .copy-btn {
   position: absolute; top: 0.5rem; right: 0.5rem;
   padding: 4px 10px; font-size: 11px; border-radius: 4px;
@@ -87,7 +113,29 @@ body {
 .code-block-wrapper .copy-btn:hover { color: var(--color-primary); border-color: var(--color-primary); }
 .prose strong { color: var(--color-text); font-weight: 600; }
 .prose hr { border: none; border-top: 1px solid var(--color-border); margin: 2.5rem 0; }
-.prose img { max-width: 100%; border-radius: 8px; margin: 1.75rem 0; }
+.prose .markdown-image { display: block; width: 100%; margin: 1.75rem 0; }
+.prose .markdown-image img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: min(78vh, 960px);
+  margin: 0 auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.prose .markdown-image-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.25rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
 
 @media (max-width: 767px) {
   .prose h1 { font-size: 1.875rem; margin-top: 2.5rem; }
@@ -115,11 +163,11 @@ body {
 }
 
 /* === Image hover zoom === */
-.prose img {
+.prose .markdown-image img {
   transition: transform 0.3s ease, box-shadow 0.3s ease !important;
   border-radius: 6px !important;
 }
-.prose img:hover {
+.prose .markdown-image img:hover {
   transform: scale(1.02) !important;
   box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
 }
@@ -156,5 +204,18 @@ body {
   }
   .inverted .runner-container {
     background: #f7f7f7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .prose .markdown-image img:hover {
+    transform: none !important;
   }
 }

@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react'
 import api from '@/services/api'
 
+interface Score {
+  id: number
+  username: string
+  score: number
+  played_at: string
+}
+
 export function Leaderboard() {
-  const [scores, setScores] = useState<any[]>([])
+  const [scores, setScores] = useState<Score[]>([])
 
   useEffect(() => {
     api.get('/scores/leaderboard').then((res) => setScores(res.data.leaderboard))

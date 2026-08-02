@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math'
@@ -20,6 +20,18 @@ interface Profile {
   email_public?: string | null
 }
 
+interface HomePost {
+  id: number
+  title: string
+  summary: string | null
+  cover_image: string | null
+  tags: string | null
+  created_at: string
+  comment_count: number
+  like_count: number
+  view_count: number
+}
+
 const iconCls = "text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
 
 function copyToClipboard(text: string) {
@@ -39,13 +51,26 @@ function copyToClipboard(text: string) {
 }
 
 function ProfileModal({ profile, onClose }: { profile: Profile; onClose: () => void }) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    closeButtonRef.current?.focus()
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose} role="presentation">
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="profile-dialog-title"
         className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl shadow-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <button onClick={onClose} className="absolute top-4 right-4 text-2xl text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer leading-none z-10">&times;</button>
+        <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="关闭个人信息" className="absolute top-4 right-4 text-2xl text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer leading-none z-10">&times;</button>
 
         {/* Header with bg */}
         <div className="bg-[var(--color-surface)]/50 px-6 pt-8 pb-6 text-center rounded-t-2xl">
@@ -56,7 +81,7 @@ function ProfileModal({ profile, onClose }: { profile: Profile; onClose: () => v
               {(profile.name || '?')[0]}
             </div>
           )}
-          <h2 className="text-lg font-bold text-[var(--color-text)]">{profile.name || siteConfig.shortName}</h2>
+          <h2 id="profile-dialog-title" className="text-lg font-bold text-[var(--color-text)]">{profile.name || siteConfig.shortName}</h2>
           {profile.bio && (
             <div className="text-xs text-[var(--color-text-muted)] mt-2 leading-relaxed prose max-w-none prose-a:text-[var(--color-primary)]">
               <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{profile.bio}</ReactMarkdown>
@@ -87,7 +112,7 @@ function ProfileModal({ profile, onClose }: { profile: Profile; onClose: () => v
 }
 
 export function Home() {
-  const [posts, setPosts] = useState<any[]>([])
+  const [posts, setPosts] = useState<HomePost[]>([])
   const [profile, setProfile] = useState<Profile>({})
   const [showProfile, setShowProfile] = useState(false)
   const [copied, setCopied] = useState('')
@@ -96,8 +121,6 @@ export function Home() {
     api.get('/posts', { params: { page_size: 5 } }).then((res) => setPosts(res.data.items))
     api.get('/profile').then((res) => setProfile(res.data)).catch(() => {})
   }, [])
-
-  const hasSocial = profile.github_url || profile.twitter_url || profile.qq || profile.douyin
 
   return (
     <div className="min-h-[80vh] flex flex-col justify-center">

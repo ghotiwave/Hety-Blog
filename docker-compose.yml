@@ -4,7 +4,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - blog_data:/app/data
       - blog_uploads:/app/uploads
@@ -18,8 +18,11 @@ services:
       - AI_MODEL=${AI_MODEL:-deepseek-v4-flash}
       - UPLOAD_DIR=/app/uploads
       - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
+      - TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY:-}
+      - SITE_NAME=${SITE_NAME:-我的个人主页}
       - SITE_DOMAIN=${SITE_DOMAIN:-gianniiss.top}
-      - SITE_URL=${SITE_URL:-https://gianniiss.top}
+      - SITE_URL=${SITE_URL:-https://blog.gianniiss.top}
     restart: unless-stopped
 
   frontend:

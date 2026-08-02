@@ -71,9 +71,19 @@ def reading_history(
         .group_by(ReadingHistory.post_id)
         .subquery()
     )
-    total = db.query(subq).count()
+    visible_history = (
+        db.query(
+            subq.c.post_id,
+            subq.c.last_visit,
+            Post.slug,
+            Post.title,
+        )
+        .join(Post, Post.id == subq.c.post_id)
+        .filter(Post.published == True)
+    )
+    total = visible_history.count()
     rows = (
-        db.query(subq)
+        visible_history
         .order_by(desc(subq.c.last_visit))
         .offset((page - 1) * page_size)
         .limit(page_size)
@@ -81,13 +91,12 @@ def reading_history(
     )
     items = []
     for row in rows:
-        p = db.query(Post).filter(Post.id == row.post_id, Post.published == True).first()
-        if p:
-            items.append({
-                "post_id": p.id,
-                "title": p.title,
-                "visited_at": row.last_visit.isoformat() if row.last_visit else "",
-            })
+        items.append({
+            "post_id": row.post_id,
+            "slug": row.slug,
+            "title": row.title,
+            "visited_at": row.last_visit.isoformat() if row.last_visit else "",
+        })
     return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 
@@ -98,10 +107,14 @@ def liked_posts(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    total = db.query(Like).filter(Like.user_id == user.id).count()
-    rows = (
+    visible_likes = (
         db.query(Like)
-        .filter(Like.user_id == user.id)
+        .join(Post, Post.id == Like.post_id)
+        .filter(Like.user_id == user.id, Post.published == True)
+    )
+    total = visible_likes.count()
+    rows = (
+        visible_likes
         .order_by(desc(Like.created_at))
         .offset((page - 1) * page_size)
         .limit(page_size)
@@ -110,10 +123,10 @@ def liked_posts(
     items = []
     for r in rows:
         p = r.post
-        if p and p.published:
-            items.append({
-                "post_id": p.id,
-                "title": p.title,
-                "created_at": r.created_at.isoformat() if r.created_at else "",
-            })
+        items.append({
+            "post_id": p.id,
+            "slug": p.slug,
+            "title": p.title,
+            "created_at": r.created_at.isoformat() if r.created_at else "",
+        })
     return {"items": items, "total": total, "page": page, "page_size": page_size}
