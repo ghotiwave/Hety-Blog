@@ -15,6 +15,23 @@ describe('MarkdownRenderer', () => {
     )
   })
 
+  it('does not carry a failed image state into the next article', () => {
+    const { rerender } = render(
+      <MarkdownRenderer>{'![旧图](https://images.example.com/broken.png)'}</MarkdownRenderer>,
+    )
+    fireEvent.error(screen.getByRole('img', { name: '旧图' }))
+
+    rerender(
+      <MarkdownRenderer>{'![新图](https://images.example.com/available.png)'}</MarkdownRenderer>,
+    )
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.getByRole('img', { name: '新图' })).toHaveAttribute(
+      'src',
+      'https://images.example.com/available.png',
+    )
+  })
+
   it('renders GFM content and stable slugs for formatted duplicate headings', () => {
     const { container } = render(
       <MarkdownRenderer>{'# **一级标题**\n\n~~删除~~\n\n| A | B |\n| - | - |\n| 1 | 2 |\n\n# 一级标题'}</MarkdownRenderer>,

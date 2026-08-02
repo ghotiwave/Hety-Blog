@@ -52,9 +52,9 @@ function CopyButton({ code }: { code: string }) {
 }
 
 function MarkdownImage({ src, alt }: { src?: string; alt?: string }) {
-  const [failed, setFailed] = useState(false)
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
   if (!src) return null
-  if (failed) {
+  if (failedSrc === src) {
     return (
       <span className="markdown-image-error" role="status">
         图片加载失败
@@ -70,7 +70,7 @@ function MarkdownImage({ src, alt }: { src?: string; alt?: string }) {
         loading="lazy"
         decoding="async"
         referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
+        onError={() => setFailedSrc(src)}
       />
     </span>
   )
