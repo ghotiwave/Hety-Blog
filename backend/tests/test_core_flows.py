@@ -752,13 +752,17 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
         class FakeClient:
             token = None
 
+            def __init__(self):
+                self.token_headers = None
+
             async def __aenter__(self):
                 return self
 
             async def __aexit__(self, *_):
                 return None
 
-            async def fetch_token(self, *_args, **_kwargs):
+            async def fetch_token(self, *_args, **kwargs):
+                self.token_headers = kwargs.get("headers")
                 return {"access_token": "discarded", "token_type": "bearer"}
 
             async def get(self, url, **_kwargs):
@@ -769,11 +773,13 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
                     {"email": "primary@example.com", "verified": True, "primary": True},
                 ])
 
-        with patch("app.services.github_oauth._oauth_client", return_value=FakeClient()):
+        fake_client = FakeClient()
+        with patch("app.services.github_oauth._oauth_client", return_value=fake_client):
             identity = await exchange_github_identity("code", "state", "verifier")
 
         self.assertEqual(identity.provider_user_id, "107")
         self.assertEqual(identity.email, "primary@example.com")
+        self.assertEqual(fake_client.token_headers, {"Accept": "application/json", "Host": "github.com"})
 
     async def test_callback_returns_site_token_in_fragment(self):
         authorization_url, state_token = await create_github_authorization("login")

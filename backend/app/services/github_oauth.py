@@ -141,7 +141,7 @@ async def exchange_github_identity(code: str, state: str, verifier: str) -> GitH
             settings.GITHUB_TOKEN_URL.strip(),
             code=code,
             code_verifier=verifier,
-            headers={"Accept": "application/json"},
+            headers={"Accept": "application/json", "Host": "github.com"},
         )
         client.token = token
         profile_response = await client.get(f"{GITHUB_API_URL}/user")
