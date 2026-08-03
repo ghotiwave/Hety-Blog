@@ -53,8 +53,9 @@ def github_callback_url() -> str:
 
 def _oauth_client(*, state: str | None = None, token: dict | None = None) -> AsyncOAuth2Client:
     return AsyncOAuth2Client(
-        client_id=settings.GITHUB_CLIENT_ID,
-        client_secret=settings.GITHUB_CLIENT_SECRET,
+        client_id=settings.GITHUB_CLIENT_ID.strip(),
+        client_secret=settings.GITHUB_CLIENT_SECRET.strip(),
+        token_endpoint_auth_method="client_secret_post",
         redirect_uri=github_callback_url(),
         scope=GITHUB_SCOPE,
         state=state,

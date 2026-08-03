@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { AuthShell } from '@/components/auth/AuthShell'
+import { GitHubAuthLink } from '@/components/auth/GitHubAuthLink'
 import api from '@/services/api'
 import { TurnstileWidget } from '@/components/auth/TurnstileWidget'
 
@@ -20,12 +21,14 @@ export function Register() {
   const [codeSending, setCodeSending] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [turnstileSiteKey, setTurnstileSiteKey] = useState('')
+  const [githubEnabled, setGithubEnabled] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState('')
   const [turnstileVersion, setTurnstileVersion] = useState(0)
 
   useEffect(() => {
     api.get('/auth/config').then((response) => {
       setTurnstileSiteKey(response.data.turnstile_site_key || '')
+      setGithubEnabled(Boolean(response.data.github_oauth_enabled))
     }).catch(() => {})
   }, [])
 
@@ -104,6 +107,7 @@ export function Register() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? '注册中...' : '注册'}
             </Button>
+            {githubEnabled && <GitHubAuthLink mode="register" />}
           </form>
     </AuthShell>
   )

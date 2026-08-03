@@ -57,6 +57,7 @@ from app.services.github_oauth import (
     GITHUB_STATE_COOKIE,
     GitHubFlowError,
     GitHubIdentity,
+    _oauth_client,
     create_github_authorization,
     exchange_github_identity,
     read_github_state,
@@ -636,6 +637,10 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("code_challenge_method=S256", authorization_url)
         self.assertIn("scope=read%3Auser+user%3Aemail", authorization_url)
         self.assertIn("HttpOnly", response.headers["set-cookie"])
+
+    async def test_token_exchange_posts_github_client_credentials(self):
+        async with _oauth_client() as client:
+            self.assertEqual(client.token_endpoint_auth_method, "client_secret_post")
 
     def test_new_github_identity_creates_linked_user(self):
         identity = GitHubIdentity("101", "octocat", "octocat@example.com", "https://avatar")
