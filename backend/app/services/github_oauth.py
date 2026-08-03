@@ -19,7 +19,6 @@ from app.models.user import User
 
 
 GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
-GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
 GITHUB_API_URL = "https://api.github.com"
 GITHUB_SCOPE = "read:user user:email"
 GITHUB_STATE_COOKIE = "hety_github_oauth"
@@ -139,7 +138,7 @@ def read_github_state(request: Request, returned_state: str | None) -> dict:
 async def exchange_github_identity(code: str, state: str, verifier: str) -> GitHubIdentity:
     async with _oauth_client(state=state) as client:
         token = await client.fetch_token(
-            GITHUB_TOKEN_URL,
+            settings.GITHUB_TOKEN_URL.strip(),
             code=code,
             code_verifier=verifier,
             headers={"Accept": "application/json"},

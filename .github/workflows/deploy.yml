@@ -82,6 +82,7 @@ jobs:
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
             cd ~/blog
-            docker compose up -d --build
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend python -c 'import httpx; response = httpx.get("https://github.com:9443/login/oauth/access_token", timeout=15); assert response.status_code == 404'
             docker system prune -f
           "

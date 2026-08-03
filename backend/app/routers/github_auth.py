@@ -93,6 +93,10 @@ async def github_callback(
         )
     except GitHubFlowError as exc:
         return _frontend_redirect(error_path, error=exc.code)
+    except httpx.ConnectTimeout:
+        db.rollback()
+        logger.exception("GitHub OAuth connection timed out")
+        return _frontend_redirect(error_path, error="provider_unreachable")
     except (OAuthError, httpx.HTTPError, ValueError, KeyError, IntegrityError):
         db.rollback()
         logger.exception("GitHub OAuth callback failed")

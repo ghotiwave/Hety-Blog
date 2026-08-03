@@ -1,0 +1,16 @@
+services:
+  backend:
+    depends_on:
+      github-egress:
+        condition: service_started
+    extra_hosts:
+      - "github.com:host-gateway"
+    environment:
+      - GITHUB_TOKEN_URL=https://github.com:9443/login/oauth/access_token
+
+  github-egress:
+    image: haproxy:3.4.3-alpine
+    network_mode: host
+    volumes:
+      - ./infra/github-egress/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    restart: unless-stopped

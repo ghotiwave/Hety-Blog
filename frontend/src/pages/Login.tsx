@@ -15,6 +15,7 @@ const oauthErrors: Record<string, string> = {
   invalid_state: 'GitHub 登录请求已过期，请重新尝试。',
   missing_code: 'GitHub 没有返回授权码，请重新尝试。',
   provider_error: 'GitHub 登录服务暂时不可用，请稍后重试。',
+  provider_unreachable: '服务器暂时无法连接 GitHub，请稍后重试。',
   missing_token: 'GitHub 登录结果无效，请重新尝试。',
   session_error: '登录会话建立失败，请重新尝试。',
 }

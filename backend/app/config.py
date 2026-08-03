@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from pydantic_settings import BaseSettings
 
 
@@ -26,6 +28,7 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: str = ""
     GITHUB_CALLBACK_URL: str = ""
+    GITHUB_TOKEN_URL: str = "https://github.com/login/oauth/access_token"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
@@ -49,3 +52,19 @@ def validate_runtime_settings() -> None:
     )
     if github_credentials[0] != github_credentials[1]:
         raise RuntimeError("GITHUB_CLIENT_ID 与 GITHUB_CLIENT_SECRET 必须同时配置")
+    token_url = urlparse(settings.GITHUB_TOKEN_URL.strip())
+    try:
+        token_port = token_url.port
+    except ValueError as exc:
+        raise RuntimeError("GITHUB_TOKEN_URL 端口无效") from exc
+    if (
+        token_url.scheme != "https"
+        or token_url.hostname != "github.com"
+        or token_port not in {None, 443, 9443}
+        or token_url.path != "/login/oauth/access_token"
+        or token_url.username
+        or token_url.password
+        or token_url.query
+        or token_url.fragment
+    ):
+        raise RuntimeError("GITHUB_TOKEN_URL 必须是受支持的 GitHub OAuth token 地址")

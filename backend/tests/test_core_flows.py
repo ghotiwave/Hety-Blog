@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 import bcrypt
+import httpx
 from fastapi import HTTPException, Response, UploadFile
 from pydantic import ValidationError
 from sqlalchemy import create_engine, text
@@ -109,6 +110,16 @@ class ConfigurationTests(unittest.TestCase):
                 settings.GITHUB_CLIENT_ID,
                 settings.GITHUB_CLIENT_SECRET,
             ) = original
+
+    def test_github_token_url_cannot_send_credentials_to_an_untrusted_host(self):
+        original = (settings.SECRET_KEY, settings.GITHUB_TOKEN_URL)
+        try:
+            settings.SECRET_KEY = "s" * 32
+            settings.GITHUB_TOKEN_URL = "https://example.com/login/oauth/access_token"
+            with self.assertRaises(RuntimeError):
+                validate_runtime_settings()
+        finally:
+            settings.SECRET_KEY, settings.GITHUB_TOKEN_URL = original
 
 
 class LoginTests(DatabaseTestCase):
@@ -779,6 +790,20 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 303)
         self.assertIn("/auth/github/complete#token=", response.headers["location"])
         self.assertNotIn("temporary-code", response.headers["location"])
+
+    async def test_callback_explains_github_connection_timeout(self):
+        authorization_url, state_token = await create_github_authorization("login")
+        state = authorization_url.split("state=", 1)[1].split("&", 1)[0]
+        request = SimpleNamespace(cookies={GITHUB_STATE_COOKIE: state_token})
+
+        with patch(
+            "app.routers.github_auth.exchange_github_identity",
+            new=AsyncMock(side_effect=httpx.ConnectTimeout("timeout")),
+        ):
+            response = await github_callback(request, "temporary-code", state, None, self.db)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("oauth_error=provider_unreachable", response.headers["location"])
 
 class UserActionTests(DatabaseTestCase):
     def test_history_and_likes_totals_exclude_unpublished_posts(self):
