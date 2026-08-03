@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+import httpx
 from authlib.common.security import generate_token
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from fastapi import HTTPException, Request, Response
@@ -23,6 +24,8 @@ GITHUB_API_URL = "https://api.github.com"
 GITHUB_SCOPE = "read:user user:email"
 GITHUB_STATE_COOKIE = "hety_github_oauth"
 GITHUB_STATE_TTL_SECONDS = 600
+GITHUB_CONNECT_TIMEOUT_SECONDS = 30.0
+GITHUB_REQUEST_TIMEOUT_SECONDS = 30.0
 
 
 class GitHubFlowError(Exception):
@@ -60,13 +63,32 @@ def _oauth_client(*, state: str | None = None, token: dict | None = None) -> Asy
         state=state,
         token=token,
         code_challenge_method="S256",
-        timeout=10,
+        timeout=httpx.Timeout(
+            GITHUB_REQUEST_TIMEOUT_SECONDS,
+            connect=GITHUB_CONNECT_TIMEOUT_SECONDS,
+        ),
         headers={
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": "Hety-Blog-OAuth",
         },
     )
+
+
+async def _fetch_github_token(client: AsyncOAuth2Client, code: str, verifier: str) -> dict:
+    token_url = settings.GITHUB_TOKEN_URL.strip()
+    for attempt in range(2):
+        try:
+            return await client.fetch_token(
+                token_url,
+                code=code,
+                code_verifier=verifier,
+                headers={"Accept": "application/json", "Host": "github.com"},
+            )
+        except httpx.ConnectTimeout:
+            if attempt == 1:
+                raise
+    raise RuntimeError("GitHub token exchange retry loop exited unexpectedly")
 
 
 async def create_github_authorization(mode: str, bind_user_id: int | None = None) -> tuple[str, str]:
@@ -137,12 +159,7 @@ def read_github_state(request: Request, returned_state: str | None) -> dict:
 
 async def exchange_github_identity(code: str, state: str, verifier: str) -> GitHubIdentity:
     async with _oauth_client(state=state) as client:
-        token = await client.fetch_token(
-            settings.GITHUB_TOKEN_URL.strip(),
-            code=code,
-            code_verifier=verifier,
-            headers={"Accept": "application/json", "Host": "github.com"},
-        )
+        token = await _fetch_github_token(client, code, verifier)
         client.token = token
         profile_response = await client.get(f"{GITHUB_API_URL}/user")
         profile_response.raise_for_status()

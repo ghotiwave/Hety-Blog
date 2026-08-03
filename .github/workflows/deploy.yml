@@ -83,6 +83,6 @@ jobs:
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
             cd ~/blog
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend python -c 'import httpx; response = httpx.post("https://github.com:9443/login/oauth/access_token", headers={"Host": "github.com", "Accept": "application/json"}, data={"client_id": "deploy-healthcheck", "client_secret": "invalid", "code": "invalid"}, timeout=15); assert response.json().get("error")'
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend python -c 'import httpx; response = httpx.post("https://github.com:9443/login/oauth/access_token", headers={"Host": "github.com", "Accept": "application/json"}, data={"client_id": "deploy-healthcheck", "client_secret": "invalid", "code": "invalid"}, timeout=30); assert response.json().get("error")'
             docker system prune -f
           "

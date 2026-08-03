@@ -58,6 +58,7 @@ from app.services.github_oauth import (
     GITHUB_STATE_COOKIE,
     GitHubFlowError,
     GitHubIdentity,
+    _fetch_github_token,
     _oauth_client,
     create_github_authorization,
     exchange_github_identity,
@@ -780,6 +781,24 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(identity.provider_user_id, "107")
         self.assertEqual(identity.email, "primary@example.com")
         self.assertEqual(fake_client.token_headers, {"Accept": "application/json", "Host": "github.com"})
+
+    async def test_token_exchange_retries_one_connect_timeout(self):
+        client = AsyncMock()
+        client.fetch_token.side_effect = [
+            httpx.ConnectTimeout("TLS handshake timed out"),
+            {"access_token": "discarded", "token_type": "bearer"},
+        ]
+
+        token = await _fetch_github_token(client, "code", "verifier")
+
+        self.assertEqual(token["access_token"], "discarded")
+        self.assertEqual(client.fetch_token.await_count, 2)
+        client.fetch_token.assert_awaited_with(
+            settings.GITHUB_TOKEN_URL.strip(),
+            code="code",
+            code_verifier="verifier",
+            headers={"Accept": "application/json", "Host": "github.com"},
+        )
 
     async def test_callback_returns_site_token_in_fragment(self):
         authorization_url, state_token = await create_github_authorization("login")
