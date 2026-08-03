@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
@@ -18,14 +18,16 @@ from app.database import Base
 from app.models.comment import Comment, CommentLike
 from app.models.digest import NewsDigest
 from app.models.like import Like
+from app.models.oauth_account import OAuthAccount
 from app.models.post import Post
 from app.models.profile import Profile
 from app.models.reading_history import ReadingHistory
 from app.models.score import Score
 from app.models.user import User
 from app.routers.auth import _client_ip, _login_attempts, _normalize_email, _validate_password, login, register
+from app.routers.github_auth import github_callback
 from app.routers.comments import _serialize, create_comment, delete_comment, list_replies
-from app.routers.admin_dashboard import list_comments as list_admin_comments
+from app.routers.admin_dashboard import delete_user as delete_admin_user, list_comments as list_admin_comments
 from app.routers.admin_digests import trigger_digest
 from app.routers.admin_posts import export_post, import_post
 from app.routers.upload import MAX_UPLOAD_BYTES, upload_image
@@ -51,6 +53,16 @@ from app.utils.guest_comments import (
 from app.services.ai_digest import has_digest_for_date
 from app.services.email_service import store_code, verify_code
 from app.services.news_fetcher import fetch_hackernews_top
+from app.services.github_oauth import (
+    GITHUB_STATE_COOKIE,
+    GitHubFlowError,
+    GitHubIdentity,
+    create_github_authorization,
+    exchange_github_identity,
+    read_github_state,
+    resolve_github_user,
+    set_github_state_cookie,
+)
 
 
 class DatabaseTestCase(unittest.TestCase):
@@ -77,6 +89,25 @@ class ConfigurationTests(unittest.TestCase):
                     validate_runtime_settings()
         finally:
             settings.SECRET_KEY = original_secret
+
+    def test_partial_github_credentials_are_rejected(self):
+        original = (
+            settings.SECRET_KEY,
+            settings.GITHUB_CLIENT_ID,
+            settings.GITHUB_CLIENT_SECRET,
+        )
+        try:
+            settings.SECRET_KEY = "s" * 32
+            settings.GITHUB_CLIENT_ID = "client-id"
+            settings.GITHUB_CLIENT_SECRET = ""
+            with self.assertRaises(RuntimeError):
+                validate_runtime_settings()
+        finally:
+            (
+                settings.SECRET_KEY,
+                settings.GITHUB_CLIENT_ID,
+                settings.GITHUB_CLIENT_SECRET,
+            ) = original
 
 
 class LoginTests(DatabaseTestCase):
@@ -564,6 +595,185 @@ class GuestCommentTests(unittest.IsolatedAsyncioTestCase):
             columns = {row[1] for row in connection.execute(text("PRAGMA table_info(comments)"))}
         self.assertTrue({"guest_name", "guest_email", "guest_key_hash", "reply_to_name_override"} <= columns)
 
+
+class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        self.db = sessionmaker(bind=engine)()
+        self.original = (
+            settings.GITHUB_CLIENT_ID,
+            settings.GITHUB_CLIENT_SECRET,
+            settings.GITHUB_CALLBACK_URL,
+            settings.SITE_URL,
+        )
+        settings.GITHUB_CLIENT_ID = "client-id"
+        settings.GITHUB_CLIENT_SECRET = "client-secret"
+        settings.GITHUB_CALLBACK_URL = "https://blog.example/api/auth/github/callback"
+        settings.SITE_URL = "https://blog.example"
+
+    def tearDown(self):
+        (
+            settings.GITHUB_CLIENT_ID,
+            settings.GITHUB_CLIENT_SECRET,
+            settings.GITHUB_CALLBACK_URL,
+            settings.SITE_URL,
+        ) = self.original
+        self.db.close()
+
+    async def test_authorization_uses_signed_state_cookie_and_pkce(self):
+        authorization_url, state_token = await create_github_authorization("login")
+        response = Response()
+        set_github_state_cookie(response, state_token)
+        cookie_value = response.headers["set-cookie"].split(";", 1)[0].split("=", 1)[1]
+        state = authorization_url.split("state=", 1)[1].split("&", 1)[0]
+        request = SimpleNamespace(cookies={GITHUB_STATE_COOKIE: cookie_value})
+
+        payload = read_github_state(request, state)
+
+        self.assertEqual(payload["mode"], "login")
+        self.assertIn("code_challenge=", authorization_url)
+        self.assertIn("code_challenge_method=S256", authorization_url)
+        self.assertIn("scope=read%3Auser+user%3Aemail", authorization_url)
+        self.assertIn("HttpOnly", response.headers["set-cookie"])
+
+    def test_new_github_identity_creates_linked_user(self):
+        identity = GitHubIdentity("101", "octocat", "octocat@example.com", "https://avatar")
+
+        user, result = resolve_github_user(self.db, identity, mode="login")
+
+        self.assertEqual(result, "created")
+        self.assertEqual(user.email, "octocat@example.com")
+        self.assertEqual(user.email_verified, 1)
+        self.assertTrue(user.password_hash.startswith("$2"))
+        link = self.db.query(OAuthAccount).filter_by(user_id=user.id, provider="github").one()
+        self.assertEqual(link.provider_user_id, "101")
+
+    def test_linked_identity_logs_into_the_same_user(self):
+        identity = GitHubIdentity("102", "linked-user", "linked@example.com")
+        first, _ = resolve_github_user(self.db, identity, mode="login")
+
+        second, result = resolve_github_user(self.db, identity, mode="login")
+
+        self.assertEqual(result, "login")
+        self.assertEqual(second.id, first.id)
+        self.assertEqual(self.db.query(User).count(), 1)
+
+    def test_matching_local_email_requires_explicit_binding(self):
+        local = User(username="local", email="same@example.com", password_hash="unused")
+        self.db.add(local)
+        self.db.commit()
+
+        with self.assertRaises(GitHubFlowError) as raised:
+            resolve_github_user(
+                self.db,
+                GitHubIdentity("103", "same", "same@example.com"),
+                mode="login",
+            )
+
+        self.assertEqual(raised.exception.code, "existing_email")
+        self.assertEqual(self.db.query(OAuthAccount).count(), 0)
+
+    def test_authenticated_user_can_bind_github_explicitly(self):
+        local = User(username="local", email="local@example.com", password_hash="unused")
+        self.db.add(local)
+        self.db.commit()
+
+        user, result = resolve_github_user(
+            self.db,
+            GitHubIdentity("104", "different", "different@example.com"),
+            mode="bind",
+            bind_user_id=local.id,
+        )
+
+        self.assertEqual(result, "bound")
+        self.assertEqual(user.id, local.id)
+        self.assertEqual(user.email, "local@example.com")
+        self.assertEqual(self.db.query(OAuthAccount).filter_by(user_id=local.id).count(), 1)
+
+    def test_github_identity_cannot_be_bound_to_two_users(self):
+        first = User(username="first", email="first@example.com", password_hash="unused")
+        second = User(username="second", email="second@example.com", password_hash="unused")
+        self.db.add_all([first, second])
+        self.db.commit()
+        identity = GitHubIdentity("106", "shared", "shared@example.com")
+        resolve_github_user(self.db, identity, mode="bind", bind_user_id=first.id)
+
+        with self.assertRaises(GitHubFlowError) as raised:
+            resolve_github_user(self.db, identity, mode="bind", bind_user_id=second.id)
+
+        self.assertEqual(raised.exception.code, "account_conflict")
+
+    def test_admin_user_deletion_removes_oauth_identity(self):
+        admin = User(username="admin", password_hash="unused", role="admin")
+        member = User(username="member", password_hash="unused")
+        self.db.add_all([admin, member])
+        self.db.commit()
+        self.db.add(OAuthAccount(
+            user_id=member.id,
+            provider="github",
+            provider_user_id="108",
+            provider_username="member-gh",
+        ))
+        self.db.commit()
+
+        delete_admin_user(member.id, self.db, admin)
+
+        self.assertIsNone(self.db.get(User, member.id))
+        self.assertEqual(self.db.query(OAuthAccount).count(), 0)
+
+    async def test_exchange_selects_verified_primary_email(self):
+        class FakeResponse:
+            def __init__(self, data):
+                self.data = data
+
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return self.data
+
+        class FakeClient:
+            token = None
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *_):
+                return None
+
+            async def fetch_token(self, *_args, **_kwargs):
+                return {"access_token": "discarded", "token_type": "bearer"}
+
+            async def get(self, url, **_kwargs):
+                if url.endswith("/user"):
+                    return FakeResponse({"id": 107, "login": "email-user", "avatar_url": "https://avatar"})
+                return FakeResponse([
+                    {"email": "other@example.com", "verified": True, "primary": False},
+                    {"email": "primary@example.com", "verified": True, "primary": True},
+                ])
+
+        with patch("app.services.github_oauth._oauth_client", return_value=FakeClient()):
+            identity = await exchange_github_identity("code", "state", "verifier")
+
+        self.assertEqual(identity.provider_user_id, "107")
+        self.assertEqual(identity.email, "primary@example.com")
+
+    async def test_callback_returns_site_token_in_fragment(self):
+        authorization_url, state_token = await create_github_authorization("login")
+        state = authorization_url.split("state=", 1)[1].split("&", 1)[0]
+        request = SimpleNamespace(cookies={GITHUB_STATE_COOKIE: state_token})
+        identity = GitHubIdentity("105", "callback-user", "callback@example.com")
+
+        with patch(
+            "app.routers.github_auth.exchange_github_identity",
+            new=AsyncMock(return_value=identity),
+        ):
+            response = await github_callback(request, "temporary-code", state, None, self.db)
+
+        self.assertEqual(response.status_code, 303)
+        self.assertIn("/auth/github/complete#token=", response.headers["location"])
+        self.assertNotIn("temporary-code", response.headers["location"])
 
 class UserActionTests(DatabaseTestCase):
     def test_history_and_likes_totals_exclude_unpublished_posts(self):

@@ -6,6 +6,7 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.models.user import User
 from app.models.like import Like
+from app.models.oauth_account import OAuthAccount
 from app.dependencies import get_current_admin
 from app.utils.timestamps import beijing_isoformat
 from app.utils.comment_threads import delete_comment_thread
@@ -81,6 +82,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin: User = Depen
         raise HTTPException(status_code=404, detail="Not found")
     if u.role == "admin":
         raise HTTPException(status_code=400, detail="Cannot delete admin")
+    db.query(OAuthAccount).filter(OAuthAccount.user_id == u.id).delete(synchronize_session=False)
     db.delete(u)
     db.commit()
     return {"message": "deleted"}

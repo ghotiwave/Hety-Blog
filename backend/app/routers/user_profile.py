@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from app.database import get_db
 from app.models.user import User
+from app.models.oauth_account import OAuthAccount
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/user", tags=["user-profile"])
@@ -16,6 +17,10 @@ class ProfileUpdate(BaseModel):
 
 @router.get("/profile")
 def get_profile(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    github = db.query(OAuthAccount).filter(
+        OAuthAccount.user_id == user.id,
+        OAuthAccount.provider == "github",
+    ).first()
     return {
         "id": user.id,
         "username": user.username,
@@ -23,6 +28,8 @@ def get_profile(db: Session = Depends(get_db), user: User = Depends(get_current_
         "avatar_url": user.avatar_url,
         "signature": user.signature,
         "role": user.role,
+        "github_linked": github is not None,
+        "github_login": github.provider_username if github else None,
     }
 
 

@@ -10,6 +10,7 @@ const PostDetail = lazy(() => import('@/pages/PostDetail').then((module) => ({ d
 const About = lazy(() => import('@/pages/About').then((module) => ({ default: module.About })))
 const Login = lazy(() => import('@/pages/Login').then((module) => ({ default: module.Login })))
 const Register = lazy(() => import('@/pages/Register').then((module) => ({ default: module.Register })))
+const GitHubOAuthComplete = lazy(() => import('@/pages/GitHubOAuthComplete').then((module) => ({ default: module.GitHubOAuthComplete })))
 const Game = lazy(() => import('@/pages/Game').then((module) => ({ default: module.Game })))
 const Leaderboard = lazy(() => import('@/pages/Leaderboard').then((module) => ({ default: module.Leaderboard })))
 const Digest = lazy(() => import('@/pages/Digest').then((module) => ({ default: module.Digest })))
@@ -89,6 +90,7 @@ export default function App() {
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/auth/github/complete" element={<GitHubOAuthComplete />} />
             {siteConfig.features.game && <Route path="/game" element={<Game />} />}
             {siteConfig.features.game && <Route path="/leaderboard" element={<Leaderboard />} />}
             {siteConfig.features.digest && <Route path="/digest" element={<Digest />} />}

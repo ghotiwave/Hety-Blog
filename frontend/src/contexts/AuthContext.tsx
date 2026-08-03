@@ -16,6 +16,7 @@ interface AuthState {
   login: (identifier: string, password: string) => Promise<void>
   register: (username: string, email: string, password: string, code: string, turnstile_token?: string) => Promise<void>
   sendCode: (email: string) => Promise<void>
+  completeOAuthLogin: (token: string) => Promise<void>
   refreshUser: () => Promise<void>
   logout: () => void
 }
@@ -71,6 +72,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await api.post('/auth/send-code', { email })
   }
 
+  async function completeOAuthLogin(oauthToken: string) {
+    localStorage.setItem('token', oauthToken)
+    setToken(oauthToken)
+    try {
+      const res = await api.get('/auth/me')
+      localStorage.setItem('user', JSON.stringify(res.data))
+      setUser(res.data)
+    } catch (error) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      setToken(null)
+      setUser(null)
+      throw error
+    }
+  }
+
   async function refreshUser() {
     const res = await api.get('/auth/me')
     localStorage.setItem('user', JSON.stringify(res.data))
@@ -85,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isAdmin, login, register, sendCode, refreshUser, logout }}>
+    <AuthContext.Provider value={{ user, token, isAdmin, login, register, sendCode, completeOAuthLogin, refreshUser, logout }}>
       {children}
     </AuthContext.Provider>
   )

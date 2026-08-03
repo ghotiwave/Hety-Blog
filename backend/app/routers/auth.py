@@ -29,7 +29,12 @@ EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 @router.get("/config")
 def public_auth_config():
-    return {"turnstile_site_key": settings.TURNSTILE_SITE_KEY or None}
+    from app.services.github_oauth import github_oauth_enabled
+
+    return {
+        "turnstile_site_key": settings.TURNSTILE_SITE_KEY or None,
+        "github_oauth_enabled": github_oauth_enabled(),
+    }
 
 
 def _validate_username(username: str):

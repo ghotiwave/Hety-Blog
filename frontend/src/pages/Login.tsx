@@ -1,18 +1,42 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '@/contexts/AuthContext'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { AuthShell } from '@/components/auth/AuthShell'
+import { GitHubIcon } from '@/components/auth/GitHubIcon'
+import api from '@/services/api'
+
+const oauthErrors: Record<string, string> = {
+  cancelled: '已取消 GitHub 授权。',
+  existing_email: '该 GitHub 邮箱已注册。请先使用原账号登录，再到个人资料中绑定 GitHub。',
+  no_verified_email: 'GitHub 账号没有可用的已验证邮箱。',
+  invalid_state: 'GitHub 登录请求已过期，请重新尝试。',
+  missing_code: 'GitHub 没有返回授权码，请重新尝试。',
+  provider_error: 'GitHub 登录服务暂时不可用，请稍后重试。',
+  missing_token: 'GitHub 登录结果无效，请重新尝试。',
+  session_error: '登录会话建立失败，请重新尝试。',
+}
 
 export function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(() => {
+    const oauthError = searchParams.get('oauth_error')
+    return oauthError ? oauthErrors[oauthError] || oauthErrors.provider_error : ''
+  })
   const [loading, setLoading] = useState(false)
+  const [githubEnabled, setGithubEnabled] = useState(false)
+
+  useEffect(() => {
+    api.get('/auth/config')
+      .then((response) => setGithubEnabled(Boolean(response.data.github_oauth_enabled)))
+      .catch(() => {})
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,6 +81,22 @@ export function Login() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? '登录中...' : '登录'}
             </Button>
+            {githubEnabled && (
+              <>
+                <div className="flex items-center gap-3 py-1 text-[10px] tracking-[0.14em] text-[var(--color-text-muted)]">
+                  <span className="h-px flex-1 bg-[var(--color-border)]" />
+                  OR
+                  <span className="h-px flex-1 bg-[var(--color-border)]" />
+                </div>
+                <a
+                  href="/api/auth/github/start"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-medium text-[var(--color-text)] transition-colors hover:border-[var(--color-primary)] hover:bg-[var(--color-bg)]"
+                >
+                  <GitHubIcon />
+                  使用 GitHub 登录
+                </a>
+              </>
+            )}
           </form>
     </AuthShell>
   )

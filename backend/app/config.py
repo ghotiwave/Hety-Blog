@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = ""
     TURNSTILE_SECRET_KEY: str = ""
     TURNSTILE_SITE_KEY: str = ""
+    GITHUB_CLIENT_ID: str = ""
+    GITHUB_CLIENT_SECRET: str = ""
+    GITHUB_CALLBACK_URL: str = ""
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
@@ -40,3 +43,9 @@ def validate_runtime_settings() -> None:
     }
     if secret in insecure_values or len(secret) < 32:
         raise RuntimeError("SECRET_KEY 必须设置为至少 32 位的随机字符串，不能使用示例值")
+    github_credentials = (
+        bool(settings.GITHUB_CLIENT_ID.strip()),
+        bool(settings.GITHUB_CLIENT_SECRET.strip()),
+    )
+    if github_credentials[0] != github_credentials[1]:
+        raise RuntimeError("GITHUB_CLIENT_ID 与 GITHUB_CLIENT_SECRET 必须同时配置")

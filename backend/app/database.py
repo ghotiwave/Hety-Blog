@@ -31,6 +31,7 @@ def init_db():
     from app.models.user import User
     from app.models.post import Post
     from app.models.comment import Comment
+    from app.models.oauth_account import OAuthAccount
     from app.models.profile import Profile
     from app.models.score import Score
     from app.models.digest import NewsDigest
