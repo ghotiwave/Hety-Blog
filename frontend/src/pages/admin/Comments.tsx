@@ -4,6 +4,7 @@ import api from '@/services/api'
 interface AdminComment {
   id: number
   author_name: string
+  guest_email?: string | null
   post_title: string
   content: string
   created_at: string
@@ -35,6 +36,7 @@ export function AdminComments() {
             <div className="mb-2 flex items-start justify-between gap-3">
               <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="font-medium text-sm text-[var(--color-text)]">{c.author_name}</span>
+                {c.guest_email && <span className="text-xs text-[var(--color-text-muted)]">{c.guest_email}</span>}
                 <span className="text-xs text-[var(--color-text-muted)]">评论于</span>
                 <span className="text-sm text-[var(--color-primary)]">{c.post_title}</span>
               </div>

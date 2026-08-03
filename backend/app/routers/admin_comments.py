@@ -4,6 +4,7 @@ from app.database import get_db
 from app.models.comment import Comment
 from app.models.user import User
 from app.dependencies import get_current_admin
+from app.utils.comment_threads import delete_comment_thread
 
 router = APIRouter(prefix="/api/admin/comments", tags=["admin-comments"])
 
@@ -13,5 +14,5 @@ def delete_comment(comment_id: int, db: Session = Depends(get_db), _: User = Dep
     comment = db.get(Comment, comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
-    db.delete(comment)
+    delete_comment_thread(db, comment)
     db.commit()

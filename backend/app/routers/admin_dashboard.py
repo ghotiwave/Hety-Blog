@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.like import Like
 from app.dependencies import get_current_admin
 from app.utils.timestamps import beijing_isoformat
+from app.utils.comment_threads import delete_comment_thread
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -47,7 +48,8 @@ def list_comments(
             "id": c.id,
             "post_id": c.post_id,
             "post_title": post.title if post else "(deleted)",
-            "author_name": user.username if user else "anonymous",
+            "author_name": user.username if user else (c.guest_name or "anonymous"),
+            "guest_email": c.guest_email if user is None else None,
             "content": c.content,
             "created_at": beijing_isoformat(c.created_at),
         })
@@ -59,7 +61,7 @@ def delete_comment(comment_id: int, db: Session = Depends(get_db), _: User = Dep
     c = db.query(Comment).filter(Comment.id == comment_id).first()
     if not c:
         raise HTTPException(status_code=404, detail="Not found")
-    db.delete(c)
+    delete_comment_thread(db, c)
     db.commit()
     return {"message": "deleted"}
 

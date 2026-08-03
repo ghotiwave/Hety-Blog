@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 import bcrypt
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException, Response, UploadFile
 from pydantic import ValidationError
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
@@ -24,7 +24,8 @@ from app.models.reading_history import ReadingHistory
 from app.models.score import Score
 from app.models.user import User
 from app.routers.auth import _client_ip, _login_attempts, _normalize_email, _validate_password, login, register
-from app.routers.comments import _serialize, list_replies
+from app.routers.comments import _serialize, create_comment, delete_comment, list_replies
+from app.routers.admin_dashboard import list_comments as list_admin_comments
 from app.routers.admin_digests import trigger_digest
 from app.routers.admin_posts import export_post, import_post
 from app.routers.upload import MAX_UPLOAD_BYTES, upload_image
@@ -41,6 +42,12 @@ from app.utils.markdown_posts import (
 )
 from app.utils.digest_slugs import assign_unique_digest_slugs, next_digest_slug
 from app.utils.timestamps import beijing_isoformat, normalize_legacy_timestamps
+from app.utils.guest_comments import (
+    GUEST_COOKIE_NAME,
+    _guest_comment_attempts,
+    consume_guest_comment_limit,
+    ensure_guest_comment_columns,
+)
 from app.services.ai_digest import has_digest_for_date
 from app.services.email_service import store_code, verify_code
 from app.services.news_fetcher import fetch_hackernews_top
@@ -390,6 +397,18 @@ class SchemaTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             CommentCreate(content="x" * 5001)
 
+    def test_guest_identity_fields_are_optional_and_normalized(self):
+        request = CommentCreate(
+            content="hello",
+            guest_name="  visitor  ",
+            guest_email=" Visitor@Example.com ",
+        )
+        self.assertEqual(request.guest_name, "visitor")
+        self.assertEqual(request.guest_email, "visitor@example.com")
+        self.assertIsNone(CommentCreate(content="hello", guest_name=" ").guest_name)
+        with self.assertRaises(ValidationError):
+            CommentCreate(content="hello", guest_email="not-an-email")
+
     def test_admin_profile_rejects_blank_name_and_oversized_urls(self):
         with self.assertRaises(ValidationError):
             ProfileUpdate(name="   ")
@@ -424,6 +443,126 @@ class CommentTests(DatabaseTestCase):
         with self.assertRaises(HTTPException) as raised:
             list_replies(second.id, comment.id, 1, self.db, None)
         self.assertEqual(raised.exception.status_code, 404)
+
+
+class GuestCommentTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        self.db = sessionmaker(bind=engine)()
+        self.post = Post(title="Guest post", content="Body", published=True)
+        self.db.add(self.post)
+        self.db.commit()
+        _guest_comment_attempts.clear()
+
+    def tearDown(self):
+        _guest_comment_attempts.clear()
+        self.db.close()
+
+    async def test_guest_comment_uses_private_email_and_signed_identity_cookie(self):
+        original_turnstile = settings.TURNSTILE_SECRET_KEY
+        settings.TURNSTILE_SECRET_KEY = ""
+        try:
+            request = SimpleNamespace(
+                cookies={},
+                headers={},
+                client=SimpleNamespace(host="guest-comment"),
+            )
+            response = Response()
+            created = await create_comment(
+                self.post.id,
+                CommentCreate(content="Guest message", guest_email="guest@example.com"),
+                request,
+                response,
+                self.db,
+                None,
+            )
+        finally:
+            settings.TURNSTILE_SECRET_KEY = original_turnstile
+
+        stored = self.db.get(Comment, created["id"])
+        self.assertTrue(created["author_name"].startswith("Guest-"))
+        self.assertEqual(created["author_role"], "guest")
+        self.assertNotIn("guest_email", created)
+        self.assertEqual(stored.guest_email, "guest@example.com")
+        self.assertEqual(len(stored.guest_key_hash), 64)
+        cookie = response.headers.get("set-cookie", "")
+        self.assertIn(f"{GUEST_COOKIE_NAME}=", cookie)
+        self.assertIn("HttpOnly", cookie)
+        self.assertIn("SameSite=lax", cookie)
+
+        admin_items = list_admin_comments(1, 20, self.db, SimpleNamespace())["items"]
+        self.assertEqual(admin_items[0]["guest_email"], "guest@example.com")
+
+    async def test_reply_to_guest_keeps_the_target_name(self):
+        parent = Comment(post_id=self.post.id, guest_name="Visitor", content="Parent")
+        author = User(username="member", password_hash="unused")
+        self.db.add_all([parent, author])
+        self.db.commit()
+        response = Response()
+        created = await create_comment(
+            self.post.id,
+            CommentCreate(content="Reply", parent_id=parent.id),
+            SimpleNamespace(cookies={}, headers={}, client=SimpleNamespace(host="member")),
+            response,
+            self.db,
+            author,
+        )
+        self.assertEqual(created["reply_to_name"], "Visitor")
+
+    def test_deleting_root_comment_removes_its_replies(self):
+        admin = User(username="admin", password_hash="unused", role="admin")
+        root = Comment(post_id=self.post.id, guest_name="Visitor", content="Root")
+        self.db.add_all([admin, root])
+        self.db.commit()
+        reply = Comment(
+            post_id=self.post.id,
+            user_id=admin.id,
+            parent_id=root.id,
+            content="Reply",
+        )
+        self.db.add(reply)
+        self.db.commit()
+        reply_id = reply.id
+
+        delete_comment(self.post.id, root.id, self.db, admin)
+
+        self.assertIsNone(self.db.get(Comment, root.id))
+        self.assertIsNone(self.db.get(Comment, reply_id))
+
+    async def test_configured_turnstile_is_required_for_guest_comments(self):
+        original_turnstile = settings.TURNSTILE_SECRET_KEY
+        settings.TURNSTILE_SECRET_KEY = "configured-secret"
+        try:
+            with self.assertRaises(HTTPException) as raised:
+                await create_comment(
+                    self.post.id,
+                    CommentCreate(content="No captcha"),
+                    SimpleNamespace(cookies={}, headers={}, client=SimpleNamespace(host="guest-captcha")),
+                    Response(),
+                    self.db,
+                    None,
+                )
+            self.assertEqual(raised.exception.status_code, 400)
+        finally:
+            settings.TURNSTILE_SECRET_KEY = original_turnstile
+
+    def test_guest_identity_rate_limit_is_enforced(self):
+        for _ in range(5):
+            consume_guest_comment_limit("203.0.113.20", "identity")
+        with self.assertRaises(HTTPException) as raised:
+            consume_guest_comment_limit("203.0.113.20", "identity")
+        self.assertEqual(raised.exception.status_code, 429)
+
+    def test_legacy_comment_table_migration_is_idempotent(self):
+        engine = create_engine("sqlite:///:memory:")
+        with engine.begin() as connection:
+            connection.execute(text("CREATE TABLE comments (id INTEGER PRIMARY KEY, content TEXT NOT NULL)"))
+        ensure_guest_comment_columns(engine)
+        ensure_guest_comment_columns(engine)
+        with engine.connect() as connection:
+            columns = {row[1] for row in connection.execute(text("PRAGMA table_info(comments)"))}
+        self.assertTrue({"guest_name", "guest_email", "guest_key_hash", "reply_to_name_override"} <= columns)
 
 
 class UserActionTests(DatabaseTestCase):

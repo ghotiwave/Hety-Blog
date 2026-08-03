@@ -1,4 +1,3 @@
-import ipaddress
 import re
 import time
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -9,7 +8,6 @@ from jose import jwt
 from datetime import datetime, timedelta, timezone
 from app.timezone_utils import BEIJING_TZ
 import bcrypt
-import httpx
 from app.database import get_db
 from app.config import settings
 from app.models.user import User
@@ -17,6 +15,8 @@ from app.schemas.user import RegisterRequest, LoginRequest, TokenResponse, UserR
 from app.dependencies import get_current_user
 from app.services.email_service import send_verification_code, verify_code
 from app.utils.timestamps import beijing_isoformat
+from app.utils.request_ip import client_ip as _client_ip
+from app.services.turnstile import require_turnstile
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -54,18 +54,6 @@ def _normalize_email(email: str) -> str:
     if len(normalized) > 100 or not EMAIL_PATTERN.fullmatch(normalized):
         raise HTTPException(status_code=422, detail="请提供有效的邮箱地址")
     return normalized
-
-
-def _client_ip(request: Request) -> str:
-    """Resolve the original client behind the trusted local Caddy/Nginx chain."""
-    forwarded = (getattr(request, "headers", {}) or {}).get("x-forwarded-for", "")
-    candidate = forwarded.split(",", 1)[0].strip() if forwarded else ""
-    try:
-        if candidate:
-            return str(ipaddress.ip_address(candidate))
-    except ValueError:
-        pass
-    return request.client.host if request.client else "unknown"
 
 
 def _check_rate_limit(ip: str, max_attempts: int = 3, window: int = 3600) -> bool:
@@ -167,23 +155,11 @@ async def register(request: Request, req: RegisterRequest, db: Session = Depends
     if not _check_rate_limit(client_ip):
         raise HTTPException(status_code=429, detail="注册过于频繁，请稍后再试")
 
-    # Turnstile verification
-    if settings.TURNSTILE_SECRET_KEY:
-        if not req.turnstile_token:
-            raise HTTPException(status_code=400, detail="请完成人机验证")
-        try:
-            async with httpx.AsyncClient(timeout=10) as client:
-                resp = await client.post("https://challenges.cloudflare.com/turnstile/v0/siteverify", data={
-                    "secret": settings.TURNSTILE_SECRET_KEY,
-                    "response": req.turnstile_token,
-                })
-                resp.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise HTTPException(status_code=503, detail="人机验证服务暂时不可用，请稍后重试") from exc
-        else:
-            if not resp.json().get("success"):
-                _record_attempt(client_ip)
-                raise HTTPException(status_code=400, detail="人机验证失败")
+    try:
+        await require_turnstile(req.turnstile_token, client_ip)
+    except HTTPException:
+        _record_attempt(client_ip)
+        raise
 
     if db.query(User).filter(User.username == username).first():
         raise HTTPException(status_code=400, detail="用户名已被注册")

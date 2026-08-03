@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import api from '@/services/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { Textarea } from '@/components/ui/Textarea'
+import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { EmojiPicker } from '@/components/blog/EmojiPicker'
 import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer'
+import { TurnstileWidget } from '@/components/auth/TurnstileWidget'
 
 function UserCard({ comment, onClose }: { comment: Comment; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -31,6 +33,9 @@ function UserCard({ comment, onClose }: { comment: Comment; onClose: () => void 
             <span className="font-medium text-sm text-[var(--color-text)]">{comment.author_name}</span>
             {comment.author_role === 'admin' && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-medium">管理员</span>
+            )}
+            {comment.author_role === 'guest' && (
+              <span className="rounded bg-[var(--color-surface)] px-1.5 py-0.5 text-[10px] text-[var(--color-text-muted)]">游客</span>
             )}
           </div>
         </div>
@@ -75,6 +80,14 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
   const requestIdRef = useRef(0)
   const { user } = useAuth()
   const [replyTarget, setReplyTarget] = useState<{ id: number; name: string } | null>(null)
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('')
+
+  useEffect(() => {
+    if (user) return
+    api.get('/auth/config')
+      .then((response) => setTurnstileSiteKey(response.data.turnstile_site_key || ''))
+      .catch(() => {})
+  }, [user])
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const hasMore = page < totalPages
@@ -138,21 +151,22 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
       </div>
 
       {!user && (
-        <div className="mb-6 py-4 px-4 bg-[var(--color-surface)] rounded-lg border border-[var(--color-border)] text-center">
-          <p className="text-[var(--color-text-muted)] text-sm">
-            <Link to="/login" className="text-[var(--color-primary)] hover:underline">登录</Link> 后发表评论
-          </p>
+        <div className="mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm leading-6 text-[var(--color-text-muted)]">
+          可直接以游客身份评论，昵称和邮箱均可选；邮箱仅管理员可见。
+          {' '}<Link to="/login" className="text-[var(--color-primary)] hover:underline">登录</Link> 后可同步身份、点赞和阅读记录。
         </div>
       )}
 
       {/* New comment form — only when not replying */}
-      {user && !replyTarget && (
+      {!replyTarget && (
         <CommentForm
           postId={postId}
           placeholder="发表评论..."
           onSubmit={fetchComments}
           replyTarget={null}
           onCancelReply={() => {}}
+          guestMode={!user}
+          turnstileSiteKey={turnstileSiteKey}
         />
       )}
 
@@ -172,6 +186,7 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
             onReply={(id, name) => setReplyTarget({ id, name })}
             onCancelReply={() => setReplyTarget(null)}
             onRefresh={() => fetchComments(1)}
+            turnstileSiteKey={turnstileSiteKey}
           />
         ))}
       </div>
@@ -191,13 +206,14 @@ export function CommentSection({ postId, totalComments }: { postId: number; tota
   )
 }
 
-function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onRefresh }: {
+function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onRefresh, turnstileSiteKey }: {
   comment: Comment
   postId: number
   replyTarget: { id: number; name: string } | null
   onReply: (id: number, name: string) => void
   onCancelReply: () => void
   onRefresh: () => void
+  turnstileSiteKey: string
 }) {
   const [showReplies, setShowReplies] = useState(false)
   const [allReplies, setAllReplies] = useState<Comment[]>([])
@@ -266,6 +282,9 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
             {comment.author_role === 'admin' && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-medium">管理员</span>
             )}
+            {comment.author_role === 'guest' && (
+              <span className="rounded bg-[var(--color-surface)] px-1.5 py-0.5 text-[10px] text-[var(--color-text-muted)]">游客</span>
+            )}
             <span className="text-xs text-[var(--color-text-muted)]">{new Date(comment.created_at).toLocaleString('zh-CN')}</span>
           </div>
           <div className="text-sm text-[var(--color-text)] prose markdown-compact max-w-none mb-2">
@@ -308,6 +327,9 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
                       {r.author_role === 'admin' && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-medium">管理员</span>
                       )}
+                      {r.author_role === 'guest' && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border)] font-medium">游客</span>
+                      )}
                       <span className="text-xs text-[var(--color-text-muted)]">{new Date(r.created_at).toLocaleString('zh-CN')}</span>
                     </div>
                     <div className="text-sm text-[var(--color-text)] prose markdown-compact max-w-none">
@@ -318,7 +340,7 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
                     </div>
                     <button onClick={() => onReply(r.id, r.author_name)} className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-primary)] cursor-pointer mt-1">回复</button>
                     {/* Inline form for replying to this reply */}
-                    {replyTarget?.id === r.id && user && (
+                    {replyTarget?.id === r.id && (
                       <div className="mt-2">
                         <CommentForm
                           postId={postId}
@@ -326,6 +348,8 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
                           onSubmit={() => { onCancelReply(); onRefresh() }}
                           replyTarget={replyTarget}
                           onCancelReply={onCancelReply}
+                          guestMode={!user}
+                          turnstileSiteKey={turnstileSiteKey}
                         />
                       </div>
                     )}
@@ -347,7 +371,7 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
           )}
 
           {/* Inline reply form — appears below root comment */}
-          {isReplying && user && (
+          {isReplying && (
             <div className="mt-3 ml-4">
               <CommentForm
                 postId={postId}
@@ -355,6 +379,8 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
                 onSubmit={() => { onCancelReply(); onRefresh() }}
                 replyTarget={replyTarget}
                 onCancelReply={onCancelReply}
+                guestMode={!user}
+                turnstileSiteKey={turnstileSiteKey}
               />
             </div>
           )}
@@ -364,19 +390,28 @@ function CommentItem({ comment, postId, replyTarget, onReply, onCancelReply, onR
   )
 }
 
-function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply }: {
+function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply, guestMode = false, turnstileSiteKey = '' }: {
   postId: number
   placeholder: string
   onSubmit: () => void
   replyTarget: { id: number; name: string } | null
   onCancelReply: () => void
+  guestMode?: boolean
+  turnstileSiteKey?: string
 }) {
   const [content, setContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [imageUploading, setImageUploading] = useState(false)
   const [preview, setPreview] = useState(false)
   const [formError, setFormError] = useState('')
+  const [guestName, setGuestName] = useState('')
+  const [guestEmail, setGuestEmail] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [turnstileVersion, setTurnstileVersion] = useState(0)
   const textareaId = useId()
+  const handleTurnstileError = useCallback(() => {
+    setFormError('人机验证组件加载失败，请刷新页面重试。')
+  }, [])
 
   const insertAtCursor = (text: string) => {
     const el = document.getElementById(textareaId) as HTMLTextAreaElement | null
@@ -415,18 +450,34 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!content.trim()) return
+    if (guestMode && turnstileSiteKey && !turnstileToken) {
+      setFormError('请先完成人机验证。')
+      return
+    }
     setSubmitting(true)
     setFormError('')
     try {
       await api.post(`/posts/${postId}/comments`, {
         content: content.trim(),
         parent_id: replyTarget?.id || null,
+        guest_name: guestMode ? guestName.trim() || null : null,
+        guest_email: guestMode ? guestEmail.trim() || null : null,
+        turnstile_token: guestMode ? turnstileToken || null : null,
       })
       setContent('')
+      setTurnstileToken('')
+      setTurnstileVersion((version) => version + 1)
       onCancelReply()
       onSubmit()
-    } catch {
-      setFormError('评论发送失败，请稍后重试。')
+    } catch (error: unknown) {
+      if (guestMode && turnstileSiteKey) {
+        setTurnstileToken('')
+        setTurnstileVersion((version) => version + 1)
+      }
+      const detail = typeof error === 'object' && error && 'response' in error
+        ? (error as { response?: { data?: { detail?: unknown } } }).response?.data?.detail
+        : null
+      setFormError(typeof detail === 'string' ? detail : '评论发送失败，请稍后重试。')
     } finally {
       setSubmitting(false)
     }
@@ -438,6 +489,25 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
         <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
           <span>回复 @{replyTarget.name}</span>
           <button type="button" onClick={onCancelReply} className="text-[var(--color-primary)] cursor-pointer">取消</button>
+        </div>
+      )}
+      {guestMode && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input
+            value={guestName}
+            onChange={(event) => setGuestName(event.target.value)}
+            placeholder="昵称 / ID（可选）"
+            maxLength={20}
+            autoComplete="nickname"
+          />
+          <Input
+            type="email"
+            value={guestEmail}
+            onChange={(event) => setGuestEmail(event.target.value)}
+            placeholder="邮箱（可选且不公开）"
+            maxLength={100}
+            autoComplete="email"
+          />
         </div>
       )}
       {preview ? (
@@ -460,15 +530,25 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
           required
         />
       )}
-      <div className="flex items-center gap-2">
+      {guestMode && turnstileSiteKey && (
+        <TurnstileWidget
+          key={turnstileVersion}
+          siteKey={turnstileSiteKey}
+          onTokenChange={setTurnstileToken}
+          onError={handleTurnstileError}
+        />
+      )}
+      <div className="flex flex-wrap items-center gap-2">
         <Button type="submit" disabled={submitting}>
           {submitting ? '发送中...' : replyTarget ? '回复' : '发表评论'}
         </Button>
         <EmojiPicker onSelect={(text) => insertAtCursor(text)} />
-        <label className={`px-2 py-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer transition-colors ${imageUploading ? 'opacity-50' : ''}`}>
-          {imageUploading ? '⏳' : '🖼️'}
-          <input type="file" accept="image/*" onChange={handleImageUpload} disabled={imageUploading} className="hidden" />
-        </label>
+        {!guestMode && (
+          <label className={`px-2 py-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] cursor-pointer transition-colors ${imageUploading ? 'opacity-50' : ''}`}>
+            {imageUploading ? '⏳' : '🖼️'}
+            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={imageUploading} className="hidden" />
+          </label>
+        )}
         <button
           type="button"
           onClick={() => setPreview(!preview)}
@@ -476,7 +556,9 @@ function CommentForm({ postId, placeholder, onSubmit, replyTarget, onCancelReply
         >
           {preview ? '编辑' : '预览'}
         </button>
-        <span className="text-[10px] text-[var(--color-text-muted)]">支持 Markdown / 图片 / 表情</span>
+        <span className="text-[10px] text-[var(--color-text-muted)]">
+          {guestMode ? '支持 Markdown / 表情' : '支持 Markdown / 图片 / 表情'}
+        </span>
       </div>
       <div className="flex items-center justify-between gap-3 text-[10px]">
         {formError ? <p role="alert" className="text-red-600 dark:text-red-300">{formError}</p> : <span />}

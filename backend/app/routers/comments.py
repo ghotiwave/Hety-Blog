@@ -1,13 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case
 from app.database import get_db
 from app.models.post import Post
 from app.models.comment import Comment, CommentLike
+from app.utils.comment_threads import delete_comment_thread
 from app.models.user import User
 from app.schemas.comment import CommentCreate, CommentResponse
 from app.dependencies import get_current_user, get_optional_user
 from app.utils.timestamps import beijing_isoformat
+from app.services.turnstile import require_turnstile
+from app.utils.guest_comments import (
+    consume_guest_comment_limit,
+    default_guest_name,
+    guest_key_hash,
+    resolve_guest_identity,
+    set_guest_identity_cookie,
+)
+from app.utils.request_ip import client_ip
 
 router = APIRouter(prefix="/api/posts", tags=["comments"])
 
@@ -31,11 +41,11 @@ def _serialize(c, db: Session, current_user_id: int | None = None):
         "parent_id": c.parent_id,
         "content": c.content,
         "user_id": user.id if user else None,
-        "author_name": user.username if user else "anonymous",
-        "author_role": user.role if user else None,
+        "author_name": user.username if user else (c.guest_name or "anonymous"),
+        "author_role": user.role if user else ("guest" if c.guest_name else None),
         "avatar_url": user.avatar_url if user else None,
         "signature": user.signature if user else None,
-        "reply_to_name": reply_user.username if reply_user else None,
+        "reply_to_name": reply_user.username if reply_user else c.reply_to_name_override,
         "like_count": c.like_count or 0,
         "user_liked": user_liked,
         "reply_count": db.query(func.count(Comment.id)).filter(Comment.parent_id == c.id).scalar() or 0,
@@ -128,11 +138,13 @@ def list_replies(
 
 
 @router.post("/{post_id}/comments")
-def create_comment(
+async def create_comment(
     post_id: int,
     req: CommentCreate,
+    request: Request,
+    response: Response,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_user),
 ):
     post = db.query(Post).filter(Post.id == post_id, Post.published == True).first()
     if not post:
@@ -143,28 +155,49 @@ def create_comment(
     # Validate parent and reply_to — derive reply_to_user_id from parent comment
     parent_id = None
     reply_to_user_id = None
+    reply_to_name_override = None
     if req.parent_id:
         parent = db.query(Comment).filter(Comment.id == req.parent_id, Comment.post_id == post_id).first()
         if not parent:
             raise HTTPException(status_code=404, detail="Parent comment not found")
         reply_to_user_id = parent.user_id
+        if parent.user_id is None:
+            reply_to_name_override = parent.guest_name or "anonymous"
         # If replying to a reply, parent is the root
         if parent.parent_id:
             parent_id = parent.parent_id
         else:
             parent_id = parent.id
 
+    guest_id = None
+    guest_name = None
+    guest_email = None
+    identity_hash = None
+    if current_user is None:
+        guest_id = resolve_guest_identity(request)
+        identity_hash = guest_key_hash(guest_id)
+        consume_guest_comment_limit(client_ip(request), identity_hash)
+        await require_turnstile(req.turnstile_token, client_ip(request))
+        guest_name = req.guest_name or default_guest_name(guest_id)
+        guest_email = req.guest_email
+
     comment = Comment(
         post_id=post_id,
-        user_id=current_user.id,
+        user_id=current_user.id if current_user else None,
         parent_id=parent_id,
         reply_to_user_id=reply_to_user_id,
+        reply_to_name_override=reply_to_name_override,
+        guest_name=guest_name,
+        guest_email=guest_email,
+        guest_key_hash=identity_hash,
         content=req.content.strip(),
     )
     db.add(comment)
     db.commit()
     db.refresh(comment)
-    return _serialize(comment, db, current_user.id)
+    if guest_id:
+        set_guest_identity_cookie(response, guest_id)
+    return _serialize(comment, db, current_user.id if current_user else None)
 
 
 @router.post("/{post_id}/comments/{comment_id}/like")
@@ -206,6 +239,6 @@ def delete_comment(
         raise HTTPException(status_code=404, detail="Not found")
     if current_user.role != "admin" and comment.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Permission denied")
-    db.delete(comment)
+    delete_comment_thread(db, comment)
     db.commit()
     return {"message": "deleted"}

@@ -38,10 +38,12 @@ def init_db():
     from app.models.like import Like
     from app.models.comment import Comment, CommentLike
     from app.utils.digest_slugs import repair_digest_slugs
+    from app.utils.guest_comments import ensure_guest_comment_columns
     from app.utils.timestamps import normalize_legacy_timestamps
     import bcrypt
 
     Base.metadata.create_all(bind=engine)
+    ensure_guest_comment_columns(engine)
     normalize_legacy_timestamps(engine)
 
     db = SessionLocal()
