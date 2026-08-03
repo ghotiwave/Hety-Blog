@@ -1,5 +1,5 @@
 import logging
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, urlencode, urlsplit
 
 import httpx
 from authlib.integrations.base_client.errors import OAuthError
@@ -8,7 +8,6 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
@@ -18,6 +17,7 @@ from app.services.github_oauth import (
     clear_github_state_cookie,
     create_github_authorization,
     exchange_github_identity,
+    github_callback_url,
     read_github_state,
     resolve_github_user,
     set_github_state_cookie,
@@ -29,7 +29,8 @@ router = APIRouter(prefix="/api/auth/github", tags=["github-auth"])
 
 
 def _frontend_redirect(path: str, *, error: str | None = None, token: str | None = None) -> RedirectResponse:
-    target = f"{settings.SITE_URL.rstrip('/')}{path}"
+    callback = urlsplit(github_callback_url())
+    target = f"{callback.scheme}://{callback.netloc}{path}"
     if error:
         target = f"{target}?{urlencode({'oauth_error': error})}"
     if token:

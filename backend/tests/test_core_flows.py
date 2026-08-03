@@ -800,7 +800,8 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
             headers={"Accept": "application/json", "Host": "github.com"},
         )
 
-    async def test_callback_returns_site_token_in_fragment(self):
+    async def test_callback_returns_site_token_on_callback_origin(self):
+        settings.SITE_URL = "https://gianniiss.top"
         authorization_url, state_token = await create_github_authorization("login")
         state = authorization_url.split("state=", 1)[1].split("&", 1)[0]
         request = SimpleNamespace(cookies={GITHUB_STATE_COOKIE: state_token})
@@ -813,7 +814,11 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
             response = await github_callback(request, "temporary-code", state, None, self.db)
 
         self.assertEqual(response.status_code, 303)
-        self.assertIn("/auth/github/complete#token=", response.headers["location"])
+        self.assertTrue(
+            response.headers["location"].startswith(
+                "https://blog.example/auth/github/complete#token="
+            )
+        )
         self.assertNotIn("temporary-code", response.headers["location"])
 
     async def test_callback_explains_github_connection_timeout(self):

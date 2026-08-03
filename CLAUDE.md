@@ -105,7 +105,8 @@ AI_BASE_URL=https://api.deepseek.com
 AI_MODEL=deepseek-v4-flash
 RESEND_API_KEY=re_xxx         # 邮件验证
 SITE_DOMAIN=gianniiss.top
-SITE_URL=https://gianniiss.top
+SITE_URL=https://blog.gianniiss.top
+GITHUB_CALLBACK_URL=https://blog.gianniiss.top/api/auth/github/callback
 ```
 
 ### 颜色/主题
