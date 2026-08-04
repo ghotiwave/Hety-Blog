@@ -25,7 +25,7 @@ from app.models.profile import Profile
 from app.models.reading_history import ReadingHistory
 from app.models.score import Score
 from app.models.user import User
-from app.routers.auth import _client_ip, _login_attempts, _normalize_email, _validate_password, login, register
+from app.routers.auth import _client_ip, _login_attempts, _normalize_email, _validate_password, login, me, register
 from app.routers.github_auth import github_callback
 from app.routers.comments import _serialize, create_comment, delete_comment, list_replies
 from app.routers.admin_dashboard import delete_user as delete_admin_user, list_comments as list_admin_comments
@@ -33,7 +33,7 @@ from app.routers.admin_digests import trigger_digest
 from app.routers.admin_posts import export_post, import_post
 from app.routers.upload import MAX_UPLOAD_BYTES, upload_image
 from app.routers.user_actions import liked_posts, reading_history
-from app.schemas.user import LoginRequest, RegisterRequest
+from app.schemas.user import LoginRequest, RegisterRequest, UserResponse
 from app.schemas.comment import CommentCreate
 from app.schemas.post import PostResponse
 from app.schemas.profile import ProfileUpdate
@@ -151,6 +151,14 @@ class LoginTests(DatabaseTestCase):
         by_email = login(request, LoginRequest(username="alice@example.com", password="pass123"), self.db)
         self.assertEqual(by_name.user.id, self.user.id)
         self.assertEqual(by_email.user.id, self.user.id)
+
+    def test_current_user_response_serializes_created_at(self):
+        payload = me(self.user)
+        response = UserResponse.model_validate(payload)
+
+        self.assertEqual(response.id, self.user.id)
+        self.assertIsInstance(response.created_at, str)
+        self.assertIn("+08:00", response.created_at)
 
     def test_repeated_failed_login_is_rate_limited(self):
         request = SimpleNamespace(headers={}, client=SimpleNamespace(host="login-rate-limit"))
