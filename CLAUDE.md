@@ -107,6 +107,7 @@ RESEND_API_KEY=re_xxx         # 邮件验证
 SITE_DOMAIN=gianniiss.top
 SITE_URL=https://blog.gianniiss.top
 GITHUB_CALLBACK_URL=https://blog.gianniiss.top/api/auth/github/callback
+GITHUB_PROXY_URL=http://blog-github:代理密码@host.docker.internal:7890
 ```
 
 ### 颜色/主题

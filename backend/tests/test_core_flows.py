@@ -122,6 +122,16 @@ class ConfigurationTests(unittest.TestCase):
         finally:
             settings.SECRET_KEY, settings.GITHUB_TOKEN_URL = original
 
+    def test_github_proxy_cannot_send_credentials_to_an_untrusted_host(self):
+        original = (settings.SECRET_KEY, settings.GITHUB_PROXY_URL)
+        try:
+            settings.SECRET_KEY = "s" * 32
+            settings.GITHUB_PROXY_URL = "http://blog-github:secret@proxy.example:7890"
+            with self.assertRaises(RuntimeError):
+                validate_runtime_settings()
+        finally:
+            settings.SECRET_KEY, settings.GITHUB_PROXY_URL = original
+
 
 class LoginTests(DatabaseTestCase):
     def setUp(self):
@@ -618,11 +628,13 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
             settings.GITHUB_CLIENT_ID,
             settings.GITHUB_CLIENT_SECRET,
             settings.GITHUB_CALLBACK_URL,
+            settings.GITHUB_PROXY_URL,
             settings.SITE_URL,
         )
         settings.GITHUB_CLIENT_ID = "client-id"
         settings.GITHUB_CLIENT_SECRET = "client-secret"
         settings.GITHUB_CALLBACK_URL = "https://blog.example/api/auth/github/callback"
+        settings.GITHUB_PROXY_URL = "http://blog-github:test-password@172.17.0.1:7890"
         settings.SITE_URL = "https://blog.example"
 
     def tearDown(self):
@@ -630,6 +642,7 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
             settings.GITHUB_CLIENT_ID,
             settings.GITHUB_CLIENT_SECRET,
             settings.GITHUB_CALLBACK_URL,
+            settings.GITHUB_PROXY_URL,
             settings.SITE_URL,
         ) = self.original
         self.db.close()
@@ -653,6 +666,14 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
     async def test_token_exchange_posts_github_client_credentials(self):
         async with _oauth_client() as client:
             self.assertEqual(client.token_endpoint_auth_method, "client_secret_post")
+
+    def test_oauth_client_uses_only_the_explicit_github_proxy(self):
+        with patch("app.services.github_oauth.AsyncOAuth2Client") as client_class:
+            _oauth_client()
+
+        kwargs = client_class.call_args.kwargs
+        self.assertEqual(kwargs["proxy"], settings.GITHUB_PROXY_URL)
+        self.assertFalse(kwargs["trust_env"])
 
     def test_new_github_identity_creates_linked_user(self):
         identity = GitHubIdentity("101", "octocat", "octocat@example.com", "https://avatar")
@@ -780,7 +801,7 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(identity.provider_user_id, "107")
         self.assertEqual(identity.email, "primary@example.com")
-        self.assertEqual(fake_client.token_headers, {"Accept": "application/json", "Host": "github.com"})
+        self.assertEqual(fake_client.token_headers, {"Accept": "application/json"})
 
     async def test_token_exchange_retries_one_connect_timeout(self):
         client = AsyncMock()
@@ -797,7 +818,7 @@ class GitHubOAuthTests(unittest.IsolatedAsyncioTestCase):
             settings.GITHUB_TOKEN_URL.strip(),
             code="code",
             code_verifier="verifier",
-            headers={"Accept": "application/json", "Host": "github.com"},
+            headers={"Accept": "application/json"},
         )
 
     async def test_callback_returns_site_token_on_callback_origin(self):

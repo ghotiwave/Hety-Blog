@@ -23,6 +23,7 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       - GITHUB_CALLBACK_URL=${GITHUB_CALLBACK_URL:-}
+      - GITHUB_PROXY_URL=${GITHUB_PROXY_URL:-}
       - GITHUB_TOKEN_URL=${GITHUB_TOKEN_URL:-https://github.com/login/oauth/access_token}
       - SITE_NAME=${SITE_NAME:-我的个人主页}
       - SITE_DOMAIN=${SITE_DOMAIN:-gianniiss.top}

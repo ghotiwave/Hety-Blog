@@ -63,6 +63,8 @@ def _oauth_client(*, state: str | None = None, token: dict | None = None) -> Asy
         state=state,
         token=token,
         code_challenge_method="S256",
+        proxy=settings.GITHUB_PROXY_URL.strip() or None,
+        trust_env=False,
         timeout=httpx.Timeout(
             GITHUB_REQUEST_TIMEOUT_SECONDS,
             connect=GITHUB_CONNECT_TIMEOUT_SECONDS,
@@ -83,7 +85,7 @@ async def _fetch_github_token(client: AsyncOAuth2Client, code: str, verifier: st
                 token_url,
                 code=code,
                 code_verifier=verifier,
-                headers={"Accept": "application/json", "Host": "github.com"},
+                headers={"Accept": "application/json"},
             )
         except httpx.ConnectTimeout:
             if attempt == 1:

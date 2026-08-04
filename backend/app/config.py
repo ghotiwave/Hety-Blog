@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: str = ""
     GITHUB_CALLBACK_URL: str = ""
+    GITHUB_PROXY_URL: str = ""
     GITHUB_TOKEN_URL: str = "https://github.com/login/oauth/access_token"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
@@ -60,11 +61,30 @@ def validate_runtime_settings() -> None:
     if (
         token_url.scheme != "https"
         or token_url.hostname != "github.com"
-        or token_port not in {None, 443, 9443}
+        or token_port not in {None, 443}
         or token_url.path != "/login/oauth/access_token"
         or token_url.username
         or token_url.password
         or token_url.query
         or token_url.fragment
     ):
-        raise RuntimeError("GITHUB_TOKEN_URL 必须是受支持的 GitHub OAuth token 地址")
+        raise RuntimeError("GITHUB_TOKEN_URL 必须是 GitHub 官方 OAuth token 地址")
+
+    proxy_value = settings.GITHUB_PROXY_URL.strip()
+    if proxy_value:
+        proxy_url = urlparse(proxy_value)
+        try:
+            proxy_port = proxy_url.port
+        except ValueError as exc:
+            raise RuntimeError("GITHUB_PROXY_URL 端口无效") from exc
+        if (
+            proxy_url.scheme != "http"
+            or proxy_url.hostname not in {"host.docker.internal", "172.17.0.1"}
+            or proxy_port != 7890
+            or proxy_url.username != "blog-github"
+            or not proxy_url.password
+            or proxy_url.path not in {"", "/"}
+            or proxy_url.query
+            or proxy_url.fragment
+        ):
+            raise RuntimeError("GITHUB_PROXY_URL 必须指向受认证的本机 Mihomo HTTP 代理")

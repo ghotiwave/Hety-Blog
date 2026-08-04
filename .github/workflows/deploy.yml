@@ -82,7 +82,7 @@ jobs:
         run: |
           ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
             cd ~/blog
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend python -c 'import httpx; response = httpx.post("https://github.com:9443/login/oauth/access_token", headers={"Host": "github.com", "Accept": "application/json"}, data={"client_id": "deploy-healthcheck", "client_secret": "invalid", "code": "invalid"}, timeout=30); assert response.json().get("error")'
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend python -c 'import httpx; from app.config import settings; assert settings.GITHUB_PROXY_URL; client = httpx.Client(proxy=settings.GITHUB_PROXY_URL, trust_env=False, timeout=30); response = client.post("https://github.com/login/oauth/access_token", headers={"Accept": "application/json"}, data={"client_id": "deploy-healthcheck", "client_secret": "invalid", "code": "invalid"}); client.close(); assert response.json().get("error")'
             docker system prune -f
           "
