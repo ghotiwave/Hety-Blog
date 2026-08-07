@@ -39,6 +39,7 @@ def init_db():
     from app.models.like import Like
     from app.models.comment import Comment, CommentLike
     from app.utils.digest_slugs import repair_digest_slugs
+    from app.utils.post_slugs import repair_post_slugs
     from app.utils.guest_comments import ensure_guest_comment_columns
     from app.utils.timestamps import normalize_legacy_timestamps
     import bcrypt
@@ -79,6 +80,9 @@ def init_db():
         # Older databases predate the unique slug constraint and may contain
         # multiple daily digests that all resolve to the same detail URL.
         repair_digest_slugs(db)
+        # Public article links use stable random slugs. Numeric IDs remain accepted
+        # by the read route only as backwards-compatible legacy URLs.
+        repair_post_slugs(db)
 
         db.commit()
     finally:

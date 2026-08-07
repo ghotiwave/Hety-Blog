@@ -22,6 +22,7 @@ interface Profile {
 
 interface HomePost {
   id: number
+  slug: string | null
   title: string
   summary: string | null
   cover_image: string | null
@@ -190,6 +191,7 @@ export function Home() {
             <PostCard
               key={p.id}
               id={p.id}
+              slug={p.slug}
               title={p.title}
               summary={p.summary}
               coverImage={p.cover_image}

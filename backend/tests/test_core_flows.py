@@ -44,6 +44,7 @@ from app.utils.markdown_posts import (
     read_markdown_archive,
 )
 from app.utils.digest_slugs import assign_unique_digest_slugs, next_digest_slug
+from app.utils.post_slugs import POST_SLUG_LENGTH, assign_missing_post_slugs
 from app.utils.timestamps import beijing_isoformat, normalize_legacy_timestamps
 from app.utils.guest_comments import (
     GUEST_COOKIE_NAME,
@@ -76,6 +77,30 @@ class DatabaseTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.db.close()
+
+
+class PostSlugTests(DatabaseTestCase):
+    def test_new_posts_receive_a_random_non_numeric_slug(self):
+        post = Post(title="Random URL", content="content")
+        self.db.add(post)
+        self.db.commit()
+
+        self.assertEqual(len(post.slug), POST_SLUG_LENGTH)
+        self.assertFalse(post.slug.isdigit())
+
+    def test_legacy_missing_and_numeric_slugs_are_repaired(self):
+        posts = [
+            SimpleNamespace(id=1, slug=None),
+            SimpleNamespace(id=2, slug="2"),
+            SimpleNamespace(id=3, slug="kept-slug"),
+        ]
+
+        changed = assign_missing_post_slugs(posts)
+
+        self.assertEqual(changed, 2)
+        self.assertEqual(posts[2].slug, "kept-slug")
+        self.assertEqual(len({post.slug for post in posts}), 3)
+        self.assertTrue(all(not post.slug.isdigit() for post in posts))
 
 
 class ConfigurationTests(unittest.TestCase):

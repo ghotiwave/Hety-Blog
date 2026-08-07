@@ -90,7 +90,9 @@ export function PostDetail() {
     >
     <article className="max-w-4xl mx-auto pb-6">
       {post.cover_image && (
-        <img src={post.cover_image} alt={post.title} className="w-full h-64 object-cover rounded-xl mb-6" />
+        <figure className="mb-8 flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 p-2 sm:p-3">
+          <img src={post.cover_image} alt={post.title} className="h-full w-full object-contain" />
+        </figure>
       )}
       <h1 className="mb-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--color-text)] md:text-4xl">
         {post.title}

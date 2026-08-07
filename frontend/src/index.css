@@ -47,10 +47,70 @@ body {
 .dark .prose code { background: var(--color-surface); color: var(--color-primary); }
 .dark .prose pre { background: #111113; color: var(--color-text); }
 
-/* Dark mode header - blend with background */
-.dark header {
-  background: rgba(11, 11, 12, 0.9) !important;
-  border-color: var(--color-border) !important;
+/* Floating glass navigation with one route-aware shared slider. */
+.site-header-shell {
+  background: linear-gradient(to bottom, var(--color-bg) 0%, color-mix(in srgb, var(--color-bg) 76%, transparent) 58%, transparent 100%);
+}
+
+.site-header-glass,
+.site-mobile-nav {
+  border: 1px solid rgba(176, 188, 216, 0.52);
+  background: rgba(255, 255, 255, 0.64);
+  box-shadow: 0 12px 36px rgba(43, 65, 108, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+}
+
+.site-header-glass { border-radius: 1rem; }
+.site-mobile-nav { border-radius: 0.9rem; }
+
+.site-nav-track {
+  border: 1px solid rgba(176, 188, 216, 0.34);
+  border-radius: 0.75rem;
+  background: rgba(245, 248, 255, 0.42);
+}
+
+.site-nav-slider {
+  position: absolute;
+  top: 0.25rem;
+  left: 0;
+  height: calc(100% - 0.5rem);
+  border: 1px solid rgba(49, 91, 214, 0.2);
+  border-radius: 0.55rem;
+  background: rgba(49, 91, 214, 0.11);
+  box-shadow: 0 4px 14px rgba(49, 91, 214, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  transition: width 360ms cubic-bezier(0.22, 1, 0.36, 1), transform 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms ease;
+  will-change: width, transform;
+}
+
+.site-nav-slider::after {
+  position: absolute;
+  right: 24%;
+  bottom: -1px;
+  left: 24%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  content: '';
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 55%, transparent);
+}
+
+.dark .site-header-glass,
+.dark .site-mobile-nav {
+  border-color: rgba(111, 134, 190, 0.32);
+  background: rgba(15, 17, 24, 0.7);
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.dark .site-nav-track {
+  border-color: rgba(111, 134, 190, 0.24);
+  background: rgba(10, 12, 18, 0.42);
+}
+
+.dark .site-nav-slider {
+  border-color: rgba(134, 165, 255, 0.3);
+  background: rgba(93, 125, 214, 0.2);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* Chrome Dino game night mode — toggled on <html> by Runner.invert() */

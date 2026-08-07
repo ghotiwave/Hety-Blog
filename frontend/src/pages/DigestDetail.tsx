@@ -9,12 +9,13 @@ import api from '@/services/api'
 import { ArticleLayout } from '@/components/blog/ArticleLayout'
 import { Button } from '@/components/ui/Button'
 import { fetchAllArticleNavItems, type ArticleNavItem } from '@/services/articleNavigation'
+import { parseDigestItems, type DigestNewsItem } from '@/services/digestContent'
 
 interface Digest {
   id: number; title: string; topic: string; content: string
   source_urls: string | null; created_at: string
 }
-interface NewsItem { title: string; desc: string; sourceUrl: string; sourceLabel: string }
+type NewsItem = DigestNewsItem
 interface SectionBlock { heading: string; subBlocks: { subheading: string; items: NewsItem[] }[] }
 
 function slugId(text: string): string {
@@ -23,30 +24,6 @@ function slugId(text: string): string {
     .trim()
     .replace(/\s+/g, '-')
     .toLowerCase()
-}
-
-/** Parse `- **title**: desc  \n> 原文：[label](url)` patterns into NewsItem[] */
-function parseItems(body: string): NewsItem[] {
-  const items: NewsItem[] = []
-  const lines = body.split('\n')
-  let i = 0
-  while (i < lines.length) {
-    const line = lines[i]
-    // Match various formats: - **title**: desc  or  - title：desc  or  - **title**：desc
-    const m = line.match(/^-\s+(?:\*\*?)?(.+?)(?:\*\*?)?\s*[：:]\s*(.+)/)
-    if (m) {
-      const title = m[1].replace(/\*+/g, '').trim()
-      const desc = m[2].trim()
-      let sourceUrl = ''; let sourceLabel = ''
-      if (i + 1 < lines.length) {
-        const sm = lines[i + 1].match(/^\s*>\s*(?:原文|来源|查看原文|原文链接)[：:]\s*\[(.+?)\]\((.+?)\)/)
-        if (sm) { sourceLabel = sm[1]; sourceUrl = sm[2]; i++ }
-      }
-      items.push({ title, desc, sourceUrl, sourceLabel })
-    }
-    i++
-  }
-  return items
 }
 
 /** Parse `###/#### title\ndesc\n> 原文：...` format into NewsItem[] */
@@ -78,7 +55,7 @@ function parseSubBlocks(body: string): { subheading: string; items: NewsItem[] }
     const hMatch = part.match(/^###\s+(.+)/)
     const subheading = hMatch ? hMatch[1] : ''
     const rest = hMatch ? part.replace(/^###\s+.+\n/, '') : part
-    let items = parseItems(rest)
+    let items = parseDigestItems(rest)
     // Fallback 1: try ###/#### detail format (from rest)
     if (items.length === 0 && /^#{3,4} /m.test(rest)) {
       items = parseDetailItems(rest)
@@ -241,7 +218,7 @@ export function DigestDetail() {
   const parsed = useMemo(() => {
     if (!digest) return null
     const { spotlight, sections } = parseSections(digest.content)
-    const spotlightItems = parseItems(spotlight)
+    const spotlightItems = parseDigestItems(spotlight)
     const sectionBlocks: SectionBlock[] = sections
       .map((s) => ({ heading: s.heading, subBlocks: parseSubBlocks(s.body) }))
       .filter((s) => s.subBlocks.length > 0 && s.subBlocks.some((b) => b.items.length > 0))

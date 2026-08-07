@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from app.utils.timestamps import beijing_now_naive
+from app.utils.post_slugs import random_post_slug
 from app.database import Base
 
 
@@ -14,7 +15,7 @@ class Post(Base):
     cover_image = Column(String(500), nullable=True)
     tags = Column(String(500), nullable=True)
     post_type = Column(String(20), default="blog")  # "blog" or "note"
-    slug = Column(String(200), nullable=True, unique=True)
+    slug = Column(String(200), nullable=True, unique=True, default=random_post_slug)
     view_count = Column(Integer, default=0)
     published = Column(Boolean, default=False)
     created_at = Column(DateTime, default=beijing_now_naive)
