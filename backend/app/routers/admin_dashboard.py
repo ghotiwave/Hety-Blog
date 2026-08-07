@@ -7,6 +7,7 @@ from app.models.comment import Comment
 from app.models.user import User
 from app.models.like import Like
 from app.models.oauth_account import OAuthAccount
+from app.models.album_photo import AlbumPhoto
 from app.dependencies import get_current_admin
 from app.utils.timestamps import beijing_isoformat
 from app.utils.comment_threads import delete_comment_thread
@@ -23,6 +24,7 @@ def get_stats(db: Session = Depends(get_db), _: User = Depends(get_current_admin
         "total_users": db.query(func.count(User.id)).scalar() or 0,
         "total_likes": db.query(func.count(Like.id)).scalar() or 0,
         "total_views": db.query(func.sum(Post.view_count)).scalar() or 0,
+        "total_album_photos": db.query(func.count(AlbumPhoto.id)).scalar() or 0,
     }
 
 

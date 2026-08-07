@@ -19,7 +19,6 @@ TIMESTAMP_COLUMNS = (
     ("profile", "updated_at"),
     ("digests", "created_at"),
     ("comments", "created_at"),
-    ("scores", "played_at"),
     ("reading_history", "visited_at"),
     ("likes", "created_at"),
     ("comment_likes", "created_at"),

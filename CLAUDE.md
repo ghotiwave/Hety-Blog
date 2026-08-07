@@ -21,7 +21,7 @@ blog/
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── components/  # blog/, admin/, layout/, ui/, game/
+│   │   ├── components/  # blog/, admin/, layout/, ui/
 │   │   ├── pages/       # 页面组件（admin/ 子目录）
 │   │   ├── contexts/    # AuthContext, ThemeContext
 │   │   ├── services/    # api.ts（axios 实例）
@@ -65,14 +65,6 @@ API 文档：`http://localhost:9000/docs`
 cd frontend
 npm run dev   # 先执行 predev 生成 logo-sm.png
 # http://localhost:5173
-```
-
-### 笔记站
-
-```bash
-cd ../notes
-node quartz/bootstrap-cli.mjs build
-cd public && python -m http.server 8080
 ```
 
 ## 工程规范
@@ -159,11 +151,6 @@ const res = await api.post('/auth/login', { username, password })
 - 同一天多次生成的 slug 自动加 `-2`、`-3` 后缀
 - **`news_fetcher.py` 只用 `timezone.utc`，不要引入 `BEIJING_TZ`**——该文件有两处 `datetime.now()` 且被 `except Exception: return []` 包裹，未导入的变量会导致新闻源静默失败，日报内容大幅缩水
 
-### 笔记站
-- 笔记站已独立为 `notes.gianniiss.top`（Quartz，由 **Caddy 网关**直接服务静态产物），**不再挂在博客下**。
-- Quartz 生成 clean URL（无 `.html`），由网关 `try_files {path} {path}.html {path}/index.html` 处理。
-- SPA 模式在子路径下导航有 bug，已关闭（`enableSPA: false`）
-
 ### 时区
 - 服务器/容器使用 UTC
 - APScheduler 已配置 `timezone="Asia/Shanghai"`（北京 8:00 生成日报）
@@ -191,15 +178,12 @@ const res = await api.post('/auth/login', { username, password })
 - 证书由 **Caddy 自动管理**（HTTP-01），博客侧已无任何 certbot / SSL 配置（旧的 `/etc/letsencrypt` + `certbot renew` 已弃用）。
 - 改服务器 `.env`（如 API Key）需 SSH 手动编辑 `~/blog/.env`，然后 `docker compose up -d backend`。CI 通过 `--exclude='.env'` 保护服务器端 .env。
 - 数据库每天凌晨 3 点自动备份到 `~/blog-backups/`。
-- **完整多站架构（网关 / 主页 / 笔记 / 工具、域名拓扑、密钥位置）见 `D:\MySite\PROJECT_MEMORY.md`**；运维细节见 `D:\MySite\Deploy guide.md`（均不在本仓库）。
+- **完整多站架构与域名拓扑见 `D:\MySite\PROJECT_MEMORY.md`**；运维细节见 `D:\MySite\Deploy guide.md`（均不在本仓库）。
 
 ## CI/CD
 
 ### 博客站（Hety-Blog）
-`push main` → rsync 代码到服务器 `~/blog/` → `docker compose up -d --build`（TLS 归 Caddy 网关，CI 不再处理 SSL/域名/notes）
-
-### 笔记站（Hety-Wiki）
-`push main` → npm ci → Quartz 构建 → rsync `public/` 到服务器
+`push main` → rsync 代码到服务器 `~/blog/` → `docker compose up -d --build`（TLS 归 Caddy 网关，CI 不再处理 SSL/域名）
 
 需要 GitHub Secrets：`SERVER_HOST`、`SERVER_USER`、`SERVER_SSH_KEY`
 

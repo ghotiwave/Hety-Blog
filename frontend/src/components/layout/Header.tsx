@@ -70,14 +70,13 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
   const navItems = [
     { to: '/blog', label: '博客' },
-    ...(siteConfig.features.digest ? [{ to: '/digest', label: '科技日报' }] : []),
+    ...(siteConfig.features.digest ? [{ to: '/digest', label: '日报' }] : []),
+    ...(siteConfig.features.album ? [{ to: '/album', label: '相簿' }] : []),
     { to: '/about', label: '关于' },
-    ...(siteConfig.features.game ? [{ to: '/game', label: 'Game', aliases: ['/leaderboard'] }] : []),
   ]
   const activeNavPath = navItems.find((item) => (
     pathname === item.to
     || pathname.startsWith(`${item.to}/`)
-    || item.aliases?.some((alias) => pathname === alias || pathname.startsWith(`${alias}/`))
   ))?.to
   const accountItems = user
     ? [
@@ -111,13 +110,13 @@ export function Header() {
 
   return (
     <header className="site-header-shell sticky top-0 z-50 px-3 pt-2 sm:px-4">
-      <div className="site-header-glass max-w-5xl mx-auto flex h-14 items-center justify-between px-3 sm:px-5">
+      <div className="site-header-glass max-w-6xl mx-auto flex h-14 items-center justify-between px-3 sm:px-5">
         <div className="flex items-center gap-7">
           <a href="https://gianniiss.top" className="flex items-center gap-1 hover:opacity-80 transition-opacity">
             <img src={logoImg} alt={siteConfig.shortName} className="h-8 w-auto object-contain" />
             <span className="text-sm text-[var(--color-text)] tracking-wider">{siteConfig.shortName}</span>
           </a>
-          <nav ref={primaryNavRef} className="site-nav-track relative hidden items-center p-1 text-sm md:flex" aria-label="主导航">
+          <nav ref={primaryNavRef} className="site-nav-track relative hidden items-center p-1 text-sm lg:flex" aria-label="主导航">
             <Slider state={primarySlider} />
             {navItems.map((item) => (
               <NavLink
@@ -135,7 +134,7 @@ export function Header() {
           <button onClick={toggle} className="text-lg cursor-pointer px-2 py-1 rounded hover:bg-[var(--color-surface)] transition-colors" title={dark ? '切到亮色' : '切到暗色'} aria-label={dark ? '切换到亮色主题' : '切换到暗色主题'}>
             {dark ? '☀' : '☾'}
           </button>
-          <div className="hidden items-center gap-2 md:flex">
+          <div className="hidden items-center gap-2 lg:flex">
             <nav ref={accountNavRef} className="site-nav-track relative flex items-center p-1 text-sm" aria-label="账户导航">
               <Slider state={accountSlider} />
               {accountItems.map((item) => (
@@ -154,10 +153,10 @@ export function Header() {
             </nav>
             {user && <Button variant="ghost" size="sm" onClick={logout}>退出</Button>}
           </div>
-          <button onClick={() => setMenuOpen((open) => !open)} className="md:hidden p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]" aria-label={menuOpen ? '关闭导航' : '打开导航'} aria-controls="mobile-navigation" aria-expanded={menuOpen}>☰</button>
+          <button onClick={() => setMenuOpen((open) => !open)} className="lg:hidden p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]" aria-label={menuOpen ? '关闭导航' : '打开导航'} aria-controls="mobile-navigation" aria-expanded={menuOpen}>☰</button>
         </div>
       </div>
-      <div className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out md:hidden ${menuOpen ? 'grid-rows-[1fr] opacity-100' : 'pointer-events-none grid-rows-[0fr] opacity-0'}`}>
+      <div className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out lg:hidden ${menuOpen ? 'grid-rows-[1fr] opacity-100' : 'pointer-events-none grid-rows-[0fr] opacity-0'}`}>
       <div id="mobile-navigation" className="overflow-hidden" aria-hidden={!menuOpen} inert={!menuOpen}>
       <nav className="site-mobile-nav mt-2 space-y-1 px-5 py-4" aria-label="移动端导航">
         {navItems.map((item) => (

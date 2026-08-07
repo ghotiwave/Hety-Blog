@@ -11,10 +11,9 @@ const About = lazy(() => import('@/pages/About').then((module) => ({ default: mo
 const Login = lazy(() => import('@/pages/Login').then((module) => ({ default: module.Login })))
 const Register = lazy(() => import('@/pages/Register').then((module) => ({ default: module.Register })))
 const GitHubOAuthComplete = lazy(() => import('@/pages/GitHubOAuthComplete').then((module) => ({ default: module.GitHubOAuthComplete })))
-const Game = lazy(() => import('@/pages/Game').then((module) => ({ default: module.Game })))
-const Leaderboard = lazy(() => import('@/pages/Leaderboard').then((module) => ({ default: module.Leaderboard })))
 const Digest = lazy(() => import('@/pages/Digest').then((module) => ({ default: module.Digest })))
 const DigestDetail = lazy(() => import('@/pages/DigestDetail').then((module) => ({ default: module.DigestDetail })))
+const Album = lazy(() => import('@/pages/Album').then((module) => ({ default: module.Album })))
 const UserHistory = lazy(() => import('@/pages/UserHistory').then((module) => ({ default: module.UserHistory })))
 const UserProfile = lazy(() => import('@/pages/UserProfile').then((module) => ({ default: module.UserProfile })))
 const UserLikes = lazy(() => import('@/pages/UserLikes').then((module) => ({ default: module.UserLikes })))
@@ -24,6 +23,7 @@ const PostEdit = lazy(() => import('@/pages/admin/PostEdit').then((module) => ({
 const AdminComments = lazy(() => import('@/pages/admin/Comments').then((module) => ({ default: module.AdminComments })))
 const ProfileEdit = lazy(() => import('@/pages/admin/ProfileEdit').then((module) => ({ default: module.ProfileEdit })))
 const AdminUsers = lazy(() => import('@/pages/admin/Users').then((module) => ({ default: module.AdminUsers })))
+const AlbumManage = lazy(() => import('@/pages/admin/AlbumManage').then((module) => ({ default: module.AlbumManage })))
 
 function RouteFallback() {
   return (
@@ -45,6 +45,7 @@ function AdminShell() {
     ['/admin/dashboard', '控制面板'],
     ['/admin/posts', '文章管理'],
     ['/admin/comments', '评论管理'],
+    ['/admin/album', '相簿管理'],
     ['/admin/profile', '关于页'],
     ['/admin/users', '用户管理'],
   ]
@@ -91,10 +92,9 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/auth/github/complete" element={<GitHubOAuthComplete />} />
-            {siteConfig.features.game && <Route path="/game" element={<Game />} />}
-            {siteConfig.features.game && <Route path="/leaderboard" element={<Leaderboard />} />}
             {siteConfig.features.digest && <Route path="/digest" element={<Digest />} />}
             {siteConfig.features.digest && <Route path="/digest/:id" element={<DigestDetail />} />}
+            {siteConfig.features.album && <Route path="/album" element={<Album />} />}
             <Route path="/history" element={<UserHistory />} />
             <Route path="/likes" element={<UserLikes />} />
             <Route path="/profile" element={<UserProfile />} />
@@ -108,6 +108,7 @@ export default function App() {
               <Route path="/admin/comments" element={<AdminComments />} />
               <Route path="/admin/profile" element={<ProfileEdit />} />
               <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/album" element={<AlbumManage />} />
             </Route>
           </Route>
         </Routes>

@@ -10,7 +10,6 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.models.profile import Profile
 from app.models.user import User
-from app.models.score import Score
 from app.models.digest import NewsDigest
 from app.services.ai_digest import generate_daily_digest
 
@@ -243,32 +242,6 @@ def update_profile(name: str = "", bio: str = "", interests: str = "", experienc
         if twitter_url: p.twitter_url = twitter_url
         db.commit()
         return json.dumps({"message": "Profile updated"})
-    finally:
-        db.close()
-
-
-# ─── Leaderboard ────────────────────────────────────────
-
-@mcp.tool()
-def get_leaderboard(limit: int = 10) -> str:
-    """查看游戏排行榜。"""
-    db = _db()
-    try:
-        scores = (
-            db.query(Score)
-            .order_by(Score.score.desc())
-            .limit(limit)
-            .all()
-        )
-        return json.dumps(
-            [
-                {"rank": i + 1, "username": s.user.username if s.user else "?", "score": s.score,
-                 "played_at": s.played_at.isoformat() if s.played_at else ""}
-                for i, s in enumerate(scores)
-            ],
-            ensure_ascii=False,
-            indent=2,
-        )
     finally:
         db.close()
 

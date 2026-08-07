@@ -13,6 +13,7 @@ export function DashboardStats({ stats }: Props) {
     { label: '用户数', value: stats.total_users },
     { label: '点赞数', value: stats.total_likes },
     { label: '浏览量', value: stats.total_views },
+    ...(typeof stats.total_album_photos === 'number' ? [{ label: '相簿照片', value: stats.total_album_photos }] : []),
   ]
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">

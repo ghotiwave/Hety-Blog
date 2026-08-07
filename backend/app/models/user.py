@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.orm import relationship
 from app.utils.timestamps import beijing_now_naive
 from app.database import Base
 
@@ -17,5 +16,3 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     role = Column(String(10), default="user")
     created_at = Column(DateTime, default=beijing_now_naive)
-
-    scores = relationship("Score", back_populates="user", cascade="all, delete-orphan")

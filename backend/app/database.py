@@ -33,18 +33,20 @@ def init_db():
     from app.models.comment import Comment
     from app.models.oauth_account import OAuthAccount
     from app.models.profile import Profile
-    from app.models.score import Score
     from app.models.digest import NewsDigest
     from app.models.reading_history import ReadingHistory
     from app.models.like import Like
+    from app.models.album_photo import AlbumPhoto, AlbumSettings
     from app.models.comment import Comment, CommentLike
     from app.utils.digest_slugs import repair_digest_slugs
     from app.utils.post_slugs import repair_post_slugs
     from app.utils.guest_comments import ensure_guest_comment_columns
     from app.utils.timestamps import normalize_legacy_timestamps
+    from app.utils.album_photos import ensure_album_photo_columns
     import bcrypt
 
     Base.metadata.create_all(bind=engine)
+    ensure_album_photo_columns(engine)
     ensure_guest_comment_columns(engine)
     normalize_legacy_timestamps(engine)
 
@@ -76,6 +78,9 @@ def init_db():
                 experience="Your experience here",
             )
             db.add(profile)
+
+        if not db.get(AlbumSettings, 1):
+            db.add(AlbumSettings(id=1, autoplay_delay_ms=6500))
 
         # Older databases predate the unique slug constraint and may contain
         # multiple daily digests that all resolve to the same detail URL.

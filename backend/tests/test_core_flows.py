@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, Mock, patch
 import zipfile
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -17,18 +17,26 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings, validate_runtime_settings
 from app.database import Base
 from app.models.comment import Comment, CommentLike
+from app.models.album_photo import AlbumPhoto
 from app.models.digest import NewsDigest
 from app.models.like import Like
 from app.models.oauth_account import OAuthAccount
 from app.models.post import Post
 from app.models.profile import Profile
 from app.models.reading_history import ReadingHistory
-from app.models.score import Score
 from app.models.user import User
 from app.routers.auth import _client_ip, _login_attempts, _normalize_email, _validate_password, login, me, register
 from app.routers.github_auth import github_callback
 from app.routers.comments import _serialize, create_comment, delete_comment, list_replies
 from app.routers.admin_dashboard import delete_user as delete_admin_user, list_comments as list_admin_comments
+from app.routers.admin_album import (
+    create_album_photo,
+    delete_album_photo,
+    rotate_album_photo,
+    update_album_photo,
+    update_album_settings,
+)
+from app.routers.album import album_feed
 from app.routers.admin_digests import trigger_digest
 from app.routers.admin_posts import export_post, import_post
 from app.routers.upload import MAX_UPLOAD_BYTES, upload_image
@@ -37,6 +45,7 @@ from app.schemas.user import LoginRequest, RegisterRequest, UserResponse
 from app.schemas.comment import CommentCreate
 from app.schemas.post import PostResponse
 from app.schemas.profile import ProfileUpdate
+from app.schemas.album import AlbumPhotoRotate, AlbumPhotoUpdate, AlbumSettingsUpdate
 from app.utils.markdown_posts import (
     export_markdown_post,
     local_markdown_assets,
@@ -46,6 +55,7 @@ from app.utils.markdown_posts import (
 from app.utils.digest_slugs import assign_unique_digest_slugs, next_digest_slug
 from app.utils.post_slugs import POST_SLUG_LENGTH, assign_missing_post_slugs
 from app.utils.timestamps import beijing_isoformat, normalize_legacy_timestamps
+from app.utils.album_photos import ensure_album_photo_columns
 from app.utils.guest_comments import (
     GUEST_COOKIE_NAME,
     _guest_comment_attempts,
@@ -1006,6 +1016,134 @@ class UploadTests(unittest.IsolatedAsyncioTestCase):
                     self.assertIn("A", image.getbands())
         finally:
             settings.UPLOAD_DIR = original_upload_dir
+
+
+class AlbumTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        engine = create_engine("sqlite:///:memory:")
+        Base.metadata.create_all(engine)
+        self.db = sessionmaker(bind=engine)()
+
+    def tearDown(self):
+        self.db.close()
+
+    def test_existing_album_table_receives_taken_on_column(self):
+        engine = create_engine("sqlite:///:memory:")
+        with engine.begin() as connection:
+            connection.execute(text("CREATE TABLE album_photos (id INTEGER PRIMARY KEY)"))
+        ensure_album_photo_columns(engine)
+        with engine.connect() as connection:
+            columns = connection.execute(text("PRAGMA table_info(album_photos)")).mappings().all()
+        self.assertIn("taken_on", {column["name"] for column in columns})
+
+    async def test_album_upload_creates_private_variants_and_public_sections(self):
+        from PIL import Image
+
+        source = BytesIO()
+        Image.new("RGB", (1200, 800), (18, 76, 132)).save(source, format="HEIF")
+        original_upload_dir = settings.UPLOAD_DIR
+        try:
+            with TemporaryDirectory() as upload_dir:
+                settings.UPLOAD_DIR = upload_dir
+                created = await create_album_photo(
+                    UploadFile(filename="iphone.heic", file=BytesIO(source.getvalue())),
+                    "海边的风",
+                    "厦门",
+                    "2026-08-08",
+                    "蓝色海面",
+                    90,
+                    True,
+                    True,
+                    True,
+                    self.db,
+                    SimpleNamespace(),
+                )
+
+                self.assertTrue(created.image_url.endswith("-display.webp"))
+                self.assertTrue(created.thumbnail_url.endswith("-thumb.webp"))
+                self.assertEqual((created.width, created.height), (800, 1200))
+                self.assertEqual(created.taken_on, date(2026, 8, 8))
+                self.assertTrue(Path(upload_dir, created.image_url.rsplit("/", 1)[-1]).is_file())
+                self.assertTrue(Path(upload_dir, created.thumbnail_url.rsplit("/", 1)[-1]).is_file())
+
+                feed = album_feed(self.db)
+                self.assertEqual([photo.id for photo in feed["carousel"]], [created.id])
+                self.assertEqual([photo.id for photo in feed["gallery"]], [created.id])
+                self.assertEqual(feed["autoplay_delay_ms"], 6500)
+        finally:
+            settings.UPLOAD_DIR = original_upload_dir
+
+    async def test_album_metadata_can_be_updated_and_delete_removes_variants(self):
+        from PIL import Image
+
+        source = BytesIO()
+        Image.new("RGB", (20, 12), (90, 40, 120)).save(source, format="PNG")
+        original_upload_dir = settings.UPLOAD_DIR
+        try:
+            with TemporaryDirectory() as upload_dir:
+                settings.UPLOAD_DIR = upload_dir
+                created = await create_album_photo(
+                    UploadFile(filename="photo.png", file=BytesIO(source.getvalue())),
+                    "",
+                    "",
+                    "",
+                    "",
+                    0,
+                    False,
+                    True,
+                    True,
+                    self.db,
+                    SimpleNamespace(),
+                )
+                old_paths = [
+                    Path(upload_dir, created.image_url.rsplit("/", 1)[-1]),
+                    Path(upload_dir, created.thumbnail_url.rsplit("/", 1)[-1]),
+                ]
+                rotated = rotate_album_photo(
+                    created.id,
+                    AlbumPhotoRotate(degrees=90),
+                    self.db,
+                    SimpleNamespace(),
+                )
+                self.assertEqual((rotated.width, rotated.height), (12, 20))
+                self.assertEqual(rotated.image_url, created.image_url)
+                self.assertTrue(all(path.exists() for path in old_paths))
+                updated = update_album_photo(
+                    created.id,
+                    AlbumPhotoUpdate(
+                        caption="夜色",
+                        location="上海",
+                        taken_on=date(2026, 8, 7),
+                        show_in_carousel=True,
+                        gallery_order=42,
+                    ),
+                    self.db,
+                    SimpleNamespace(),
+                )
+                self.assertEqual(updated.caption, "夜色")
+                self.assertEqual(updated.taken_on, date(2026, 8, 7))
+                self.assertEqual(updated.location, "上海")
+                self.assertTrue(updated.show_in_carousel)
+                self.assertEqual(updated.gallery_order, 42)
+
+                paths = [
+                    Path(upload_dir, updated.image_url.rsplit("/", 1)[-1]),
+                    Path(upload_dir, updated.thumbnail_url.rsplit("/", 1)[-1]),
+                ]
+                delete_album_photo(created.id, self.db, SimpleNamespace())
+                self.assertIsNone(self.db.get(AlbumPhoto, created.id))
+                self.assertTrue(all(not path.exists() for path in paths))
+        finally:
+            settings.UPLOAD_DIR = original_upload_dir
+
+    def test_album_autoplay_delay_can_be_configured(self):
+        result = update_album_settings(
+            AlbumSettingsUpdate(autoplay_delay_ms=9000),
+            self.db,
+            SimpleNamespace(),
+        )
+        self.assertEqual(result, {"autoplay_delay_ms": 9000})
+        self.assertEqual(album_feed(self.db)["autoplay_delay_ms"], 9000)
 
 
 if __name__ == "__main__":

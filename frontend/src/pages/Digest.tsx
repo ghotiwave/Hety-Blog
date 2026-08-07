@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import api from '@/services/api'
+import { SectionHeading } from '@/components/layout/SectionHeading'
 
 interface Digest {
   id: number; title: string; topic: string; created_at: string; slug?: string | null
@@ -48,9 +49,9 @@ export function Digest() {
   )
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <h1 className="text-3xl text-[var(--color-text)] mb-3 font-light tracking-wide">科技日报</h1>
-      <p className="text-[15px] text-[var(--color-text-muted)] mb-10">AI 科技新闻，每日早八点更新。</p>
+    <div className="max-w-5xl mx-auto">
+      <SectionHeading eyebrow="AI / DAILY BRIEF" title="日报" description="AI 科技新闻，每日早八点更新。" />
+      <div className="mx-auto max-w-3xl">
 
       {/* Archive navigation */}
       {archives.length > 0 && (
@@ -120,6 +121,7 @@ export function Digest() {
           )}
         </div>
       )}
+      </div>
     </div>
   )
 }
