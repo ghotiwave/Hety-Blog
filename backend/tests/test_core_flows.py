@@ -1073,6 +1073,40 @@ class AlbumTests(unittest.IsolatedAsyncioTestCase):
         finally:
             settings.UPLOAD_DIR = original_upload_dir
 
+    async def test_mobile_hdr_jpeg_upload_uses_primary_mpo_frame(self):
+        from PIL import Image
+
+        source = BytesIO()
+        Image.new("RGB", (40, 24), (20, 80, 140)).save(
+            source,
+            format="MPO",
+            save_all=True,
+            append_images=[Image.new("RGB", (8, 8), (128, 128, 128))],
+        )
+        original_upload_dir = settings.UPLOAD_DIR
+        try:
+            with TemporaryDirectory() as upload_dir:
+                settings.UPLOAD_DIR = upload_dir
+                created = await create_album_photo(
+                    UploadFile(filename="IMG_3873.jpeg", file=BytesIO(source.getvalue())),
+                    "",
+                    "",
+                    "",
+                    "",
+                    0,
+                    False,
+                    True,
+                    True,
+                    self.db,
+                    SimpleNamespace(),
+                )
+
+                self.assertEqual((created.width, created.height), (40, 24))
+                self.assertTrue(Path(upload_dir, created.image_url.rsplit("/", 1)[-1]).is_file())
+                self.assertTrue(Path(upload_dir, created.thumbnail_url.rsplit("/", 1)[-1]).is_file())
+        finally:
+            settings.UPLOAD_DIR = original_upload_dir
+
     async def test_album_metadata_can_be_updated_and_delete_removes_variants(self):
         from PIL import Image
 

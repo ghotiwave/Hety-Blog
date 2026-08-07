@@ -17,7 +17,7 @@ MAX_ALBUM_UPLOAD_BYTES = 20 * 1024 * 1024
 MAX_ALBUM_PIXELS = 60_000_000
 DISPLAY_MAX_DIM = 2560
 THUMBNAIL_MAX_DIM = 960
-ALLOWED_ALBUM_FORMATS = {"HEIF", "HEIC", "JPEG", "PNG", "WEBP"}
+ALLOWED_ALBUM_FORMATS = {"HEIF", "HEIC", "JPEG", "MPO", "PNG", "WEBP"}
 
 
 @dataclass(frozen=True)
@@ -77,8 +77,15 @@ def store_album_image(contents: bytes, rotation: int = 0) -> StoredAlbumImage:
             image_format = (source.format or "").upper()
             if image_format not in ALLOWED_ALBUM_FORMATS:
                 raise HTTPException(status_code=400, detail="仅支持 HEIC、HEIF、JPEG、PNG 或 WebP 照片")
-            if getattr(source, "n_frames", 1) != 1:
+            frame_count = getattr(source, "n_frames", 1)
+            # Mobile browsers can turn an HDR HEIF photo into a .jpeg upload
+            # whose primary image and gain map are stored in an MPO container.
+            # The first frame is the actual photograph; the extra frame is not
+            # animation and can be safely discarded when producing our WebP.
+            if frame_count != 1 and image_format != "MPO":
                 raise HTTPException(status_code=400, detail="相簿暂不支持动态图片")
+            if image_format == "MPO":
+                source.seek(0)
             source.load()
             image = ImageOps.exif_transpose(source).copy()
     except HTTPException:
