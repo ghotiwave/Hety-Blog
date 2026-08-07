@@ -516,6 +516,7 @@ body {
   position: sticky;
   top: 5rem;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   padding: 1rem;
 }
@@ -613,10 +614,6 @@ body {
 .album-admin-editor {
   min-width: 0;
   max-width: 100%;
-}
-
-.album-admin-page {
-  overflow-x: clip;
 }
 
 .dark .album-feature-media,
