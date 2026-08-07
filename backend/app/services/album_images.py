@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date, datetime
 from io import BytesIO
 import os
 
 from fastapi import HTTPException
-from PIL import Image, ImageOps
+from PIL import ExifTags, Image, ImageOps
 from pillow_heif import register_heif_opener
 
 from app.config import settings
@@ -26,6 +27,37 @@ class StoredAlbumImage:
     thumbnail_url: str
     width: int
     height: int
+    taken_on: date | None = None
+
+
+def _extract_taken_on(source: Image.Image) -> date | None:
+    try:
+        exif = source.getexif()
+    except Exception:
+        return None
+    if not exif:
+        return None
+
+    mappings = [exif]
+    try:
+        nested = exif.get_ifd(ExifTags.IFD.Exif)
+        if nested:
+            mappings.insert(0, nested)
+    except (AttributeError, KeyError, TypeError, ValueError):
+        pass
+
+    for tag in (36867, 36868, 306):  # DateTimeOriginal, DateTimeDigitized, DateTime
+        for mapping in mappings:
+            value = mapping.get(tag)
+            if isinstance(value, bytes):
+                value = value.decode("ascii", errors="ignore")
+            if not isinstance(value, str):
+                continue
+            try:
+                return datetime.strptime(value.strip().rstrip("\x00")[:19], "%Y:%m:%d %H:%M:%S").date()
+            except ValueError:
+                continue
+    return None
 
 
 def _save_webp(image: Image.Image, path: str, max_dimension: int, quality: int) -> None:
@@ -38,7 +70,7 @@ def _save_webp(image: Image.Image, path: str, max_dimension: int, quality: int) 
     normalized.save(path, format="WEBP", quality=quality, method=6)
 
 
-def _store_variants(image: Image.Image) -> StoredAlbumImage:
+def _store_variants(image: Image.Image, taken_on: date | None = None) -> StoredAlbumImage:
     width, height = image.size
     if width <= 0 or height <= 0 or width * height > MAX_ALBUM_PIXELS:
         raise HTTPException(status_code=400, detail="照片尺寸无效或像素过大")
@@ -65,6 +97,7 @@ def _store_variants(image: Image.Image) -> StoredAlbumImage:
         thumbnail_url=f"/uploads/{thumbnail_name}",
         width=width,
         height=height,
+        taken_on=taken_on,
     )
 
 
@@ -86,6 +119,7 @@ def store_album_image(contents: bytes, rotation: int = 0) -> StoredAlbumImage:
                 raise HTTPException(status_code=400, detail="相簿暂不支持动态图片")
             if image_format == "MPO":
                 source.seek(0)
+            taken_on = _extract_taken_on(source)
             source.load()
             image = ImageOps.exif_transpose(source).copy()
     except HTTPException:
@@ -97,7 +131,7 @@ def store_album_image(contents: bytes, rotation: int = 0) -> StoredAlbumImage:
         raise HTTPException(status_code=422, detail="照片旋转角度无效")
     if rotation:
         image = image.rotate(-rotation, expand=True)
-    return _store_variants(image)
+    return _store_variants(image, taken_on=taken_on)
 
 
 def _album_path(url: str, required_suffix: str) -> str:

@@ -145,19 +145,33 @@ body {
 
 .album-feature-card {
   position: relative;
+  width: 100%;
+  margin-inline: auto;
+  background: transparent;
+  opacity: 0.28;
+  transform: scale(0.82);
+  transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease;
+  will-change: transform;
+}
+
+.album-feature-card.is-portrait {
+  width: min(62%, 27rem);
+}
+
+.album-feature-media {
+  position: relative;
   overflow: hidden;
   aspect-ratio: 16 / 9;
   border: 1px solid rgba(173, 184, 208, 0.5);
   border-radius: 1.45rem;
   background: transparent;
-  box-shadow: 0 26px 70px rgba(15, 24, 43, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  opacity: 0.28;
-  transform: scale(0.82);
-  transition: transform 620ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease, box-shadow 400ms ease;
-  will-change: transform;
 }
 
-.album-feature-card img {
+.album-feature-card.is-portrait .album-feature-media {
+  aspect-ratio: 4 / 5;
+}
+
+.album-feature-media img {
   display: block;
   width: 100%;
   height: 100%;
@@ -170,7 +184,6 @@ body {
   z-index: 3;
   opacity: 1;
   transform: translateZ(30px) scale(1);
-  box-shadow: 0 34px 85px rgba(15, 24, 43, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .album-feature-card.is-previous {
@@ -201,6 +214,14 @@ body {
 .album-feature-card.is-current .album-feature-caption {
   opacity: 1;
   transform: translateY(0);
+}
+
+.album-feature-card.is-portrait .album-feature-caption {
+  position: relative;
+  inset: auto;
+  padding: 0.85rem 0.2rem 0;
+  color: var(--color-text);
+  background: none;
 }
 
 .album-feature-caption span {
@@ -585,33 +606,63 @@ body {
   color: var(--color-primary);
 }
 
-.dark .album-feature-card,
+.album-admin-page,
+.album-admin-settings,
+.album-admin-workspace,
+.album-admin-list,
+.album-admin-editor {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.album-admin-page {
+  overflow-x: clip;
+}
+
+.dark .album-feature-media,
 .dark .album-grid-button {
   border-color: rgba(121, 139, 181, 0.35) !important;
+}
+
+.dark .album-grid-button {
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+@media (max-width: 1180px) {
+  .album-admin-workspace { grid-template-columns: minmax(0, 1fr); }
+  .album-admin-editor { position: static; }
 }
 
 @media (max-width: 767px) {
   .album-carousel-viewport { padding: 0.7rem 0 1.2rem; }
   .album-carousel-slide { flex-basis: 88%; padding-left: 3%; }
   .album-carousel-track { margin-left: -1.5%; }
-  .album-feature-card { aspect-ratio: 4 / 3; border-radius: 1rem; }
+  .album-feature-card.is-portrait { width: min(82%, 18rem); }
+  .album-feature-media { aspect-ratio: 4 / 3; border-radius: 1rem; }
+  .album-feature-card.is-portrait .album-feature-media { aspect-ratio: 4 / 5; }
   .album-feature-card.is-previous { transform: rotateY(8deg) translateX(5%) scale(0.9); }
   .album-feature-card.is-next { transform: rotateY(-8deg) translateX(-5%) scale(0.9); }
-  .album-feature-caption { padding: 3.5rem 1rem 1rem; }
+  .album-feature-caption {
+    position: relative;
+    inset: auto;
+    min-height: 3.8rem;
+    padding: 0.75rem 0.2rem 0;
+    color: var(--color-text);
+    background: none;
+  }
+  .album-feature-caption span { margin-bottom: 0.35rem; font-size: 0.72rem; }
+  .album-feature-caption blockquote { font-size: 0.95rem; line-height: 1.5; }
   .album-carousel-controls { gap: 0.7rem; }
   .album-carousel-count { min-width: 3.4rem; }
   .album-divider { margin-top: 2.5rem; }
-  .album-admin-workspace { grid-template-columns: minmax(0, 1fr); }
   .album-admin-list-items {
     display: flex;
     max-height: none;
     overflow-x: auto;
   }
   .album-admin-photo {
-    min-width: 13rem;
+    min-width: min(13rem, calc(100vw - 4rem));
   }
-  .album-admin-editor { position: static; }
   .album-markdown-reference { align-items: stretch; flex-direction: column; }
 }
 

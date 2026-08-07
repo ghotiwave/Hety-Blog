@@ -148,8 +148,10 @@ export function Album() {
             <div className="album-carousel-track">
               {carousel.map((photo, index) => (
                 <div className="album-carousel-slide" key={photo.id}>
-                  <article className={`album-feature-card ${relativeSlidePosition(index, selected, carousel.length)}`}>
-                    <img src={photo.image_url} alt={photo.alt_text || photo.caption || '精选照片'} draggable={false} />
+                  <article className={`album-feature-card ${photo.height > photo.width ? 'is-portrait' : 'is-landscape'} ${relativeSlidePosition(index, selected, carousel.length)}`}>
+                    <div className="album-feature-media">
+                      <img src={photo.image_url} alt={photo.alt_text || photo.caption || '精选照片'} draggable={false} />
+                    </div>
                     {(photo.caption || photo.location || photo.taken_on) && (
                       <div className="album-feature-caption">
                         {(photo.location || photo.taken_on) && <span>{[photo.location, formatPhotoDate(photo.taken_on)].filter(Boolean).join(' · ')}</span>}

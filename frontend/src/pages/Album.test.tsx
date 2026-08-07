@@ -85,4 +85,35 @@ describe('Album', () => {
     await user.click(screen.getByRole('button', { name: '打开 蓝色海面' }))
     expect(screen.getByText('LIGHTBOX_OPEN 0')).toBeInTheDocument()
   })
+
+  it('marks portrait features so their captions can sit outside the image', async () => {
+    mocks.fetchAlbum.mockResolvedValue({
+      carousel: [{
+        id: 3,
+        image_url: '/uploads/portrait.webp',
+        thumbnail_url: '/uploads/portrait-thumb.webp',
+        width: 900,
+        height: 1400,
+        caption: '竖屏瞬间',
+        location: '上海',
+        taken_on: '2026-08-08',
+        alt_text: '竖屏照片',
+        show_in_carousel: true,
+        show_in_gallery: false,
+        carousel_order: 10,
+        gallery_order: 10,
+        published: true,
+        created_at: '2026-08-08T20:00:00+08:00',
+        updated_at: '2026-08-08T20:00:00+08:00',
+      }],
+      gallery: [],
+      autoplay_delay_ms: 6500,
+    })
+
+    render(<Album />)
+
+    const portrait = await screen.findByAltText('竖屏照片')
+    expect(portrait.closest('.album-feature-card')).toHaveClass('is-portrait')
+    expect(screen.getByText('“竖屏瞬间”')).toBeInTheDocument()
+  })
 })

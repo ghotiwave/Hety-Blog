@@ -120,7 +120,7 @@ async def create_album_photo(
         height=stored.height,
         caption=_clean_optional_text(caption),
         location=_clean_optional_text(location),
-        taken_on=parsed_taken_on,
+        taken_on=parsed_taken_on or stored.taken_on,
         alt_text=_clean_optional_text(alt_text) or fallback_alt,
         show_in_carousel=show_in_carousel,
         show_in_gallery=show_in_gallery,

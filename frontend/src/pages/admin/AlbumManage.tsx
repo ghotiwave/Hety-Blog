@@ -225,13 +225,13 @@ export function AlbumManage() {
   }
 
   return (
-    <div>
+    <div className="album-admin-page">
       <div className="mb-7">
         <h1 className="text-2xl font-bold text-[var(--color-text)]">相簿管理</h1>
         <p className="mt-2 text-sm text-[var(--color-text-muted)]">上传照片，再选择一张编辑它的展示位置和信息。</p>
       </div>
 
-      <div className="mb-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/45 p-4 sm:p-5">
+      <div className="album-admin-settings mb-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/45 p-4 sm:p-5">
         <div className="mb-5 flex flex-wrap items-end gap-x-6 gap-y-4 border-b border-[var(--color-border)] pb-5">
           <label className="min-w-56 flex-1 text-xs text-[var(--color-text-muted)]">轮播间隔
             <div className="mt-2 flex items-center gap-3">

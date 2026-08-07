@@ -1107,6 +1107,35 @@ class AlbumTests(unittest.IsolatedAsyncioTestCase):
         finally:
             settings.UPLOAD_DIR = original_upload_dir
 
+    async def test_album_upload_defaults_to_original_exif_date(self):
+        from PIL import Image
+
+        source = BytesIO()
+        exif = Image.Exif()
+        exif[36867] = "2024:05:19 16:42:08"
+        Image.new("RGB", (32, 20), (40, 90, 150)).save(source, format="JPEG", exif=exif)
+        original_upload_dir = settings.UPLOAD_DIR
+        try:
+            with TemporaryDirectory() as upload_dir:
+                settings.UPLOAD_DIR = upload_dir
+                created = await create_album_photo(
+                    UploadFile(filename="camera.jpeg", file=BytesIO(source.getvalue())),
+                    "",
+                    "",
+                    "",
+                    "",
+                    0,
+                    False,
+                    True,
+                    True,
+                    self.db,
+                    SimpleNamespace(),
+                )
+
+                self.assertEqual(created.taken_on, date(2024, 5, 19))
+        finally:
+            settings.UPLOAD_DIR = original_upload_dir
+
     async def test_album_metadata_can_be_updated_and_delete_removes_variants(self):
         from PIL import Image
 
